@@ -6,6 +6,7 @@
 ## Table of Contents
 - [Planning模块简介](#introduction)
   - [Planning输入输出](#planning_io)
+  - [Planning流程](#planning_flow)
 - [Planning模块入口](#planning_entry)
   - [模块注册](#planning_register)
   - [模块初始化](#planning_init)
@@ -56,6 +57,16 @@ Planning模块的输出结果在"PlanningComponent::Proc()"中，为规划好的
 ```
 planning_writer_->Write(std::make_shared<ADCTrajectory>(adc_trajectory_pb));
 ```
+
+
+<a name="planning_flow" />
+
+#### Planning流程
+下面是整个Planning模块的执行过程：  
+![planning_flow](https://github.com/daohu527/misc/blob/master/blog/planning/planning_flow.png)  
+
+
+
 
 接下来我们逐步分析整个planning模块的代码结构。
 
