@@ -481,8 +481,8 @@ void ScenarioManager::ScenarioDispatch(const common::TrajectoryPoint& ego_point,
 
 #### 场景运行
 场景的执行在"scenario.cc"和对应的场景目录中，实际上每个场景又分为一个或者多个阶段(stage)，每个阶段又由不同的任务(task)组成。执行一个场景，就是顺序执行不同阶段的不同任务。
-![Planner结构](https://raw.githubusercontent.com/daohu527/misc/master/blog/planning/Planner.png)
-下面我们来看一个具体的例子，Scenario对应的stage和task在"planning/conf/scenario"中
+![Planner结构](https://raw.githubusercontent.com/daohu527/misc/master/blog/planning/Planner.png)  
+下面我们来看一个具体的例子，Scenario对应的stage和task在"planning/conf/scenario"中。
 ```
 // Scenario对应的Stage
 scenario_type: SIDE_PASS
