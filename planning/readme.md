@@ -47,9 +47,9 @@ Planning模块的输入在"planning_component.h"中，接口如下:
                 localization_estimate) override;
 ```
 输入参数为:
-1. 预测的障碍物信息
-2. 车辆底盘信息(车辆的速度，加速度，航向角等信息)
-3. 车辆当前位置
+1. 预测的障碍物信息(prediction_obstacles)
+2. 车辆底盘(chassis)信息(车辆的速度，加速度，航向角等信息)
+3. 车辆当前位置(localization_estimate)
 > 实际上还有高精度地图信息，不在参数中传入，而是在函数中直接读取的。  
 
 Planning模块的输出结果在"PlanningComponent::Proc()"中，为规划好的线路，发布到Control模块订阅的Topic中。  
@@ -65,9 +65,9 @@ planning_writer_->Write(std::make_shared<ADCTrajectory>(adc_trajectory_pb));
 下图是整个Planning模块的执行过程：  
 ![planning_flow](https://github.com/daohu527/misc/blob/master/blog/planning/planning_flow.png)  
 1. 模块的入口是PlanningComponent，在Cyber中注册模块，订阅和发布消息，并且注册对应的Planning类。
-2. 整个Planning的过程，之前是定时器触发，即每隔固定的时候执行一次，现已经改为事件触发，即只要收集完成对应的TOPIC的消息，就会触发执行，这样的好处是提高的实时性。
-3. Planning类主要实现了2个功能，一个是启动ReferenceLineProvider来提供参考线，后面生成的轨迹都是在参考线的基础上做优化，ReferenceLineProvider是启动单独的线程，每隔50ms执行一次。和Planning主流程并行执行。Planning类另外的一个功能是执行Planning流程。
-4. Planning流程先是选择对应的Planner，我们主要分析的是PublicRoadPlanner，在配置文件中定义了Planner支持的场景，把规划划分为具体的几个场景，每个场景又分为几个阶段，每个阶段会执行多个任务，任务执行完成后，对应的场景就完成了。不同场景间的切换是由一个状态机来控制的。规划控制器根据生成的参考线，在不同的场景下做切换，不断重复上述过程直到到达目的地。
+2. Planning的过程之前是定时器触发，即每隔一段固定的时间执行一次，现已经改为事件触发，即只要收集完成对应TOPIC的消息，就会触发执行，这样的好处是提高的实时性。
+3. Planning类主要实现了2个功能，一个是启动ReferenceLineProvider来提供参考线，后面生成的轨迹都是在参考线的基础上做优化，ReferenceLineProvider启动了一个单独的线程，每隔50ms执行一次，和Planning主流程并行执行。Planning类另外的一个功能是执行Planning主流程。
+4. Planning主流程先是选择对应的Planner，我们这里主要分析PublicRoadPlanner，在配置文件中定义了Planner支持的场景(Scenario)，把规划分为具体的几个场景来执行，每个场景又分为几个阶段(Stage)，每个阶段会执行多个任务(Task)，任务执行完成后，对应的场景就完成了。不同场景间的切换是由一个状态机(ScenarioDispatch)来控制的。规划控制器根据ReferenceLineProvider提供的参考线，在不同的场景下做切换，生成一条车辆可以行驶的轨迹，并且不断重复上述过程直到到达目的地。
 
 
 
