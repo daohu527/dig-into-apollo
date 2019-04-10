@@ -6,7 +6,7 @@
 ## Table of Contents
 - [Planning模块简介](#introduction)
   - [Planning输入输出](#planning_io)
-  - [Planning流程](#planning_flow)
+  - [Planning整个流程](#planning_flow)
 - [Planning模块入口](#planning_entry)
   - [模块注册](#planning_register)
   - [模块初始化](#planning_init)
@@ -61,10 +61,13 @@ planning_writer_->Write(std::make_shared<ADCTrajectory>(adc_trajectory_pb));
 
 <a name="planning_flow" />
 
-#### Planning流程
-下面是整个Planning模块的执行过程：  
+#### Planning整个流程
+下图是整个Planning模块的执行过程：  
 ![planning_flow](https://github.com/daohu527/misc/blob/master/blog/planning/planning_flow.png)  
-
+1. 模块的入口是PlanningComponent，在Cyber中注册模块，订阅和发布消息，并且注册对应的Planning类。
+2. 整个Planning的过程，之前是定时器触发，即每隔固定的时候执行一次，现已经改为事件触发，即只要收集完成对应的TOPIC的消息，就会触发执行，这样的好处是提高的实时性。
+3. Planning类主要实现了2个功能，一个是启动ReferenceLineProvider来提供参考线，后面生成的轨迹都是在参考线的基础上做优化，ReferenceLineProvider是启动单独的线程，每隔50ms执行一次。和Planning主流程并行执行。Planning类另外的一个功能是执行Planning流程。
+4. Planning流程先是选择对应的Planner，我们主要分析的是PublicRoadPlanner，在配置文件中定义了Planner支持的场景，把规划划分为具体的几个场景，每个场景又分为几个阶段，每个阶段会执行多个任务，任务执行完成后，对应的场景就完成了。不同场景间的切换是由一个状态机来控制的。规划控制器根据生成的参考线，在不同的场景下做切换，不断重复上述过程直到到达目的地。
 
 
 
