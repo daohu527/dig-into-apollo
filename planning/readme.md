@@ -5,13 +5,17 @@
 
 ## Table of Contents
 - [Planning模块简介](#introduction)
+  - [Planning输入输出](#planning_io)
 - [Planning模块入口](#planning_entry)
   - [模块注册](#planning_register)
-  - [模块初始化和运行](#planning_init)
+  - [模块初始化](#planning_init)
+  - [模块运行](#planning_proc)
 - [OnLanePlanning](#onLanePlanning)
   - [初始化](#onLanePlanning_init)
   - [事件触发](#onLanePlanning_trigger)
 - [Planner](#planner)
+  - [Planner注册场景](#planner_register)
+  - [运行场景](#planner_plan)
 - [Scenario](#scenario)
   - [场景转换](#scenario_update)
   - [场景运行](#scenario_process)
@@ -26,7 +30,9 @@
 规划(planning)模块的作用是根据感知预测的结果，当前的车辆信息和路况规划出一条车辆能够行驶的轨迹，这个轨迹会交给控制(control)模块，控制模块通过油门，刹车和方向盘使得车辆按照规划的轨迹运行。  
 规划模块的轨迹是短期轨迹，即车辆短期内行驶的轨迹，长期的轨迹是routing模块规划出的导航轨迹，即起点到目的地的轨迹，规划模块会先生成导航轨迹，然后根据导航轨迹和路况的情况，沿着短期轨迹行驶，直到目的地。这点也很好理解，我们开车之前先打开导航，然后根据导航行驶，如果前面有车就会减速或者变道，超车，避让行人等，这就是短期轨迹，结合上述的方式直到行驶到目的地。  
 
+<a name="planning_io" />
 
+#### Planning输入输出
 我们先看下Apollo的数据流向：
 ![Apollo_dataflow](https://raw.githubusercontent.com/daohu527/misc/master/blog/planning/dataflow.png)
 
@@ -45,8 +51,8 @@ Planning模块的输入在"planning_component.h"中，接口如下:
 3. 车辆当前位置
 > 实际上还有高精度地图信息，不在参数中传入，而是在函数中直接读取的。  
 
-Planning模块的输出结果在"PlanningComponent::Proc()"中，为规划好的线路，发布到Control模块订阅的Topic中。
-输出结果为：
+Planning模块的输出结果在"PlanningComponent::Proc()"中，为规划好的线路，发布到Control模块订阅的Topic中。  
+输出结果为：规划好的路径。
 ```
 planning_writer_->Write(std::make_shared<ADCTrajectory>(adc_trajectory_pb));
 ```
@@ -78,7 +84,7 @@ CYBER_REGISTER_COMPONENT(PlanningComponent)
 
 <a name="planning_init" />
 
-#### 模块初始化和运行
+#### 模块初始化
 除了注册模块，订阅和发布消息之外，planning模块实现了2个主要函数"init"和"proc"。  
 Init中实现了模块的初始化：
 ```
@@ -130,6 +136,10 @@ routing_reader_ = node_->CreateReader<RoutingResponse>(
 ```
 至此，Planning模块的初始化就完成了。
 
+
+<a name="planning_proc" />
+
+#### 模块运行
 Proc的主要是检查数据，并且执行注册好的Planning，生成路线并且发布。
 ```
 bool PlanningComponent::Proc(...) {
@@ -155,6 +165,7 @@ bool PlanningComponent::Proc(...) {
 每次Planning会根据以下2个信息作为输入来执行：
 1. Planning上下文信息
 2. Frame结构体(车辆信息，位置信息等所有规划需要用到的信息，在/planning/common/frame.h中)
+
 ```
 uint32_t sequence_num_ = 0;
 LocalView local_view_;
@@ -285,7 +296,7 @@ Status OnLanePlanning::Plan(
 <a name="planner" />
 
 ## Planner
-我们先看下Planner目录结构：
+我们先看下Planner目录结构，一共实现了5种Planner：
 ```
 .
 ├── BUILD
@@ -298,11 +309,11 @@ Status OnLanePlanning::Plan(
 ├── planner_dispatcher.cc
 ├── planner_dispatcher.h
 ├── planner.h
-├── lattice
-├── navi
-├── open_space
-├── public_road
-└── rtk
+├── lattice           // lattice planner
+├── navi              // navi planner
+├── open_space        // open space planner
+├── public_road       // public road planner
+└── rtk               // rtk planner
 ```
 可以看到Planner目录分别实现了Planner发布器和具体的Planner，关于发布器我们后面会根据流程图来介绍，这里先介绍一下5种不同的Planner。
 * **rtk**          - 根据录制的轨迹来规划行车路线
@@ -311,6 +322,9 @@ Status OnLanePlanning::Plan(
 * **navi**         - 基于实时相对地图的规划器
 * **open_space**   - 自主泊车规划器
 
+<a name="planner_register" />
+
+#### Planner注册场景
 下面我们整理一下planner模块的流程：  
 ![planner流程](https://raw.githubusercontent.com/daohu527/misc/master/blog/planning/planning_component.png)
 1. PlanningComponent在cyber中注册
@@ -352,13 +366,16 @@ standard_planning_config {
   }
 ```
 
+<a name="planner_plan" />
+
+#### 运行场景
 接着看"Plan"中的实现：
 ```
 Status PublicRoadPlanner::Plan(const TrajectoryPoint& planning_start_point,
                                Frame* frame,
                                ADCTrajectory* ptr_computed_trajectory) {
   DCHECK_NOTNULL(frame);
-  // 更新场景
+  // 更新场景，决策当前应该执行什么场景
   scenario_manager_.Update(planning_start_point, *frame);
   // 获取当前场景
   scenario_ = scenario_manager_.mutable_scenario();
@@ -443,7 +460,8 @@ void ScenarioManager::ScenarioDispatch(const common::TrajectoryPoint& ego_point,
 其中"ScenarioDispatch"的状态切换可以参考下图:  
 ![Scenario切换](https://github.com/daohu527/misc/blob/master/blog/planning/Flowchart.jpg)  
 
-可以看到，public Road的规划实际上就是根据不同的场景切换之后，确认当前的场景，然后执行。  
+可以看到，每次切换场景必须是从默认场景(LANE_FOLLOW)开始，即每次场景切换之后都会回到默认场景。
+> ScenarioDispatch目前的代码还没完全完成(有些分支TODO)，而且个人感觉这个实现不够简介和优秀，逻辑看起来有些混乱，不知道是否可以用状态机改进？
 
 <a name="scenario_process" />
 
