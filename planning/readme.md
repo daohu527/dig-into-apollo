@@ -441,7 +441,7 @@ void ScenarioManager::ScenarioDispatch(const common::TrajectoryPoint& ego_point,
 
 ```
 其中"ScenarioDispatch"的状态切换可以参考下图:  
-![Scenario切换]()  
+![Scenario切换](https://github.com/daohu527/misc/blob/master/blog/planning/Flowchart.jpg)  
 
 可以看到，public Road的规划实际上就是根据不同的场景切换之后，确认当前的场景，然后执行。  
 
