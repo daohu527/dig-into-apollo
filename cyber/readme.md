@@ -1,10 +1,31 @@
-## how do you design cyber?
+# Dig into Apollo - Cyber ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
+
+## Table of Contents
+- [How do you design cyber?](#how)
+- [需求分析](#requirements)
+- [系统设计](#design)
+  - [随意的假设](#hypothesis)
+  - [多节点](#multinode)
+  - [通信方式](#communication)
+  - [资源调度](#schedule)
+  - [软件复用](#reuse)
+  - [快速测试](#test)
+- [其他](#other)
+  - [云平台](#cloud)
+- [Reference](#reference)
+  
+
+<a name="how" />
+
+## How do you design cyber?
+
 无人驾驶车借鉴了很多机器人领域的技术，我们可以把无人车看做一个轮式机器人。Apollo的计算平台之前一直采用的是ROS，3.5版本用Cyber替换了这一架构，那么如果让我们来重新设计这一个框架，我们需要支持哪些特性呢，我们如何去实现它呢？  
 
 我们需要一个什么样的系统？  
 如何保证系统的稳定性和灵活性？  
 如何来调试和维护这样复杂的系统？  
 
+<a name="requirements" />
 
 ## 需求分析
 
@@ -29,22 +50,26 @@
 
 
 参考上述实现，我们可以把需求细化为以下几个方面：  
-![requirements]()  
+![requirements](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/requirements.jpg)  
 
 > 实际上Apollo主要用到了ROS消息通信的功能，同时也用到了录制bag包等一些工具类。所以目前Cyber的首要设计就是替换ROS消息通信的功能。
 
+<a name="design" />
+
 ## 系统设计
 
-#### 假设
+<a name="hypothesis" />
+
+#### 随意的假设
 
 按照上述需求，我们可以随便假想，或者根据自己的理解先画出系统的草图，这里我们要实现一个分布式的系统：  
-![node]()  
+![node](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/node.jpg)  
 1. 上述的系统是一个分布式系统，每个节点作为一个Node。
 2. 上述系统每个节点之间都可以相互通信，一个节点下线，不会导致到整个系统瘫痪。
 3. 上述系统可以灵活的增加删除节点。
 
 那么我们再看下其他的设计方式：  
-![master_node]()  
+![master_node](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/master_node.jpg)  
 上述系统采用了集中式的消息管理，每个节点之间通讯必须经过主节点来转发对应的消息，如果主节点下线，那么所有的节点都会通信失败，导致系统瘫痪。
 1. 上述系统是一个分布式系统，每个节点作为一个Node。
 2. 上述系统每个节点通过主节点通信，主节点下线会导致系统奔溃。
@@ -57,19 +82,25 @@
 * 当一个节点有10s没有发送消息，那么集中式的消息可以监控并且知道这个节点是否出故障了；
 * 集中式的消息可以知道哪些节点在线去找到这些节点，这在多机网络通信的时候很管用，节点只需要注册自己的IP地址，然后由管理节点告诉你去哪里拿到消息。
 
-![center]()  
+![center](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/center.jpg)  
 
 上述只是一个初步的想法，那么基于上面的启发，我们针对上述的每项需求，完成我们的系统设计。  
-![design]()  
+![design](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/design.jpg)  
 
+
+<a name="multinode" />
 
 #### 多节点
 1. 节点管理
 2. 节点依赖
 
+<a name="communication" />
+
 #### 通信方式
 1. 点对点
 2. 采用共享内存的方式可以提高效率，需要注意并发访问时候的问题
+
+<a name="schedule" />
 
 #### 资源调度
 1. 进程调度算法改为实时算法
@@ -77,11 +108,13 @@
 3. 支持并发
 4. 能够限制系统的资源占用
 
+<a name="reuse" />
 
 #### 软件复用
 1. 包管理
 2. 工具类
 
+<a name="test" />
 
 #### 快速测试
 1. 人机交互
@@ -89,11 +122,18 @@
 3. 调试功能
 4. 通信接口
 
+
+<a name="other" />
+
 ## 其他
 
-#### 云平台
-1. 如果需要监控线上无人车的状态，那么需要无人车提供连接到云的能力，即发送消息和接收消息的能力。
+<a name="cloud" />
 
+#### 云平台
+如果需要监控线上无人车的状态，那么需要无人车提供连接到云的能力，即发送消息和接收消息的能力。
+
+
+<a name="reference" />
 
 ## Reference
 [机器人操作系统（ROS）浅析](https://www.cse.sc.edu/~jokane/agitr/%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%EF%BC%88ROS%EF%BC%89%E6%B5%85%E6%9E%90.pdf)  
