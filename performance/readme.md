@@ -105,7 +105,7 @@ FlameGraph/flamegraph.pl out.folded > out.svg
 ```
 
 最后把生成的"out.svg"文件在浏览器中打开，就可以点击并且查看对应的调用时间和调用栈，来分析系统耗时。火焰图如下，源文件在github上下载:  
-![Gregg4](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/Gregg4.svg)  
+![Gregg4](https://github.com/daohu527/Dig-into-Apollo/blob/master/performance/Gregg4.svg)  
 > 图片引用自阮一峰《如何读懂火焰图？》
 
 
@@ -113,11 +113,11 @@ FlameGraph/flamegraph.pl out.folded > out.svg
 <a name="reference" />
 
 ## Reference
-[cgroups](https://zh.wikipedia.org/wiki/Cgroups)
-[Processor affinity](https://en.wikipedia.org/wiki/Processor_affinity)
-[sched_setaffinity](https://linux.die.net/man/2/sched_setaffinity)
-[SMP IRQ affinity](https://www.kernel.org/doc/Documentation/IRQ-affinity.txt)
-[4.3. 中断和 IRQ 调节](https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/6/html/performance_tuning_guide/s-cpu-irq)
-[perf](http://www.brendangregg.com/perf.html)
-[使用Perf和火焰图分析CPU性能](http://senlinzhan.github.io/2018/03/18/perf/)  
-[如何读懂火焰图？](http://www.ruanyifeng.com/blog/2017/09/flame-graph.html) 
+[cgroups](https://zh.wikipedia.org/wiki/Cgroups)  
+[Processor affinity](https://en.wikipedia.org/wiki/Processor_affinity)  
+[sched_setaffinity](https://linux.die.net/man/2/sched_setaffinity)  
+[SMP IRQ affinity](https://www.kernel.org/doc/Documentation/IRQ-affinity.txt)  
+[4.3. 中断和 IRQ 调节](https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/6/html/performance_tuning_guide/s-cpu-irq)  
+[perf](http://www.brendangregg.com/perf.html)  
+[使用Perf和火焰图分析CPU性能](http://senlinzhan.github.io/2018/03/18/perf/)    
+[如何读懂火焰图？](http://www.ruanyifeng.com/blog/2017/09/flame-graph.html)   
