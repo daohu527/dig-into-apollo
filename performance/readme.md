@@ -105,7 +105,7 @@ FlameGraph/flamegraph.pl out.folded > out.svg
 ```
 
 最后把生成的"out.svg"文件在浏览器中打开，就可以点击并且查看对应的调用时间和调用栈，来分析系统耗时。火焰图如下，源文件在github上下载:  
-![Gregg4](https://github.com/daohu527/Dig-into-Apollo/blob/master/performance/Gregg4.svg)  
+[![Gregg4](https://github.com/daohu527/Dig-into-Apollo/blob/master/performance/Gregg4.svg)](https://github.com/daohu527/Dig-into-Apollo/blob/master/performance/Gregg4.svg)  
 > 图片引用自阮一峰《如何读懂火焰图？》
 
 
