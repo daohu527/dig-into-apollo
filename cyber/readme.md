@@ -8,6 +8,8 @@
   - [多节点](#multinode)
   - [通信方式](#communication)
   - [资源调度](#schedule)
+    - [linux进程调度](#linux_schedule)
+    - [无人驾驶线程调度](#auto_schedule)
   - [软件复用](#reuse)
   - [快速测试](#test)
 - [其他](#other)
@@ -108,6 +110,8 @@
 3. 支持并发
 4. 能够限制系统的资源占用
 
+<a name="linux_schedule" />
+
 #### linux进程调度
 操作系统最基本的功能就是管理线程，linux的线程调度采用的是CFS(Completely Fair Scheduler)算法，我们先看下没有调度和有调度的情况下的差异。  
 ![schedule_timeline](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/schedule_timeline.jpg)  
@@ -122,6 +126,8 @@ CPU把任务根据优先级划分，并且划分不同的时间片，通过时�
 如果单纯的根据优先级，低优先级的任务可能很长一段时间都得不到执行，因此需要更加公平的算法，在一个进程等待时间太长的时候，会动态的提高它的优先级，如果一个进程执行很长的一段时间了，那么会动态降低它的优先级，这样带来的好处是，不会导致低优先级的长期得不到CPU，而高优先级的CPU长期霸占CPU，linux采用的就是CFS(Completely Fair Scheduler)算法，通过该算法可以保证进程能够相对公平的占用CPU。  
 
 同时在多CPU和多核场景下，由于每个核心的进程调度队列都是单独的，那么会导致一个问题，如果任务都集中在某一个CPU核心，而其他的CPU核心的队列都是空闲状态，这样也会导致CPU的性能低下，在这种情况下，linux会把任务迁移到其他CPU核心，使得CPU之间的负载均衡，linux引入了Cgroups用来限制，控制与分离一个进程组群的资源（如CPU、内存、磁盘输入输出等）。当然，线程迁移会带来开销，有些时候我们会绑定任务到某一个核心，防止线程迁移。同时如果系统频繁的中断，CPU会频繁停下任务去处理中断，有些场景(网络设备）需要频繁处理网络中断的情况下，通常会绑定中断到某一个CPU核心，这样其他的核心就不会频繁中断，减少了进程切换的开销。  
+
+<a name="auto_schedule" />
 
 #### 无人驾驶线程调度
 参考linux的线程调度，我们也可以思考下无人驾驶线程调度的算法。  
@@ -491,8 +497,7 @@ RoleAttributes
 ## Reference
 [机器人操作系统（ROS）浅析](https://www.cse.sc.edu/~jokane/agitr/%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%EF%BC%88ROS%EF%BC%89%E6%B5%85%E6%9E%90.pdf)  
 [线程与进程的区别及其通信方式](https://segmentfault.com/a/1190000008732448)  
-[cgroups](https://zh.wikipedia.org/wiki/Cgroups)  
-[如何读懂火焰图？](http://www.ruanyifeng.com/blog/2017/09/flame-graph.html)  
+[cgroups](https://zh.wikipedia.org/wiki/Cgroups)   
 [Scheduling (computing)](https://en.wikipedia.org/wiki/Scheduling_(computing))  
-[Scheduling Algorithms](http://www.math.nsc.ru/LBRT/k5/Scheduling/BruckerSchedulingAlgorithms_Full.pdf)  
+[Scheduling Algorithms](http://www.math.nsc.ru/LBRT/k5/Scheduling/BruckerSchedulingAlgorithms_Full.pdf) 
 
