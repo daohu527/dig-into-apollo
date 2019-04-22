@@ -142,12 +142,6 @@ CPU把任务根据优先级划分，并且划分不同的时间片，通过时�
 * 对线程设置cgroups，可以控制资源使用，设置优先级等。
 * 测试算法的时间复杂度，是否稳定。
 
-#### linux性能优化
-linux自带了perf可以采样一段时间的系统调用，输出文件再结合火焰图，可以查看当前系统的调用情况，各个线程对cpu的使用情况，然后进行优化。  
-![Gregg4](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/Gregg4.svg)  
-> 图片引用自阮一峰《如何读懂火焰图？》
-
-
 
 <a name="reuse" />
 
@@ -174,6 +168,324 @@ linux自带了perf可以采样一段时间的系统调用，输出文件再结�
 如果需要监控线上无人车的状态，那么需要无人车提供连接到云的能力，即发送消息和接收消息的能力。Cyber需要支持能够发送消息给云端，并且接收来自云端消息的能力。
 
 
+# cyber分析
+
+## cyber入口
+cyber的入口在"cyber/mainboard"目录，我们先看下目录结构：
+```
+.
+├── mainboard.cc             // 入口
+├── module_argument.cc       // 模块参数
+├── module_argument.h
+├── module_controller.cc     // 模块控制
+└── module_controller.h
+```
+根据文件名称也可以大概猜到cyber主目录的工作，cyber主函数通过模块的参数加载cyber中的所有模块，而cyber模块是有依赖顺序的，每个cyber模块都有一个DAG文件，这个文件声明了各个模块的依赖关系，而control模块大概率就是控制模块的加载顺序。接下来我们通过看代码验证我们的猜想是否正确。  
+我们从"mainboard.cc"开始，阅读代码之前的头文件相当关键，头文件可以告诉我们文件之间的依赖关系，引用了哪些模块。我们可以看到主模块引用了"mainboard/module_argument.h"和"mainboard/module_controller.h"，这2个文件相当于是"mainboard.cc"的子函数，所以我们先从"mainboard.cc"开始看，剩下的2个文件自然会在"mainboard.cc"中引用。还有一些其他的引用主要是一些状态和标志位，可以先略过。
+```
+#include "cyber/common/global_data.h"
+#include "cyber/common/log.h"
+#include "cyber/init.h"
+#include "cyber/mainboard/module_argument.h"         // "mainboard.cc"引用
+#include "cyber/mainboard/module_controller.h"       // "mainboard.cc"引用
+#include "cyber/state.h"
+
+#include "gflags/gflags.h"
+```
+接下来我们看下函数的主流程：  
+```
+int main(int argc, char** argv) {
+  google::SetUsageMessage("we use this program to load dag and run user apps.");
+
+  // 解析模块参数
+  // parse the argument
+  ModuleArgument module_args;
+  module_args.ParseArgument(argc, argv);
+
+  // 初始化cyber
+  // initialize cyber
+  apollo::cyber::Init(argv[0]);
+
+  // 启动模块
+  // start module
+  ModuleController controller(module_args);
+  if (!controller.Init()) {
+    controller.Clear();
+    AERROR << "module start error.";
+    return -1;
+  }
+
+  // 等待cyber关闭
+  apollo::cyber::WaitForShutdown();
+  controller.Clear();
+  AINFO << "exit mainboard.";
+
+  return 0;
+}
+```
+接下来我们更加详细的分析每个过程。  
+* **解析模块参数** 解析模块参数在"module_argument.h"和"module_argument.cc"中的"ModuleArgument"类中，具体的实现如下
+```
+void ModuleArgument::ParseArgument(const int argc, char* const argv[]) {
+  
+  // 解析输入参数
+  GetOptions(argc, argv);
+  
+  ...
+  
+  // 设置执行组，类似linux的cgroups
+  GlobalData::Instance()->SetProcessGroup(process_group_);
+  // 设置调度器名称
+  GlobalData::Instance()->SetSchedName(sched_name_);
+  // 打印模块的信息：名称，组，DAG配置
+  AINFO << "binary_name_ is " << binary_name_ << ", process_group_ is "
+        << process_group_ << ", has " << dag_conf_list_.size() << " dag conf";
+  // 打印所有模块的依赖关系
+  for (std::string& dag : dag_conf_list_) {
+    AINFO << "dag_conf: " << dag;
+  }
+}
+```
+
+* **初始化cyber** 初始化cyber就是cyber目录下的"init.h"和"init.cc"中，具体的实现如下：
+```
+bool Init(const char* binary_name) {
+  // 获取锁，为了改变state状态而获取锁
+  std::lock_guard<std::mutex> lg(g_mutex);
+  // 如果已经初始化，则返回失败
+  if (GetState() != STATE_UNINITIALIZED) {
+    return false;
+  }
+
+  // 初始化日志，并且把打印日志线程放入调度器
+  InitLogger(binary_name);
+  auto thread = const_cast<std::thread*>(async_logger->LogThread());
+  scheduler::Instance()->SetInnerThreadAttr("async_log", thread);
+  std::signal(SIGINT, OnShutdown);
+  
+  // 注册退出句柄ExitHandle，调用Clear()函数执行
+  // Register exit handlers
+  if (!g_atexit_registered) {
+    if (std::atexit(ExitHandle) != 0) {
+      AERROR << "Register exit handle failed";
+      return false;
+    }
+    AINFO << "Register exit handle succ.";
+    g_atexit_registered = true;
+  }
+  // 设置状态为已经初始化
+  SetState(STATE_INITIALIZED);
+  return true;
+}
+```
+
+* **启动模块** 启动模块功能在"module_controller.h"和"module_controller.cc"中实现，具体的流程如下：  
+```
+// 1. 构造ModuleController
+
+// 2. ModuleController控制器初始化
+
+```
+
+
+## Cyber通信方式
+cyber的通信方式有以下几种:
+```
+  switch (mode) {
+    case OptionalMode::INTRA:
+      transmitter = std::make_shared<IntraTransmitter<M>>(modified_attr);
+      break;
+
+    case OptionalMode::SHM:
+      transmitter = std::make_shared<ShmTransmitter<M>>(modified_attr);
+      break;
+
+    case OptionalMode::RTPS:
+      transmitter =
+          std::make_shared<RtpsTransmitter<M>>(modified_attr, participant());
+      break;
+
+    default:
+      transmitter =
+          std::make_shared<HybridTransmitter<M>>(modified_attr, participant());
+      break;
+  }
+```
+我们先看下是根据什么配置来决定通信方式的？
+
+SHM (shared-memory queues)
+SHM模式的配置可以指定IP和Port
+```
+message ShmMulticastLocator {
+    optional string ip = 1;
+    optional uint32 port = 2;
+};
+
+message ShmConf {
+    optional string notifier_type = 1;
+    optional ShmMulticastLocator shm_locator = 2;
+};
+```
+
+cyber的ip地址: 
+```
+export CYBER_IP=127.0.0.1
+```
+
+RTPS (Real-Time Publish Subscribe)
+实时发布订阅
+https://tools.ietf.org/html/draft-thiebaut-rtps-wps-00
+
+RTPS协议是针对视频流新推出的网络协议，增加了控制信息。
+
+Simple Discovery Protocol (SDP). It is divided in the Simple Participant Discovery Protocol (SPDP) and the Endpoint Discovery Protocol (SEDP).
+
+https://en.wikipedia.org/wiki/Simple_Service_Discovery_Protocol
+
+
+https://community.rti.com/static/documentation/connext-dds/5.2.3/doc/manuals/connext_dds/html_files/RTI_ConnextDDS_CoreLibraries_UsersManual/Content/UsersManual/Ports_Used_for_Discovery.htm  
+https://zh.wikipedia.org/wiki/%E7%AE%80%E5%8D%95%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E5%8D%8F%E8%AE%AE  
+
+
+1. 首先注册Participant，设置配置，比如广播地址，端口
+2. 然后通过创建发布和订阅者来实现服务注册
+
+```
+// 1. 
+void Participant::CreateFastRtpsParticipant(
+    const std::string& name, int send_port,
+    eprosima::fastrtps::ParticipantListener* listener) {
+  uint32_t domain_id = 80;
+
+  const char* val = ::getenv("CYBER_DOMAIN_ID");
+  if (val != nullptr) {
+    try {
+      domain_id = std::stoi(val);
+    } catch (const std::exception& e) {
+      AERROR << "convert domain_id error " << e.what();
+      return;
+    }
+  }
+
+  auto part_attr_conf = std::make_shared<proto::RtpsParticipantAttr>();
+  auto& global_conf = common::GlobalData::Instance()->Config();
+  if (global_conf.has_transport_conf() &&
+      global_conf.transport_conf().has_participant_attr()) {
+    part_attr_conf->CopyFrom(global_conf.transport_conf().participant_attr());
+  }
+
+  eprosima::fastrtps::ParticipantAttributes attr;
+  attr.rtps.defaultSendPort = send_port;
+  attr.rtps.port.domainIDGain =
+      static_cast<uint16_t>(part_attr_conf->domain_id_gain());
+  attr.rtps.port.portBase = static_cast<uint16_t>(part_attr_conf->port_base());
+  attr.rtps.use_IP6_to_send = false;
+  attr.rtps.builtin.use_SIMPLE_RTPSParticipantDiscoveryProtocol = true;
+  attr.rtps.builtin.use_SIMPLE_EndpointDiscoveryProtocol = true;
+  attr.rtps.builtin.m_simpleEDP.use_PublicationReaderANDSubscriptionWriter =
+      true;
+  attr.rtps.builtin.m_simpleEDP.use_PublicationWriterANDSubscriptionReader =
+      true;
+  attr.rtps.builtin.domainId = domain_id;
+  attr.rtps.builtin.leaseDuration.seconds = part_attr_conf->lease_duration();
+  attr.rtps.builtin.leaseDuration_announcementperiod.seconds =
+      part_attr_conf->announcement_period();
+
+  attr.rtps.setName(name.c_str());
+
+  std::string ip_env("127.0.0.1");
+  const char* ip_val = ::getenv("CYBER_IP");
+  if (ip_val != nullptr) {
+    ip_env = ip_val;
+    if (ip_env.size() == 0) {
+      AERROR << "invalid CYBER_IP (an empty string)";
+      return;
+    }
+  }
+  ADEBUG << "cyber ip: " << ip_env;
+
+  eprosima::fastrtps::rtps::Locator_t locator;
+  locator.port = 0;
+  RETURN_IF(!locator.set_IP4_address(ip_env));
+
+  locator.kind = LOCATOR_KIND_UDPv4;
+
+  attr.rtps.defaultUnicastLocatorList.push_back(locator);
+  attr.rtps.defaultOutLocatorList.push_back(locator);
+  attr.rtps.builtin.metatrafficUnicastLocatorList.push_back(locator);
+
+  locator.set_IP4_address(239, 255, 0, 1);
+  attr.rtps.builtin.metatrafficMulticastLocatorList.push_back(locator);
+
+  fastrtps_participant_ =
+      eprosima::fastrtps::Domain::createParticipant(attr, listener);
+  RETURN_IF_NULL(fastrtps_participant_);
+  eprosima::fastrtps::Domain::registerType(fastrtps_participant_, &type_);
+}
+
+
+// 2.
+
+bool Manager::StartDiscovery(RtpsParticipant* participant) {
+  if (participant == nullptr) {
+    return false;
+  }
+  if (is_discovery_started_.exchange(true)) {
+    return true;
+  }
+  if (!CreatePublisher(participant) || !CreateSubscriber(participant)) {
+    AERROR << "create publisher or subscriber failed.";
+    StopDiscovery();
+    return false;
+  }
+  return true;
+}
+
+```
+
+fast-RTPS
+```
+ParticipantImpl::createPublisher
+```
+
+PDPSimple.cpp
+普通查找服务
+
+
+
+IntraTransmitter
+不确定是不是以下内容
+https://www.developershome.com/sms/intraInterInternationalSMS.asp
+
+
+#### 广播
+multicast_notifier.cc
+广播
+```
+  notify_fd_ = socket(AF_INET, SOCK_DGRAM, 0);
+  ssize_t nbytes =
+      sendto(notify_fd_, info_str.c_str(), info_str.size(), 0,
+             (struct sockaddr*)&notify_addr_, sizeof(notify_addr_));  
+```
+
+监听
+```
+  listen_fd_ = socket(AF_INET, SOCK_DGRAM, 0);
+  bind(listen_fd_, (struct sockaddr*)&listen_addr_, sizeof(listen_addr_)
+  ssize_t nbytes = recvfrom(listen_fd_, buf, 32, 0, nullptr, nullptr);
+```
+
+
+#### node属性
+RoleAttributes
+
+#### module初始化
+如果一个module只是需要传输一些节点，而不需要传递其他任何信息？module的工作流程是如何的？module和node的关系如何？
+
+#### cyber
+
+
+
 <a name="reference" />
 
 ## Reference
@@ -181,5 +493,6 @@ linux自带了perf可以采样一段时间的系统调用，输出文件再结�
 [线程与进程的区别及其通信方式](https://segmentfault.com/a/1190000008732448)  
 [cgroups](https://zh.wikipedia.org/wiki/Cgroups)  
 [如何读懂火焰图？](http://www.ruanyifeng.com/blog/2017/09/flame-graph.html)  
-
+[Scheduling (computing)](https://en.wikipedia.org/wiki/Scheduling_(computing))  
+[Scheduling Algorithms](http://www.math.nsc.ru/LBRT/k5/Scheduling/BruckerSchedulingAlgorithms_Full.pdf)  
 
