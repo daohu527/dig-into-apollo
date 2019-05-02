@@ -1,4 +1,18 @@
-# Routing
+# Dig into Apollo - Routing ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
+
+> 青，取之于蓝而青于蓝；冰，水为之而寒于水。
+
+
+## Table of Contents
+- [Routing模块简介](#introduction)
+- [routing模块分析](#routing)
+  - [Planning整个流程](#planning_flow)
+  
+
+<a name="introduction" />
+
+
+## Routing模块简介
 Routing类似于现在开车时用到的导航模块，通常考虑的是起点到终点的最优路径（通常是最短路径），和Planning的区别是Routing考虑的是起点到终点的最短路径，而Planning则是行驶过程中，当前一小段时间如何行驶，需要考虑当前路况，是否有障碍物。Routing模块则不需要考虑这些信息，只需要做一个长期的规划路径即可，过程如下：  
 
 ![introduction](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/introduction.png)  
@@ -6,6 +20,12 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 这也和我们开车类似，上车之后，首先搜索目的地，打开导航（Routing所做的事情），而开始驾车之后，则会根据当前路况，行人车辆信息来适当调整直到到达目的地（Planning所做的事情）。
 * **Routing** - 主要关注起点到终点的长期路径，根据起点到终点之间的道路，选择一条最优路径。  
 * **Planning** - 主要关注几秒钟之内汽车的行驶路径，根据当前行驶过程中的交通规则，车辆行人等信息，然后规划一条短期路径。  
+
+下面我们在分析下Apollo的Routing模块。
+
+<a name="routing" />
+
+## routing模块分析
 
 
 ## routing for osm
