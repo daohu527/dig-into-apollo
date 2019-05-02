@@ -21,14 +21,14 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 * **Routing** - 主要关注起点到终点的长期路径，根据起点到终点之间的道路，选择一条最优路径。  
 * **Planning** - 主要关注几秒钟之内汽车的行驶路径，根据当前行驶过程中的交通规则，车辆行人等信息，规划一条短期路径。  
 
-下面我们在分析下Apollo的Routing模块。
+下面我们开始分析Apollo Routing模块的代码流程。
 
 <a name="routing" />
 
 ## routing模块分析
 
-首先我们从"routing_component.h"和"routing_component.cc"开始，apollo所有的模块都对应一个component模块，启动时候由cyber框架负责根据模块间的依赖顺序(每个模块的dag文件申明了依赖顺序)加载，所以每次查看一个模块时，都是从component文件开始。  
-可以看到"RoutingComponent"继承至"cyber::Component"，并且申明为"public"继承方式，"cyber::Component"是一个模板类，其中定义了"Initialize"和"Process"方法。而"Proc"为纯虚函数由子类实现。  
+首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，所以开始查看一个模块时，都是从component文件开始。  
+可以看到"RoutingComponent"继承至"cyber::Component"，并且申明为"public"继承方式，"cyber::Component"是一个模板类，它定义了"Initialize"和"Process"方法。而"Proc"为纯虚函数由子类实现。  
 ```
 template <typename M0>
 class Component<M0, NullType, NullType, NullType> : public ComponentBase {
@@ -42,7 +42,7 @@ class Component<M0, NullType, NullType, NullType> : public ComponentBase {
   virtual bool Proc(const std::shared_ptr<M0>& msg) = 0;
 };
 ```
-//todo 模板方法中为虚函数，而继承类中为公有方法？为什么？
+// todo 模板方法中为虚函数，而继承类中为公有方法？为什么？
 
 
 ```
@@ -60,6 +60,7 @@ class RoutingComponent final
   bool Proc(const std::shared_ptr<RoutingRequest>& request) override;
 
  private:
+  // 申明routing请求发布
   std::shared_ptr<::apollo::cyber::Writer<RoutingResponse>> response_writer_ =
       nullptr;
   std::shared_ptr<::apollo::cyber::Writer<RoutingResponse>>
@@ -73,11 +74,12 @@ class RoutingComponent final
   std::mutex mutex_;
 };
 
+// 在cyber框架中注册routing模块
 CYBER_REGISTER_COMPONENT(RoutingComponent)
 ```
-"RoutingComponent"模块的主要功能
+从上面的分析可以看出，"RoutingComponent"模块实现的主要功能:  
 1. 实现"Init"和"Proc"函数
-2. 模块接收"RoutingRequest"信息，输出"RoutingResponse"信息。
+2. 接收"RoutingRequest"消息，输出"RoutingResponse"响应。
 
 我们先看下"Init"函数:  
 ```
@@ -94,7 +96,7 @@ bool RoutingComponent::Init() {
   response_writer_ = node_->CreateWriter<RoutingResponse>(attr);
 
   ...
-  // 设置消息qos，创建历史消息发布
+  // 设置消息qos，创建历史消息发布，和response_writer_类似
   response_history_writer_ = node_->CreateWriter<RoutingResponse>(attr_history);
   
   // todo 启动定时器，发布历史消息，todo，为什么要赋值，并且保证锁？
@@ -122,7 +124,7 @@ bool RoutingComponent::Init() {
 }
 ```
 
-接下来看"Proc"如何执行:  
+接下来看"Proc"实现了哪些功能:  
 ```
 bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
   auto response = std::make_shared<RoutingResponse>();
@@ -141,10 +143,9 @@ bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
 }
 ```
 
-"routing_component"在cyber中注册，接收routing请求，并且响应规划好的路径。下面我们来看routing具体流程。  
-
+接下来我们来看routing的具体实现。  
 #### routing
-"Routing"类的实现在"routing.h"和"routing.cc"中，首先看下"Routing类"引用的头文件：  
+"Routing"类的实现在"routing.h"和"routing.cc"中，首先看下"Routing"类引用的头文件：  
 ```
 #include "modules/common/monitor_log/monitor_log_buffer.h"
 #include "modules/common/status/status.h"
@@ -152,8 +153,8 @@ bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
 #include "modules/routing/core/navigator.h"
 #include "modules/routing/proto/routing_config.pb.h"
 ```
-看代码之前先看下头文件是个很好的习惯，通过头文件，我们可以知道当前模块的依赖项，从而搞清楚各个模块之间的关系。我们看到"Routing"模块是一个相对比较独立的模块，只依赖于地图。  
-接着我们看下Routing类的实现：  
+看代码之前先看下头文件是个很好的习惯。通过头文件，我们可以知道当前模块的依赖项，从而搞清楚各个模块之间的依赖关系。可以看到"Routing"模块是一个相对比较独立的模块，只依赖于地图。  
+Routing类的实现：  
 ```
 class Routing {
  public:
