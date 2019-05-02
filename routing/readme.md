@@ -6,7 +6,7 @@
 ## Table of Contents
 - [Routing模块简介](#introduction)
 - [Routing模块分析](#routing)
-  - [Planning整个流程](#planning_flow)
+  - [Routing类](#routing_class)
   
 
 <a name="introduction" />
@@ -25,7 +25,7 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 
 <a name="routing" />
 
-## routing模块分析
+## Routing模块分析
 
 首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，所以开始查看一个模块时，都是从component文件开始。  
 可以看到"RoutingComponent"继承至"cyber::Component"，并且申明为"public"继承方式，"cyber::Component"是一个模板类，它定义了"Initialize"和"Process"方法。而"Proc"为纯虚函数由子类实现。  
@@ -143,7 +143,10 @@ bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
 2. 接收"RoutingRequest"消息，输出"RoutingResponse"响应。
 
 接下来我们来看routing的具体实现。  
-#### routing
+
+<a name="routing_class" />
+
+#### Routing类
 "Routing"类的实现在"routing.h"和"routing.cc"中，首先看下"Routing"类引用的头文件：  
 ```
 #include "modules/common/monitor_log/monitor_log_buffer.h"
