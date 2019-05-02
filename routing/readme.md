@@ -265,6 +265,104 @@ RoutingRequest Routing::FillLaneInfoIfMissing(
 <a name="navigator_class" />
 
 #### Navigator类
+Navigator初始化
+```
+bool Navigator::Init(const RoutingRequest& request, const TopoGraph* graph,
+                     std::vector<const TopoNode*>* const way_nodes,
+                     std::vector<double>* const way_s) {
+  // 清除上次规划
+  Clear();
+  // 根据请求获取节点
+  if (!GetWayNodes(request, graph_.get(), way_nodes, way_s)) {
+    AERROR << "Failed to find search terminal point in graph!";
+    return false;
+  }
+  // 黑名单
+  black_list_generator_->GenerateBlackMapFromRequest(request, graph_.get(),
+                                                     &topo_range_manager_);
+}
+```
+GetWayNodes查看规划请求的点是否能够在图中找到，如果找到则放入"way_nodes"，并且记录起始点。
+```
+bool GetWayNodes(const RoutingRequest& request, const TopoGraph* graph,
+                 std::vector<const TopoNode*>* const way_nodes,
+                 std::vector<double>* const way_s) {
+  for (const auto& point : request.waypoint()) {
+    const auto* cur_node = graph->GetNode(point.id());
+    if (cur_node == nullptr) {
+      AERROR << "Cannot find way point in graph! Id: " << point.id();
+      return false;
+    }
+    way_nodes->push_back(cur_node);
+    way_s->push_back(point.s());
+  }
+  return true;
+}
+```
+生成黑名单路段，// todo 即不经过该区域？
+```
+void BlackListRangeGenerator::GenerateBlackMapFromRequest(
+    const RoutingRequest& request, const TopoGraph* graph,
+    TopoRangeManager* const range_manager) const {
+  AddBlackMapFromLane(request, graph, range_manager);
+  AddBlackMapFromRoad(request, graph, range_manager);
+  range_manager->SortAndMerge();
+}
+```
+
+SearchRoute查找规划线路
+```
+bool Navigator::SearchRoute(const RoutingRequest& request,
+                            RoutingResponse* const response) {
+  if (!ShowRequestInfo(request, graph_.get())) {
+    SetErrorCode(ErrorCode::ROUTING_ERROR_REQUEST,
+                 "Error encountered when reading request point!",
+                 response->mutable_status());
+    return false;
+  }
+
+  if (!IsReady()) {
+    SetErrorCode(ErrorCode::ROUTING_ERROR_NOT_READY, "Navigator is not ready!",
+                 response->mutable_status());
+    return false;
+  }
+  std::vector<const TopoNode*> way_nodes;
+  std::vector<double> way_s;
+  if (!Init(request, graph_.get(), &way_nodes, &way_s)) {
+    SetErrorCode(ErrorCode::ROUTING_ERROR_NOT_READY,
+                 "Failed to initialize navigator!", response->mutable_status());
+    return false;
+  }
+
+  std::vector<NodeWithRange> result_nodes;
+  if (!SearchRouteByStrategy(graph_.get(), way_nodes, way_s, &result_nodes)) {
+    SetErrorCode(ErrorCode::ROUTING_ERROR_RESPONSE,
+                 "Failed to find route with request!",
+                 response->mutable_status());
+    return false;
+  }
+  if (result_nodes.empty()) {
+    SetErrorCode(ErrorCode::ROUTING_ERROR_RESPONSE, "Failed to result nodes!",
+                 response->mutable_status());
+    return false;
+  }
+  result_nodes.front().SetStartS(request.waypoint().begin()->s());
+  result_nodes.back().SetEndS(request.waypoint().rbegin()->s());
+
+  if (!result_generator_->GeneratePassageRegion(
+          graph_->MapVersion(), request, result_nodes, topo_range_manager_,
+          response)) {
+    SetErrorCode(ErrorCode::ROUTING_ERROR_RESPONSE,
+                 "Failed to generate passage regions based on result lanes",
+                 response->mutable_status());
+    return false;
+  }
+  SetErrorCode(ErrorCode::OK, "Success!", response->mutable_status());
+
+  PrintDebugData(result_nodes);
+  return true;
+}
+```
 
 
 
