@@ -7,6 +7,7 @@
 - [Routing模块简介](#introduction)
 - [Routing模块分析](#routing)
   - [Routing类](#routing_class)
+  - [Navigator类](#navigator_class)
   
 
 <a name="introduction" />
@@ -178,7 +179,7 @@ class Routing {
   const hdmap::HDMap *hdmap_ = nullptr;
 };
 ```
-下面看下具体的实现"routing.cc"：  
+下面看下"routing.cc"具体的实现：  
 Routing模块初始化
 ```
 apollo::common::Status Routing::Init() {
@@ -229,8 +230,10 @@ bool Routing::Process(const std::shared_ptr<RoutingRequest>& routing_request,
 RoutingRequest Routing::FillLaneInfoIfMissing(
     const RoutingRequest& routing_request) {
   RoutingRequest fixed_request(routing_request);
+  // 遍历routing请求的点
   for (int i = 0; i < routing_request.waypoint_size(); ++i) {
     const auto& lane_waypoint = routing_request.waypoint(i);
+    // lane是否有id
     if (lane_waypoint.has_id()) {
       continue;
     }
@@ -243,6 +246,7 @@ RoutingRequest Routing::FillLaneInfoIfMissing(
     hdmap::LaneInfoConstPtr lane;
     // FIXME(all): select one reasonable lane candidate for point=>lane
     // is one to many relationship.
+    // 找到当前点最近的lane信息
     if (hdmap_->GetNearestLane(point, &lane, &s, &l) != 0) {
       AERROR << "Failed to find nearest lane from map at position: "
              << point.DebugString();
@@ -252,10 +256,16 @@ RoutingRequest Routing::FillLaneInfoIfMissing(
     waypoint_info->set_id(lane->id().id());
     waypoint_info->set_s(s);
   }
-  AINFO << "Fixed routing request:" << fixed_request.DebugString();
   return fixed_request;
 }
 ```
+遍历规划请求的点，简单的规划只有起点和终点，而复杂的规划可以在起点和终点之间设置途经点。如果规划请求中的某一点找不到道路(lane)信息，那么则直接返回，如果找到，则填充缺失信息。而规划的主要流程就是在"navigator_ptr_->SearchRoute()"中。
+
+
+<a name="navigator_class" />
+
+#### Navigator类
+
 
 
 
