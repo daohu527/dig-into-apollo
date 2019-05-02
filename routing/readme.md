@@ -5,7 +5,7 @@
 
 ## Table of Contents
 - [Routing模块简介](#introduction)
-- [routing模块分析](#routing)
+- [Routing模块分析](#routing)
   - [Planning整个流程](#planning_flow)
   
 
@@ -77,10 +77,6 @@ class RoutingComponent final
 // 在cyber框架中注册routing模块
 CYBER_REGISTER_COMPONENT(RoutingComponent)
 ```
-从上面的分析可以看出，"RoutingComponent"模块实现的主要功能:  
-1. 实现"Init"和"Proc"函数
-2. 接收"RoutingRequest"消息，输出"RoutingResponse"响应。
-
 我们先看下"Init"函数:  
 ```
 bool RoutingComponent::Init() {
@@ -142,6 +138,9 @@ bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
   return true;
 }
 ```
+从上面的分析可以看出，"RoutingComponent"模块实现的主要功能:  
+1. 实现"Init"和"Proc"函数
+2. 接收"RoutingRequest"消息，输出"RoutingResponse"响应。
 
 接下来我们来看routing的具体实现。  
 #### routing
@@ -159,28 +158,17 @@ Routing类的实现：
 class Routing {
  public:
   Routing();
-
   // 初始化
   apollo::common::Status Init();
-
   // 启动
   apollo::common::Status Start();
-
-  // 析构函数
-  virtual ~Routing() = default;
-
   // 执行
   bool Process(const std::shared_ptr<RoutingRequest> &routing_request,
                RoutingResponse *const routing_response);
 
  private:
-  // 填充缺失的LaneInfo
-  RoutingRequest FillLaneInfoIfMissing(const RoutingRequest &routing_request);
-
   // 导航
   std::unique_ptr<Navigator> navigator_ptr_;
-  // 监控日志
-  common::monitor::MonitorLogBuffer monitor_logger_buffer_;
   // routing模块配置
   RoutingConfig routing_conf_;
   // 高精度地图，用来获取高精度地图信息
