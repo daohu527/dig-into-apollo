@@ -34,14 +34,14 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 #### 地图
 首先我们以openstreetmap为例来介绍下地图是如何组成的。[开放街道地图](https://www.openstreetmap.org/)（英语：OpenStreetMap，缩写为OSM）是一个建构自由内容之网上地图协作计划，目标是创造一个内容自由且能让所有人编辑的世界地图，并且让一般的移动设备有方便的导航方案。因为这个地图是一个开源地图，所以可以灵活和自由的获取地图资源。
 首先我们看下openstreetmap的基本元素：
-Node![node](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_node.svg)  
+Node![node](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_node.svg.png)  
 节点表示由其纬度和经度定义的地球表面上的特定点。每个节点至少包括id号和一对坐标。节点也可用于定义独立点功能。例如，节点可以代表公园长椅或水井。节点也可以定义道路(Way)的形状，节点是一切形状的基础。  
 ```
 <node id="25496583" lat="51.5173639" lon="-0.140043" version="1" changeset="203496" user="80n" uid="1238" visible="true" timestamp="2007-01-28T11:40:26Z">
     <tag k="highway" v="traffic_signals"/>
 </node>
 ```
-Way![way](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_way.svg)![way](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_closedway.svg)![way](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_area.svg)  
+Way![way](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_way.svg.png)![way](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_closedway.svg.png)![way](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_area.svg.png)  
 道路是包含2到2,000个有序节点的折线组成，用于表示线性特征，例如河流和道路。道路也可以表示区域（实心多边形）的边界，例如建筑物或森林。在这种情况下，道路的第一个和最后一个节点将是相同的。这被称为“封闭的方式”。  
 ```
   <way id="5090250" visible="true" timestamp="2009-01-19T19:07:25Z" version="8" changeset="816806" user="Blumpsy" uid="64226">
@@ -60,12 +60,12 @@ Way![way](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-O
     <tag k="oneway" v="yes"/>
   </way>
 ```
-Relation![relation](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_relation.svg)  
+Relation![relation](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_relation.svg.png)  
 关系是记录两个或更多个数据元素（节点，方式和/或其他关系）之间的关系的多用途数据结构。例子包括：  
 * 路线关系，列出形成主要（编号）高速公路，自行车路线或公交路线的方式。
 * 转弯限制，表示你无法从一种方式转向另一种方式。
 * 描述具有孔的区域（其边界是“外部方式”）的多面体（“内部方式”）。
-Tag[tag](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_tag.svg)  
+Tag[tag](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_tag.svg.png)  
 所有类型的数据元素（节点，方式和关系）以及变更集都可以包含标签。标签描述了它们所附着的特定元素的含义。标签由两个自由格式文本字段组成; 'Key'和'Vaule'。例如，“高速公路”=“住宅”定义了一条道路。元素不能有2个带有相同“key”的标签，“key”必须是唯一的。例如，您不能将元素标记为amenity = restaurant和amenity = bar。  
 
 可以看到我们看到的地图，实际上是由一些Node和Way组成，需要展示地图时候，通过读取地图中的Node和Way的数据实时画(渲染)出来，例如2个Node组成了一条道路，那么就在这两点之间画一条直线，并且标记为道路，如果是封闭区域，并且根据数据，画出一个多边形，并把它标记为湖泊或者公园。  
@@ -79,7 +79,7 @@ Tag[tag](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Os
 #### 最短距离
 我们先看一下经典的例子：最短路径。  
 在图论中，最短路径问题是在图中的两个顶点之间找到路径，使得其边的权重之和最小化的问题。而在地图上找到两个点之间最短路径的问题可以被建模为图中最短路径问题的特殊情况，其中顶点对应于交叉点并且边缘对应于路段，每个路段对应于路段的长度。  
-![shortest_path](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/375px-Shortest_path_with_direct_weights.svg)  
+![shortest_path](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/375px-Shortest_path_with_direct_weights.svg.png)  
 
 
 
