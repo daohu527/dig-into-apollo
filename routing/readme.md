@@ -482,10 +482,130 @@ bool Navigator::SearchRouteByStrategy(
   return true;
 }
 ```
-#### 如何查找
-下面我们先通过
+#### 建图
+apollo的建图在"routing/topo_creator"中，通过下图可以看下建图的流程。  
+通过读取base_map_file_path_为pbmap_来建图。  
+![topo_creator]()  
+而Grap图中数据结构在"routing/graph"中。
+topo_graph.cc主要是存储了点和边的信息
+topo_node.cc 点和边的数据结构
+sub_topo_graph.cc blackmap的点和边数据结构
 
 
+#### 最短路径
+apollo的最短路径算法采用的是Astar算法，代码实现在"routing/strategy"目录。可以看到strategy中实现了一个"Strategy"的基类，也就是说后面可以扩展其他的路径策略。  
+```
+class Strategy {
+ public:
+  virtual ~Strategy() {}
+  // 在派生类中实现查找方法
+  virtual bool Search(const TopoGraph* graph, const SubTopoGraph* sub_graph,
+                      const TopoNode* src_node, const TopoNode* dest_node,
+                      std::vector<NodeWithRange>* const result_nodes) = 0;
+};
+```
+下面看"AStarStrategy"的"Search"方法：  
+```
+bool AStarStrategy::Search(const TopoGraph* graph,
+                           const SubTopoGraph* sub_graph,
+                           const TopoNode* src_node, const TopoNode* dest_node,
+                           std::vector<NodeWithRange>* const result_nodes) {
+
+  std::priority_queue<SearchNode> open_set_detail;
+
+  SearchNode src_search_node(src_node);
+  src_search_node.f = HeuristicCost(src_node, dest_node);
+  open_set_detail.push(src_search_node);
+
+  open_set_.insert(src_node);
+  g_score_[src_node] = 0.0;
+  enter_s_[src_node] = src_node->StartS();
+
+  SearchNode current_node;
+  std::unordered_set<const TopoEdge*> next_edge_set;
+  std::unordered_set<const TopoEdge*> sub_edge_set;
+  while (!open_set_detail.empty()) {
+    current_node = open_set_detail.top();
+    const auto* from_node = current_node.topo_node;
+    if (current_node.topo_node == dest_node) {
+      if (!Reconstruct(came_from_, from_node, result_nodes)) {
+        AERROR << "Failed to reconstruct route.";
+        return false;
+      }
+      return true;
+    }
+    open_set_.erase(from_node);
+    open_set_detail.pop();
+
+    if (closed_set_.count(from_node) != 0) {
+      // if showed before, just skip...
+      continue;
+    }
+    closed_set_.emplace(from_node);
+
+    // if residual_s is less than FLAGS_min_length_for_lane_change, only move
+    // forward
+    const auto& neighbor_edges =
+        (GetResidualS(from_node) > FLAGS_min_length_for_lane_change &&
+         change_lane_enabled_)
+            ? from_node->OutToAllEdge()
+            : from_node->OutToSucEdge();
+    double tentative_g_score = 0.0;
+    next_edge_set.clear();
+    for (const auto* edge : neighbor_edges) {
+      sub_edge_set.clear();
+      sub_graph->GetSubInEdgesIntoSubGraph(edge, &sub_edge_set);
+      next_edge_set.insert(sub_edge_set.begin(), sub_edge_set.end());
+    }
+
+    for (const auto* edge : next_edge_set) {
+      const auto* to_node = edge->ToNode();
+      if (closed_set_.count(to_node) == 1) {
+        continue;
+      }
+      if (GetResidualS(edge, to_node) < FLAGS_min_length_for_lane_change) {
+        continue;
+      }
+      tentative_g_score =
+          g_score_[current_node.topo_node] + GetCostToNeighbor(edge);
+      if (edge->Type() != TopoEdgeType::TET_FORWARD) {
+        tentative_g_score -=
+            (edge->FromNode()->Cost() + edge->ToNode()->Cost()) / 2;
+      }
+      double f = tentative_g_score + HeuristicCost(to_node, dest_node);
+      if (open_set_.count(to_node) != 0 && f >= g_score_[to_node]) {
+        continue;
+      }
+      // if to_node is reached by forward, reset enter_s to start_s
+      if (edge->Type() == TopoEdgeType::TET_FORWARD) {
+        enter_s_[to_node] = to_node->StartS();
+      } else {
+        // else, add enter_s with FLAGS_min_length_for_lane_change
+        double to_node_enter_s =
+            (enter_s_[from_node] + FLAGS_min_length_for_lane_change) /
+            from_node->Length() * to_node->Length();
+        // enter s could be larger than end_s but should be less than length
+        to_node_enter_s = std::min(to_node_enter_s, to_node->Length());
+        // if enter_s is larger than end_s and to_node is dest_node
+        if (to_node_enter_s > to_node->EndS() && to_node == dest_node) {
+          continue;
+        }
+        enter_s_[to_node] = to_node_enter_s;
+      }
+
+      g_score_[to_node] = f;
+      SearchNode next_node(to_node);
+      next_node.f = f;
+      open_set_detail.push(next_node);
+      came_from_[to_node] = from_node;
+      if (open_set_.count(to_node) == 0) {
+        open_set_.insert(to_node);
+      }
+    }
+  }
+
+}
+```
 
 
 
