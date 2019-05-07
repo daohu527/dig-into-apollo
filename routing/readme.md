@@ -609,6 +609,12 @@ bool AStarStrategy::Search(const TopoGraph* graph,
 
 
 
+## 需求分析
+1. 如何从A点到B点
+2. 如何规避某些点
+3. 如何途径某些点
+4. 如何设置固定线路，而且不会变？
+
 ## routing for osm
 https://wiki.openstreetmap.org/wiki/Routing
 
