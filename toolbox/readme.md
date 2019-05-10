@@ -15,3 +15,15 @@ nm -u /media/data/k8s/apollo/bazel-bin/cyber/py_wrapper/../../_solib_k8/libcyber
 
 [undefined symbol](https://blog.csdn.net/stpeace/article/details/76561814)  
 [名字修饰](https://zh.wikipedia.org/wiki/%E5%90%8D%E5%AD%97%E4%BF%AE%E9%A5%B0)  
+
+
+## coredump
+https://www.jianshu.com/p/3dc143c53ca2  
+
+
+## bazel编译
+编译清除  
+```
+bazel clean --expunge
+```
+
