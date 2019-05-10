@@ -114,10 +114,20 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 根据上述的信息，构建有向图，下载的格式由于对渲染比较友好，但是对查找最短路径不友好，因此要转换成有向图的格式(apollo的routing模块也是经过了如下的转换)。
 3. 查找最短路径 
 根据上述的信息，查找一条最短路径。
+> 如果图的规模太大，以1000个举例，只算两个点之间互相有连接的情况，1000*1000就是100万个点，如果点的规模更大，那么就需要采用redis数据库来提高查找效率了。
 
 <a name="routing" />
 
 ## Routing模块分析
+分析Routing模块之前，我们只需要能够解决以下几个问题，就算是把routing模块掌握清楚了。  
+1. 如何从A点到B点
+2. 如何规避某些点
+查找的时候发现是黑名单里的节点，则选择跳过
+3. 如何途径某些点
+采用分段的形式，逐段导航（改进版的算法是不给定点的顺序，自动规划最优的线路）
+4. 如何设置固定线路，而且不会变？
+最后routing输出的结果是什么？固定成文件的形式
+
 下面我们开始分析Apollo Routing模块的代码流程。  
 首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，所以开始查看一个模块时，都是从component文件开始。  
 可以看到"RoutingComponent"继承至"cyber::Component"，并且申明为"public"继承方式，"cyber::Component"是一个模板类，它定义了"Initialize"和"Process"方法。而"Proc"为纯虚函数由子类实现。  
@@ -718,6 +728,12 @@ bool AStarStrategy::Search(const TopoGraph* graph,
 如果是曲线转弯，并且需要变道的情况，是否可以规划？比如在十字路口，左转的时候有车挡住，这时候需要变道，就是edge右转，再加上node是曲线的情况，是否能够实现，这应该是planning应该考虑的情况？？？
 
 
+
+## 需求分析
+1. 如何从A点到B点
+2. 如何规避某些点
+3. 如何途径某些点
+4. 如何设置固定线路，而且不会变？
 
 ## routing for osm
 https://wiki.openstreetmap.org/wiki/Routing
