@@ -32,7 +32,7 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 <a name="demo" />
 
 #### Demo
-我们通过"OSM Pathfinding"作为例子，来详细讲解整个过程。[项目地址](https://github.com/daohu527/osm-pathfinding)，感谢@mplewis提供的展示。  
+我们通过"OSM Pathfinding"作为例子，来详细讲解整个过程。[演示地址](https://daohu527.github.io/)，感谢@mplewis提供的展示。  
 首先我们通过如下的视频演示看下Routing寻找路径的过程，查找的是深圳南山区的地图：
 ![]()
 1. 首先选择查找算法，有: A*, Breadth First Search, Greedy Best First Search, Uniform Cost Search, Depth First Search。
