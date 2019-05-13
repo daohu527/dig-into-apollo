@@ -17,7 +17,7 @@
 <a name="introduction" />
 
 ## Routing模块简介
-Routing类似于现在开车时用到的导航模块，通常考虑的是起点到终点的最优路径（通常是最短路径），和Planning的区别是Routing考虑的是起点到终点的最短路径，而Planning则是行驶过程中，当前一小段时间如何行驶，需要考虑当前路况，是否有障碍物。Routing模块则不需要考虑这些信息，只需要做一个长期的规划路径即可，过程如下：  
+Routing类似于现在开车时用到的导航模块，通常考虑的是起点到终点的最优路径（通常是最短路径），Routing考虑的是起点到终点的最短路径，而Planning则是行驶过程中，当前一小段时间如何行驶，需要考虑当前路况，是否有障碍物。Routing模块则不需要考虑这些信息，只需要做一个长期的规划路径即可，过程如下：  
 
 ![introduction](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/introduction.png)  
 
@@ -29,11 +29,29 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 
 ## 基础知识
 
+<a name="demo" />
+
+#### Demo
+我们通过"OSM Pathfinding"作为例子，来详细讲解整个过程。[项目地址](https://github.com/daohu527/osm-pathfinding)，感谢@mplewis提供的展示。  
+首先我们通过如下的视频演示看下Routing寻找路径的过程，查找的是深圳南山区的地图：
+![]()
+1. 首先选择查找算法，有: A*, Breadth First Search, Greedy Best First Search, Uniform Cost Search, Depth First Search。
+2. 选择起点
+3. 选择终点
+4. 选择开始，开始寻找路径
+
+上面的项目是基于OSM(openstreetmap)获取的地图数据，如果需要自己制作地图，首先在OSM的[官网](https://www.openstreetmap.org/)导出地图，导出的文件格式为“map.osm”，可以通过浏览器打开查看，然后在项目的tools目录，把OSM地图转成项目用到的(Graph)图。制作demo的过程如下：
+1. 获取地图信息 - 由于OSM的地图都是开源的，所以我们只需要找到对应的区域，并且选择导出，就可以导出地图的原始数据。地图的数据格式为OSM格式。
+2. 构建图 - 根据上述的信息，构建有向图，下载的格式对渲染比较友好，但是对查找最短路径不友好，因此要转换成有向图的格式(apollo的routing模块也是经过了如下的转换)。
+3. 查找最短路径 - 根据上述的信息，查找一条最短路径。
+> 如果图的规模太大，以1000个举例，只算两个点之间互相有连接的情况，1000*1000就是100万个点，如果点的规模更大，那么就需要采用redis数据库来提高查找效率了。
+
+下面我们先介绍上面的例子是如何工作的。
 <a name="map" />
 
 #### 地图
 首先我们以openstreetmap为例来介绍下地图是如何组成的。[开放街道地图](https://www.openstreetmap.org/)（英语：OpenStreetMap，缩写为OSM）是一个建构自由内容之网上地图协作计划，目标是创造一个内容自由且能让所有人编辑的世界地图，并且让一般的移动设备有方便的导航方案。因为这个地图是一个开源地图，所以可以灵活和自由的获取地图资源。
-首先我们看下openstreetmap的基本元素：
+接着看下openstreetmap的基本元素：
 **Node**![node](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_node.svg.png)  
 节点表示由其纬度和经度定义的地球表面上的特定点。每个节点至少包括id号和一对坐标。节点也可用于定义独立点功能。例如，节点可以代表公园长椅或水井。节点也可以定义道路(Way)的形状，节点是一切形状的基础。  
 ```
@@ -69,8 +87,8 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 **Tag**![tag](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_tag.svg.png)  
 所有类型的数据元素（节点，方式和关系）以及变更集都可以包含标签。标签描述了它们所附着的特定元素的含义。标签由两个自由格式文本字段组成; 'Key'和'Vaule'。例如，“高速公路”=“住宅”定义了一条道路。元素不能有2个带有相同“key”的标签，“key”必须是唯一的。例如，您不能将元素标记为amenity = restaurant和amenity = bar。  
 
-可以看到我们看到的地图，实际上是由一些Node和Way组成，需要展示地图时候，通过读取地图中的Node和Way的数据实时画(渲染)出来，例如2个Node组成了一条道路，那么就在这两点之间画一条直线，并且标记为道路，如果是封闭区域，并且根据数据，画出一个多边形，并把它标记为湖泊或者公园。  
-有很多地图渲染引擎，下面看下openstreet推荐的地图引擎：  
+我们看到的地图，实际上是由一些Node和Way组成，需要展示地图时候，通过读取地图中的Node和Way的数据实时画(渲染)出来，例如2个Node组成了一条道路，那么就在这两点之间画一条直线，并且标记为道路，如果是封闭区域，并且根据数据，画出一个多边形，并把它标记为湖泊或者公园。  
+有很多地图渲染引擎，以下是openstreet推荐的地图引擎：  
 1. Osmarender: 一个基于可扩展样式表语言转换 (XSLT) 的渲染器,能够创建可缩放矢量图形(SVG), SVG可以用浏览器观看或转换成位图.
 2. Mapnik: 一个用C++写的非常快的渲染器,可以生成位图(png, jpeg)和矢量图形(pdf, svg, postscript)。
 
@@ -104,17 +122,7 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 根据用户的反馈实时的更新路况，比如路上有10个人在用地图导航，发现在某一段大家都开的很慢，或者有用户反馈堵车，就更新当前路况。  
 所以地图是一个强者越强的市场，用户越多，数据就更新的就越快，地图就越准确，用的人就越多；用的人越少，数据更新的就越慢，假设一条路上只有一个用户，一个人开的慢，并不能反馈当前道路拥堵，用该地图的其它用户过去之后，发现堵车，就导致用户体验很差，下次就不会再用这个地图了。所以地图必须需要一定的用户量才能活下去，而且强者越强。  
 
-<a name="demo" />
 
-#### Demo
-下面我们通过"OSM Pathfinding"作为例子，来详细讲解整个过程。[项目地址](https://github.com/daohu527/osm-pathfinding)  
-1. 获取地图信息
-由于OSM的地图都是开源的，所以我们只需要找到对应的区域，并且选择导出，就可以导出地图的原始数据。地图的数据格式为OSM格式。
-2. 构建图
-根据上述的信息，构建有向图，下载的格式由于对渲染比较友好，但是对查找最短路径不友好，因此要转换成有向图的格式(apollo的routing模块也是经过了如下的转换)。
-3. 查找最短路径 
-根据上述的信息，查找一条最短路径。
-> 如果图的规模太大，以1000个举例，只算两个点之间互相有连接的情况，1000*1000就是100万个点，如果点的规模更大，那么就需要采用redis数据库来提高查找效率了。
 
 <a name="routing" />
 
@@ -765,6 +773,7 @@ https://www.openstreetmap.org/export#map=15/22.5163/113.9380
 
 
 ## Reference
+[OSM Pathfinding](https://github.com/daohu527/osm-pathfinding)
 [OpenstreetMap](https://www.openstreetmap.org/)  
 [OpenstreetMap Elements](https://wiki.openstreetmap.org/wiki/Elements)  
 [OpenstreetMap地图渲染](https://wiki.openstreetmap.org/wiki/Zh-hans:Beginners_Guide_1.5)  
