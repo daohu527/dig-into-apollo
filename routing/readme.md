@@ -129,12 +129,159 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 ## Routing模块分析
 分析Routing模块之前，我们只需要能够解决以下几个问题，就算是把routing模块掌握清楚了。  
 1. 如何从A点到B点
-2. 如何规避某些点
-查找的时候发现是黑名单里的节点，则选择跳过
-3. 如何途径某些点
-采用分段的形式，逐段导航（改进版的算法是不给定点的顺序，自动规划最优的线路）
-4. 如何设置固定线路，而且不会变？
-最后routing输出的结果是什么？固定成文件的形式
+2. 如何规避某些点 - 查找的时候发现是黑名单里的节点，则选择跳过。
+3. 如何途径某些点 - 采用分段的形式，逐段导航（改进版的算法是不给定点的顺序，自动规划最优的线路）。
+4. 如何设置固定线路，而且不会变？最后routing输出的结果是什么？固定成文件的形式。
+
+
+#### 建图
+通过上面的介绍可以知道，routing需要的是一个拓扑结构的图，要想做routing，第一步就是要把原始的地图转换成包含拓扑结构的图，apollo中也实现了类似的操作，把base_map转换为routing_map，这里的base_map就是高精度地图，而routing_map则是导航地图，routing_map的结构为一个有向图。对应的例子在"modules/map/data/demo"中，这个例子比较简陋，因为routing_map.txt中只包含一个节点(Node)，没有边(Edge)信息。  
+apollo建图的实现在"routing/topo_creator"中，首先apollo的拓扑图中的节点和上面介绍的传统的节点不一样，我们前面的例子中，节点就是路的起点和终点，边就是路，而自动驾驶中的道路是车道线级别的，原来的这种定义点和边的方式就不适用了（定义不了车道），所以apollo中引用的新的概念，apollo中的点就是一条车道，而边则是车道和车道之间的连接，点对应具体的车道，而边则是一个虚拟的概念，表示车道之间的关系。下面我们可以先看下apollo中道路(road)和车道(lane)的概念。  
+![](lane.png)  
+可以看到一条道路(road)，包含多个车道(lane)，图中一条道路分成了2段，每一段包含3条车道(lane)，车道的信息见图中，主要标识了车道唯一id，左边界，右边界，参考线，长度，前车道，后车道，左边相邻的车道，右边相邻的车道等，通过这些结构化的信息，我们就知道车道之间的相互关系，也就知道了我们能否到达下一个车道，从而规划出一条到达目的地的车道线级别的路线，Planning模块在根据规划好的线路进行行驶，因为已经到车道线级别了，所以相对规划起来就简单很多。最后我们会建立一张如下的图，其中的节点就是一个个的Lane，而边则是车道之间的连接。
+![]()  
+其中节点和边的结构在protobuf中定义，在文件"modules/routing/proto/topo_graph.proto"中，其中节点包括车道唯一id，长度，左边出口，右边出口（这里的出口对应车道虚线的部分，或者自己定义的一段允许变道的路段），路段代价（限速或者拐弯的路段会增加成本，代价系数在routing_config.pb.txt中定义)，中心线（虚拟的，用于生成参考线），是否可见，车道所属的道路id。边则包括起始车道id，到达车道id，切换代价，方向（向前，向左，向右）。我们以上图中的例子来说明：  
+```
+// 以lane2举例子
+id                              = 2
+predecessor_id                  = null // 上一车道id，不考虑变道的情况
+successor_id                    = 5    // 下一车道id，不考虑变道的情况
+left_neighbor_forward_lane_id   = 1    // 左边邻居车道
+right_neighbor_forward_lane_id  = 3    // 右边邻居车道
+type                            = CITY_DRIVING
+turn                            = NO_TURN  // 没有拐弯，有些车道本身是曲线，如路口的左拐弯，右拐弯车道
+direction                       = FORWARD  // 前向，反向，或者双向
+speed_limit                     = 30       // 限速30km/h
+
+// 以lane5举例子
+id                              = 5
+predecessor_id                  = 2 // 上一车道id，不考虑变道的情况
+successor_id                    = null    // 下一车道id，不考虑变道的情况
+left_neighbor_forward_lane_id   = 4    // 左边邻居车道
+right_neighbor_forward_lane_id  = 6    // 右边邻居车道
+type                            = CITY_DRIVING
+turn                            = NO_TURN  // 没有拐弯，有些车道本身是曲线，如路口的左拐弯，右拐弯车道
+direction                       = FORWARD  // 前向，反向，或者双向
+speed_limit                     = 30       // 限速30km/h
+```
+
+
+
+通过读取base_map_file_path_为pbmap_来建图。  
+![topo_creator]()  
+而Grap图中数据结构在"routing/graph"中。
+topo_graph.cc主要是存储了点和边的信息
+topo_node.cc 点和边的数据结构
+
+我们从graph_creator.cc中的Create()函数看起：  
+```
+bool GraphCreator::Create() {
+  // 这里注意，有2种格式，一种是openstreet格式，apollo通过OpendriveAdapter来读取
+  // 另外一种是apollo自己定义的格式
+  if (common::util::EndWith(base_map_file_path_, ".xml")) {
+    if (!hdmap::adapter::OpendriveAdapter::LoadData(base_map_file_path_,
+                                                    &pbmap_)) {
+      AERROR << "Failed to load base map file from " << base_map_file_path_;
+      return false;
+    }
+  } else {
+    if (!common::util::GetProtoFromFile(base_map_file_path_, &pbmap_)) {
+      AERROR << "Failed to load base map file from " << base_map_file_path_;
+      return false;
+    }
+  }
+
+  // graph_的消息格式在topo_graph.proto中申明
+  graph_.set_hdmap_version(pbmap_.header().version());
+  graph_.set_hdmap_district(pbmap_.header().district());
+
+  // 消息结构在map.proto map_road.proto
+  for (const auto& road : pbmap_.road()) {
+    for (const auto& section : road.section()) {
+      for (const auto& lane_id : section.lane_id()) {
+        road_id_map_[lane_id.id()] = road.id().id();
+      }
+    }
+  }
+
+  InitForbiddenLanes();
+  const double min_turn_radius =
+      VehicleConfigHelper::GetConfig().vehicle_param().min_turn_radius();
+
+  for (const auto& lane : pbmap_.lane()) {
+    const auto& lane_id = lane.id().id();
+    // 禁止的车道
+    if (forbidden_lane_id_set_.find(lane_id) != forbidden_lane_id_set_.end()) {
+      ADEBUG << "Ignored lane id: " << lane_id
+             << " because its type is NOT CITY_DRIVING.";
+      continue;
+    }
+    // 掉头的曲率太大
+    if (lane.turn() == hdmap::Lane::U_TURN &&
+        !IsValidUTurn(lane, min_turn_radius)) {
+      ADEBUG << "The u-turn lane radius is too small for the vehicle to turn";
+      continue;
+    }
+    
+    node_index_map_[lane_id] = graph_.node_size();
+    const auto iter = road_id_map_.find(lane_id);
+    if (iter != road_id_map_.end()) {
+      node_creator::GetPbNode(lane, iter->second, routing_conf_,
+                              graph_.add_node());
+    } else {
+      AWARN << "Failed to find road id of lane " << lane_id;
+      node_creator::GetPbNode(lane, "", routing_conf_, graph_.add_node());
+    }
+  }
+
+  std::string edge_id = "";
+  for (const auto& lane : pbmap_.lane()) {
+    const auto& lane_id = lane.id().id();
+    if (forbidden_lane_id_set_.find(lane_id) != forbidden_lane_id_set_.end()) {
+      ADEBUG << "Ignored lane id: " << lane_id
+             << " because its type is NOT CITY_DRIVING.";
+      continue;
+    }
+    const auto& from_node = graph_.node(node_index_map_[lane_id]);
+
+    AddEdge(from_node, lane.successor_id(), Edge::FORWARD);
+    if (lane.length() < FLAGS_min_length_for_lane_change) {
+      continue;
+    }
+    if (lane.has_left_boundary() && IsAllowedToCross(lane.left_boundary())) {
+      AddEdge(from_node, lane.left_neighbor_forward_lane_id(), Edge::LEFT);
+    }
+
+    if (lane.has_right_boundary() && IsAllowedToCross(lane.right_boundary())) {
+      AddEdge(from_node, lane.right_neighbor_forward_lane_id(), Edge::RIGHT);
+    }
+  }
+
+  if (!EndWith(dump_topo_file_path_, ".bin") &&
+      !EndWith(dump_topo_file_path_, ".txt")) {
+    AERROR << "Failed to dump topo data into file, incorrect file type "
+           << dump_topo_file_path_;
+    return false;
+  }
+  auto type_pos = dump_topo_file_path_.find_last_of(".") + 1;
+  std::string bin_file = dump_topo_file_path_.replace(type_pos, 3, "bin");
+  std::string txt_file = dump_topo_file_path_.replace(type_pos, 3, "txt");
+  if (!common::util::SetProtoToASCIIFile(graph_, txt_file)) {
+    AERROR << "Failed to dump topo data into file " << txt_file;
+    return false;
+  }
+  AINFO << "Txt file is dumped successfully. Path: " << txt_file;
+  if (!common::util::SetProtoToBinaryFile(graph_, bin_file)) {
+    AERROR << "Failed to dump topo data into file " << bin_file;
+    return false;
+  }
+  AINFO << "Bin file is dumped successfully. Path: " << bin_file;
+  return true;
+}
+```
+
+## Routing主流程
+
 
 下面我们开始分析Apollo Routing模块的代码流程。  
 首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，所以开始查看一个模块时，都是从component文件开始。  
@@ -500,120 +647,7 @@ bool Navigator::SearchRouteByStrategy(
   return true;
 }
 ```
-#### 建图
-apollo的建图在"routing/topo_creator"中，通过下图可以看下建图的流程。  
-通过读取base_map_file_path_为pbmap_来建图。  
-![topo_creator]()  
-而Grap图中数据结构在"routing/graph"中。
-topo_graph.cc主要是存储了点和边的信息
-topo_node.cc 点和边的数据结构
 
-我们从graph_creator.cc中的Create()函数看起：  
-```
-bool GraphCreator::Create() {
-  // 这里注意，有2种格式，一种是openstreet格式，apollo通过OpendriveAdapter来读取
-  // 另外一种是apollo自己定义的格式
-  if (common::util::EndWith(base_map_file_path_, ".xml")) {
-    if (!hdmap::adapter::OpendriveAdapter::LoadData(base_map_file_path_,
-                                                    &pbmap_)) {
-      AERROR << "Failed to load base map file from " << base_map_file_path_;
-      return false;
-    }
-  } else {
-    if (!common::util::GetProtoFromFile(base_map_file_path_, &pbmap_)) {
-      AERROR << "Failed to load base map file from " << base_map_file_path_;
-      return false;
-    }
-  }
-
-  // graph_的消息格式在topo_graph.proto中申明
-  graph_.set_hdmap_version(pbmap_.header().version());
-  graph_.set_hdmap_district(pbmap_.header().district());
-
-  // 消息结构在map.proto map_road.proto
-  for (const auto& road : pbmap_.road()) {
-    for (const auto& section : road.section()) {
-      for (const auto& lane_id : section.lane_id()) {
-        road_id_map_[lane_id.id()] = road.id().id();
-      }
-    }
-  }
-
-  InitForbiddenLanes();
-  const double min_turn_radius =
-      VehicleConfigHelper::GetConfig().vehicle_param().min_turn_radius();
-
-  for (const auto& lane : pbmap_.lane()) {
-    const auto& lane_id = lane.id().id();
-    // 禁止的车道
-    if (forbidden_lane_id_set_.find(lane_id) != forbidden_lane_id_set_.end()) {
-      ADEBUG << "Ignored lane id: " << lane_id
-             << " because its type is NOT CITY_DRIVING.";
-      continue;
-    }
-    // 掉头的曲率太大
-    if (lane.turn() == hdmap::Lane::U_TURN &&
-        !IsValidUTurn(lane, min_turn_radius)) {
-      ADEBUG << "The u-turn lane radius is too small for the vehicle to turn";
-      continue;
-    }
-    
-    node_index_map_[lane_id] = graph_.node_size();
-    const auto iter = road_id_map_.find(lane_id);
-    if (iter != road_id_map_.end()) {
-      node_creator::GetPbNode(lane, iter->second, routing_conf_,
-                              graph_.add_node());
-    } else {
-      AWARN << "Failed to find road id of lane " << lane_id;
-      node_creator::GetPbNode(lane, "", routing_conf_, graph_.add_node());
-    }
-  }
-
-  std::string edge_id = "";
-  for (const auto& lane : pbmap_.lane()) {
-    const auto& lane_id = lane.id().id();
-    if (forbidden_lane_id_set_.find(lane_id) != forbidden_lane_id_set_.end()) {
-      ADEBUG << "Ignored lane id: " << lane_id
-             << " because its type is NOT CITY_DRIVING.";
-      continue;
-    }
-    const auto& from_node = graph_.node(node_index_map_[lane_id]);
-
-    AddEdge(from_node, lane.successor_id(), Edge::FORWARD);
-    if (lane.length() < FLAGS_min_length_for_lane_change) {
-      continue;
-    }
-    if (lane.has_left_boundary() && IsAllowedToCross(lane.left_boundary())) {
-      AddEdge(from_node, lane.left_neighbor_forward_lane_id(), Edge::LEFT);
-    }
-
-    if (lane.has_right_boundary() && IsAllowedToCross(lane.right_boundary())) {
-      AddEdge(from_node, lane.right_neighbor_forward_lane_id(), Edge::RIGHT);
-    }
-  }
-
-  if (!EndWith(dump_topo_file_path_, ".bin") &&
-      !EndWith(dump_topo_file_path_, ".txt")) {
-    AERROR << "Failed to dump topo data into file, incorrect file type "
-           << dump_topo_file_path_;
-    return false;
-  }
-  auto type_pos = dump_topo_file_path_.find_last_of(".") + 1;
-  std::string bin_file = dump_topo_file_path_.replace(type_pos, 3, "bin");
-  std::string txt_file = dump_topo_file_path_.replace(type_pos, 3, "txt");
-  if (!common::util::SetProtoToASCIIFile(graph_, txt_file)) {
-    AERROR << "Failed to dump topo data into file " << txt_file;
-    return false;
-  }
-  AINFO << "Txt file is dumped successfully. Path: " << txt_file;
-  if (!common::util::SetProtoToBinaryFile(graph_, bin_file)) {
-    AERROR << "Failed to dump topo data into file " << bin_file;
-    return false;
-  }
-  AINFO << "Bin file is dumped successfully. Path: " << bin_file;
-  return true;
-}
-```
 
 
 #### 最短路径
@@ -730,6 +764,118 @@ bool AStarStrategy::Search(const TopoGraph* graph,
 
 }
 ```
+
+BlackListRangeGenerator生成黑名单路段
+通过RoutingRequest中的black_lane和black_road来生成黑名单路段，这里会设置一整段路都为黑名单。
+```
+void BlackListRangeGenerator::GenerateBlackMapFromRequest(
+    const RoutingRequest& request, const TopoGraph* graph,
+    TopoRangeManager* const range_manager) const {
+  AddBlackMapFromLane(request, graph, range_manager);
+  AddBlackMapFromRoad(request, graph, range_manager);
+  range_manager->SortAndMerge();
+}
+```
+
+通过Terminal来设置黑名单，应用场景是设置routing的起点和终点。这里的起点和终点都是一个点，功能是把lane切分为2个subNode
+```
+void BlackListRangeGenerator::AddBlackMapFromTerminal(
+    const TopoNode* src_node, const TopoNode* dest_node, double start_s,
+    double end_s, TopoRangeManager* const range_manager) const {
+  double start_length = src_node->Length();
+  double end_length = dest_node->Length();
+  if (start_s < 0.0 || start_s > start_length) {
+    AERROR << "Illegal start_s: " << start_s << ", length: " << start_length;
+    return;
+  }
+  if (end_s < 0.0 || end_s > end_length) {
+    AERROR << "Illegal end_s: " << end_s << ", length: " << end_length;
+    return;
+  }
+
+  double start_cut_s = MoveSBackward(start_s, 0.0);
+  range_manager->Add(src_node, start_cut_s, start_cut_s);
+  AddBlackMapFromOutParallel(src_node, start_cut_s / start_length,
+                             range_manager);
+
+  double end_cut_s = MoveSForward(end_s, end_length);
+  range_manager->Add(dest_node, end_cut_s, end_cut_s);
+  AddBlackMapFromInParallel(dest_node, end_cut_s / end_length, range_manager);
+  range_manager->SortAndMerge();
+}
+```
+
+> TODO: 如果在dreamview里设置多个routing点的情况，那么会出现第一段的终点和第二段的起点有overlap的情况，排序之后，会出现2厘米的gap?目前看起来不会影响，因为会往前开，另外为什么要设置往后偏移1厘米，如果刚好停在边界点上，会如何处理？？？
+
+```
+Navigator::Navigator(const std::string& topo_file_path) {
+  Graph graph;
+  if (!common::util::GetProtoFromFile(topo_file_path, &graph)) {
+    AERROR << "Failed to read topology graph from " << topo_file_path;
+    return;
+  }
+
+  graph_.reset(new TopoGraph());
+  if (!graph_->LoadGraph(graph)) {
+    AINFO << "Failed to init navigator graph failed! File path: "
+          << topo_file_path;
+    return;
+  }
+  black_list_generator_.reset(new BlackListRangeGenerator);
+  result_generator_.reset(new ResultGenerator);
+  is_ready_ = true;
+  AINFO << "The navigator is ready.";
+}
+```
+
+
+TODO: 判断是否足够进行切换Lane, 
+```
+bool TopoNode::IsOutRangeEnough(const std::vector<NodeSRange>& range_vec,
+                                double start_s, double end_s) {
+  // 是否足够切换Lane
+  if (!NodeSRange::IsEnoughForChangeLane(start_s, end_s)) {
+    return false;
+  }
+  int start_index = BinarySearchForSLarger(range_vec, start_s);
+  int end_index = BinarySearchForSSmaller(range_vec, end_s);
+
+  int index_diff = end_index - start_index;
+  if (start_index < 0 || end_index < 0) {
+    return false;
+  }
+  if (index_diff > 1) {
+    return true;
+  }
+
+  double pre_s_s = std::max(start_s, range_vec[start_index].StartS());
+  double suc_e_s = std::min(end_s, range_vec[end_index].EndS());
+
+  if (index_diff == 1) {
+    double dlt = range_vec[start_index].EndS() - pre_s_s;
+    dlt += suc_e_s - range_vec[end_index].StartS();
+    return NodeSRange::IsEnoughForChangeLane(dlt);
+  }
+  if (index_diff == 0) {
+    return NodeSRange::IsEnoughForChangeLane(pre_s_s, suc_e_s);
+  }
+  return false;
+}
+```
+
+
+## 调试
+在routing/tools目录
+```
+routing_cast.cc // 定时发送routing response响应
+routing_dump.cc // 保存routing请求
+routing_tester.cc // 定时发送routing request请求
+
+```
+
+
+
+
 
 
 ## 问题
