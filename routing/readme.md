@@ -19,7 +19,7 @@
 ## Routing模块简介
 Routing类似于现在开车时用到的导航模块，通常考虑的是起点到终点的最优路径（通常是最短路径），Routing考虑的是起点到终点的最短路径，而Planning则是行驶过程中，当前一小段时间如何行驶，需要考虑当前路况，是否有障碍物。Routing模块则不需要考虑这些信息，只需要做一个长期的规划路径即可，过程如下：  
 
-![introduction](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/introduction.png)  
+![introduction](img/introduction.png)  
 
 这也和我们开车类似，上车之后，首先搜索目的地，打开导航（Routing所做的事情），而开始驾车之后，则会根据当前路况，行人车辆信息来适当调整直到到达目的地（Planning所做的事情）。
 * **Routing** - 主要关注起点到终点的长期路径，根据起点到终点之间的道路，选择一条最优路径。  
@@ -52,14 +52,14 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 #### 地图
 首先我们以openstreetmap为例来介绍下地图是如何组成的。[开放街道地图](https://www.openstreetmap.org/)（英语：OpenStreetMap，缩写为OSM）是一个建构自由内容之网上地图协作计划，目标是创造一个内容自由且能让所有人编辑的世界地图，并且让一般的移动设备有方便的导航方案。因为这个地图是一个开源地图，所以可以灵活和自由的获取地图资源。
 接着看下openstreetmap的基本元素：
-**Node**![node](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_node.svg.png)  
+**Node**![node](img/30px-Osm_element_node.svg.png)  
 节点表示由其纬度和经度定义的地球表面上的特定点。每个节点至少包括id号和一对坐标。节点也可用于定义独立点功能。例如，节点可以代表公园长椅或水井。节点也可以定义道路(Way)的形状，节点是一切形状的基础。  
 ```
 <node id="25496583" lat="51.5173639" lon="-0.140043" version="1" changeset="203496" user="80n" uid="1238" visible="true" timestamp="2007-01-28T11:40:26Z">
     <tag k="highway" v="traffic_signals"/>
 </node>
 ```
-**Way**![way](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_way.svg.png)![way](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_closedway.svg.png)![way](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_area.svg.png)  
+**Way**![way](img/30px-Osm_element_way.svg.png)![way](img/30px-Osm_element_closedway.svg.png)![way](img/30px-Osm_element_area.svg.png)  
 道路是包含2到2,000个有序节点的折线组成，用于表示线性特征，例如河流和道路。道路也可以表示区域（实心多边形）的边界，例如建筑物或森林。在这种情况下，道路的第一个和最后一个节点将是相同的。这被称为“封闭的方式”。  
 ```
   <way id="5090250" visible="true" timestamp="2009-01-19T19:07:25Z" version="8" changeset="816806" user="Blumpsy" uid="64226">
@@ -78,13 +78,13 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
     <tag k="oneway" v="yes"/>
   </way>
 ```
-**Relation**![relation](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_relation.svg.png)  
+**Relation**![relation](img/30px-Osm_element_relation.svg.png)  
 关系是记录两个或更多个数据元素（节点，方式和/或其他关系）之间的关系的多用途数据结构。例子包括：  
 * 路线关系，列出形成主要（编号）高速公路，自行车路线或公交路线的方式。
 * 转弯限制，表示你无法从一种方式转向另一种方式。
 * 描述具有孔的区域（其边界是“外部方式”）的多面体（“内部方式”）。
 
-**Tag**![tag](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/30px-Osm_element_tag.svg.png)  
+**Tag**![tag](img/30px-Osm_element_tag.svg.png)  
 所有类型的数据元素（节点，方式和关系）以及变更集都可以包含标签。标签描述了它们所附着的特定元素的含义。标签由两个自由格式文本字段组成; 'Key'和'Vaule'。例如，“高速公路”=“住宅”定义了一条道路。元素不能有2个带有相同“key”的标签，“key”必须是唯一的。例如，您不能将元素标记为amenity = restaurant和amenity = bar。  
 
 我们看到的地图，实际上是由一些Node和Way组成，需要展示地图时候，通过读取地图中的Node和Way的数据实时画(渲染)出来，例如2个Node组成了一条道路，那么就在这两点之间画一条直线，并且标记为道路，如果是封闭区域，并且根据数据，画出一个多边形，并把它标记为湖泊或者公园。  
@@ -98,7 +98,7 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 #### 最短距离
 我们先看一下经典的例子：最短路径。  
 在图论中，最短路径问题是在图中的两个顶点之间找到路径，使得其边的权重之和最小化的问题。而在地图上找到两个点之间最短路径的问题可以被建模为图中最短路径问题的特殊情况，其中顶点对应于交叉点并且边缘对应于路段，每个路段对应于路段的长度。  
-![shortest_path](https://github.com/daohu527/Dig-into-Apollo/blob/master/routing/375px-Shortest_path_with_direct_weights.svg.png)  
+![shortest_path](img/375px-Shortest_path_with_direct_weights.svg.png)  
 
 最短路径算法：  
 * Dijkstra算法
@@ -137,9 +137,9 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 ## 建图
 通过上面的介绍可以知道，routing需要的是一个拓扑结构的图，要想做routing，第一步就是要把原始的地图转换成包含拓扑结构的图，apollo中也实现了类似的操作，把base_map转换为routing_map，这里的base_map就是高精度地图，而routing_map则是导航地图，routing_map的结构为一个有向图。对应的例子在"modules/map/data/demo"中，这个例子比较简陋，因为routing_map.txt中只包含一个节点(Node)，没有边(Edge)信息。  
 apollo建图的实现在"routing/topo_creator"中，首先apollo的拓扑图中的节点和上面介绍的传统的节点不一样，我们前面的例子中，节点就是路的起点和终点，边就是路，而自动驾驶中的道路是车道线级别的，原来的这种定义点和边的方式就不适用了（定义不了车道），所以apollo中引用的新的概念，apollo中的点就是一条车道，而边则是车道和车道之间的连接，点对应具体的车道，而边则是一个虚拟的概念，表示车道之间的关系。下面我们可以先看下apollo中道路(road)和车道(lane)的概念。  
-![lane](lane.png)  
+![lane](img/lane.png)  
 可以看到一条道路(road)，包含多个车道(lane)，图中一条道路分成了2段，每一段包含3条车道(lane)，车道的信息见图中，主要标识了车道唯一id，左边界，右边界，参考线，长度，前车道，后车道，左边相邻的车道，右边相邻的车道等，通过这些结构化的信息，我们就知道车道之间的相互关系，也就知道了我们能否到达下一个车道，从而规划出一条到达目的地的车道线级别的路线，Planning模块在根据规划好的线路进行行驶，因为已经到车道线级别了，所以相对规划起来就简单很多。最后我们会建立一张如下的图，其中**节点是一个个的lane，而边则代表lane之间的连接**。
-![graph](graph.jpg)  
+![graph](img/graph.jpg)  
 其中节点和边的结构在protobuf中定义，在文件"modules/routing/proto/topo_graph.proto"中，其中：  
 * **NODE** - 包括车道唯一id，长度，左边出口，右边出口（这里的出口对应车道虚线的部分，或者自己定义的一段允许变道的路段），路段代价（限速或者拐弯的路段会增加成本，代价系数在routing_config.pb.txt中定义)，中心线（虚拟的，用于生成参考线），是否可见，车道所属的道路id。  
 * **EDGE** - 则包括起始车道id，到达车道id，切换代价，方向（向前，向左，向右）。  
@@ -393,7 +393,7 @@ void GetPbEdge(const Node& node_from, const Node& node_to,
 }
 ```
 我们可以看下edge cost的曲线，因为"changing_area_length / routing_config.base_changing_length() < 1"，这个函数最小值为1，最大值为无穷。  
-![edge_cost](edge_cost.png)  
+![edge_cost](img/edge_cost.png)  
 
 
 到这里制作routing_map的流程就结束了，建图的主要目的是把base结构的map转换为graph结构的map，从而利用图结构来查找最佳路径，下面会分析如何通过routing_map得到规划好的路线。  
