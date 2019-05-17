@@ -364,8 +364,35 @@ void InitNodeCost(const Lane& lane, const RoutingConfig& routing_config,
 
 #### 创建节点的边
 接下来分析如何创建边，创建边的流程在函数"GetPbEdge()"中  
+```
+void GetPbEdge(const Node& node_from, const Node& node_to,
+               const Edge::DirectionType& type,
+               const RoutingConfig& routing_config, Edge* edge) {
+  // 设置起始，终止车道和类型
+  edge->set_from_lane_id(node_from.lane_id());
+  edge->set_to_lane_id(node_to.lane_id());
+  edge->set_direction_type(type);
 
-
+  // 默认代价为0，即直接向前开的代价
+  edge->set_cost(0.0);
+  if (type == Edge::LEFT || type == Edge::RIGHT) {
+    const auto& target_range =
+        (type == Edge::LEFT) ? node_from.left_out() : node_from.right_out();
+    double changing_area_length = 0.0;
+    for (const auto& range : target_range) {
+      changing_area_length += range.end().s() - range.start().s();
+    }
+    double ratio = 1.0;
+    // 计算代价
+    if (changing_area_length < routing_config.base_changing_length()) {
+      ratio = std::pow(
+          changing_area_length / routing_config.base_changing_length(), -1.5);
+    }
+    edge->set_cost(routing_config.change_penalty() * ratio);
+  }
+}
+```
+到这里制作routing_map的流程就结束了，建图的主要目的是把base结构的map转换为graph结构的map，从而利用图结构来查找最佳路径，下面会分析如何通过routing_map得到规划好的路线。  
 
 
 ## Routing主流程
