@@ -126,7 +126,7 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 
 <a name="routing" />
 
-## Routing模块分析
+# Routing模块分析
 分析Routing模块之前，我们只需要能够解决以下几个问题，就算是把routing模块掌握清楚了。  
 1. 如何从A点到B点
 2. 如何规避某些点 - 查找的时候发现是黑名单里的节点，则选择跳过。
@@ -134,13 +134,16 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 4. 如何设置固定线路，而且不会变？最后routing输出的结果是什么？固定成文件的形式。
 
 
-#### 建图
+## 建图
 通过上面的介绍可以知道，routing需要的是一个拓扑结构的图，要想做routing，第一步就是要把原始的地图转换成包含拓扑结构的图，apollo中也实现了类似的操作，把base_map转换为routing_map，这里的base_map就是高精度地图，而routing_map则是导航地图，routing_map的结构为一个有向图。对应的例子在"modules/map/data/demo"中，这个例子比较简陋，因为routing_map.txt中只包含一个节点(Node)，没有边(Edge)信息。  
 apollo建图的实现在"routing/topo_creator"中，首先apollo的拓扑图中的节点和上面介绍的传统的节点不一样，我们前面的例子中，节点就是路的起点和终点，边就是路，而自动驾驶中的道路是车道线级别的，原来的这种定义点和边的方式就不适用了（定义不了车道），所以apollo中引用的新的概念，apollo中的点就是一条车道，而边则是车道和车道之间的连接，点对应具体的车道，而边则是一个虚拟的概念，表示车道之间的关系。下面我们可以先看下apollo中道路(road)和车道(lane)的概念。  
 ![lane](lane.png)  
 可以看到一条道路(road)，包含多个车道(lane)，图中一条道路分成了2段，每一段包含3条车道(lane)，车道的信息见图中，主要标识了车道唯一id，左边界，右边界，参考线，长度，前车道，后车道，左边相邻的车道，右边相邻的车道等，通过这些结构化的信息，我们就知道车道之间的相互关系，也就知道了我们能否到达下一个车道，从而规划出一条到达目的地的车道线级别的路线，Planning模块在根据规划好的线路进行行驶，因为已经到车道线级别了，所以相对规划起来就简单很多。最后我们会建立一张如下的图，其中的节点就是一个个的Lane，而边则是车道之间的连接。
 ![graph](graph.jpg)  
-其中节点和边的结构在protobuf中定义，在文件"modules/routing/proto/topo_graph.proto"中，其中节点包括车道唯一id，长度，左边出口，右边出口（这里的出口对应车道虚线的部分，或者自己定义的一段允许变道的路段），路段代价（限速或者拐弯的路段会增加成本，代价系数在routing_config.pb.txt中定义)，中心线（虚拟的，用于生成参考线），是否可见，车道所属的道路id。边则包括起始车道id，到达车道id，切换代价，方向（向前，向左，向右）。我们以上图中的例子来说明：  
+其中节点和边的结构在protobuf中定义，在文件"modules/routing/proto/topo_graph.proto"中，其中：
+**节点** - 包括车道唯一id，长度，左边出口，右边出口（这里的出口对应车道虚线的部分，或者自己定义的一段允许变道的路段），路段代价（限速或者拐弯的路段会增加成本，代价系数在routing_config.pb.txt中定义)，中心线（虚拟的，用于生成参考线），是否可见，车道所属的道路id。  
+**边** - 则包括起始车道id，到达车道id，切换代价，方向（向前，向左，向右）。  
+我们以上图中的例子来说明：  
 ```
 // 以lane2举例子
 id                              = 2
@@ -165,19 +168,25 @@ direction                       = FORWARD  // 前向，反向，或者双向
 speed_limit                     = 30       // 限速30km/h
 ```
 
-
-
-通过读取base_map_file_path_为pbmap_来建图。  
-![topo_creator]()  
-而Grap图中数据结构在"routing/graph"中。
-topo_graph.cc主要是存储了点和边的信息
-topo_node.cc 点和边的数据结构
-
-我们从graph_creator.cc中的Create()函数看起：  
+#### 建图主流程
+可以看到对比map结构中的lane，graph中的节点和边省去了很多信息，主要关注的是lane之间的关系。在理解了上述数据结构之后，理解建图的过程就轻松多了，下面我们结合代码来分析具体的建图流程。建图的代码目录为"routing/topo_creator"，其文件结构如下：  
+```
+.
+├── BUILD
+├── edge_creator.cc            // 建边 
+├── edge_creator.h
+├── graph_creator.cc           // 建图
+├── graph_creator.h
+├── graph_creator_test.cc
+├── node_creator.cc            // 建节点
+├── node_creator.h
+└── topo_creator.cc           // main函数
+```
+编译生成可执行文件"topo_creator"，地图需要事先通过"topo_creator"把base_map转换为routing_map。其中建图的主流程在"graph_creator.cc"，并且创建节点和边。建图的主流程在函数"GraphCreator::Create()"中，下面我们具体分析这个函数。  
 ```
 bool GraphCreator::Create() {
-  // 这里注意，有2种格式，一种是openstreet格式，apollo通过OpendriveAdapter来读取
-  // 另外一种是apollo自己定义的格式
+  // 这里注意，有2种格式，一种是openstreet格式，通过OpendriveAdapter来读取
+  // 另外一种是apollo自己定义的格式。
   if (common::util::EndWith(base_map_file_path_, ".xml")) {
     if (!hdmap::adapter::OpendriveAdapter::LoadData(base_map_file_path_,
                                                     &pbmap_)) {
@@ -191,11 +200,11 @@ bool GraphCreator::Create() {
     }
   }
 
-  // graph_的消息格式在topo_graph.proto中申明
+  // graph_为最后保存的图，消息格式在topo_graph.proto中申明
   graph_.set_hdmap_version(pbmap_.header().version());
   graph_.set_hdmap_district(pbmap_.header().district());
 
-  // 消息结构在map.proto map_road.proto
+  // 从base_map中读取道路和lane对应关系，base_map的消息结构在map.proto和map_road.proto中
   for (const auto& road : pbmap_.road()) {
     for (const auto& section : road.section()) {
       for (const auto& lane_id : section.lane_id()) {
@@ -204,26 +213,33 @@ bool GraphCreator::Create() {
     }
   }
 
+  // 初始化禁止的车道线，从配置文件中读取最小掉头半径
   InitForbiddenLanes();
   const double min_turn_radius =
       VehicleConfigHelper::GetConfig().vehicle_param().min_turn_radius();
 
+  // 遍历base_map中的lane，并且创建节点。
   for (const auto& lane : pbmap_.lane()) {
     const auto& lane_id = lane.id().id();
-    // 禁止的车道
+    // 跳过不是城市道路(CITY_DRIVING)的车道
     if (forbidden_lane_id_set_.find(lane_id) != forbidden_lane_id_set_.end()) {
       ADEBUG << "Ignored lane id: " << lane_id
              << " because its type is NOT CITY_DRIVING.";
       continue;
     }
-    // 掉头的曲率太大
+    // 跳过掉头曲率太小的车道
     if (lane.turn() == hdmap::Lane::U_TURN &&
         !IsValidUTurn(lane, min_turn_radius)) {
       ADEBUG << "The u-turn lane radius is too small for the vehicle to turn";
       continue;
     }
     
+    // 存储图中节点index和lane_id的关系，因为跳过node可以找到lane，
+    // 而通过lane_id需要遍历节点才能找到节点index。
     node_index_map_[lane_id] = graph_.node_size();
+    
+    // 如果从road_id_map_中找到lane_id，则把创建节点的时候指定道路id，
+    // 如果没有找到那么road_id则为空。
     const auto iter = road_id_map_.find(lane_id);
     if (iter != road_id_map_.end()) {
       node_creator::GetPbNode(lane, iter->second, routing_conf_,
@@ -234,38 +250,42 @@ bool GraphCreator::Create() {
     }
   }
 
+  
   std::string edge_id = "";
+  // 遍历base_map中的lane，并且创建边。
   for (const auto& lane : pbmap_.lane()) {
     const auto& lane_id = lane.id().id();
+    // 跳过不是城市道路(CITY_DRIVING)的车道
     if (forbidden_lane_id_set_.find(lane_id) != forbidden_lane_id_set_.end()) {
       ADEBUG << "Ignored lane id: " << lane_id
              << " because its type is NOT CITY_DRIVING.";
       continue;
     }
+    
+    // 这里就是通过上面所说的通过lane_id找到node的index，得到节点，
+    // 如果不保存，则需要遍历所有节点通过lane_id来查找节点，原因为node中有lane_id，
+    // 而lane结构中没有node_id。
     const auto& from_node = graph_.node(node_index_map_[lane_id]);
 
+    // 添加一条该节点到下一个节点的边，注意这里没有换道，所以方向为前。  
     AddEdge(from_node, lane.successor_id(), Edge::FORWARD);
     if (lane.length() < FLAGS_min_length_for_lane_change) {
       continue;
     }
+    // 车道有左边界，并且允许变道
+    // 添加一条该节点到左边邻居的边
     if (lane.has_left_boundary() && IsAllowedToCross(lane.left_boundary())) {
       AddEdge(from_node, lane.left_neighbor_forward_lane_id(), Edge::LEFT);
     }
-
+    // 同上
     if (lane.has_right_boundary() && IsAllowedToCross(lane.right_boundary())) {
       AddEdge(from_node, lane.right_neighbor_forward_lane_id(), Edge::RIGHT);
     }
   }
 
-  if (!EndWith(dump_topo_file_path_, ".bin") &&
-      !EndWith(dump_topo_file_path_, ".txt")) {
-    AERROR << "Failed to dump topo data into file, incorrect file type "
-           << dump_topo_file_path_;
-    return false;
-  }
-  auto type_pos = dump_topo_file_path_.find_last_of(".") + 1;
-  std::string bin_file = dump_topo_file_path_.replace(type_pos, 3, "bin");
-  std::string txt_file = dump_topo_file_path_.replace(type_pos, 3, "txt");
+  ...
+  
+  // 保存routing_map文件，有2种格式txt和bin
   if (!common::util::SetProtoToASCIIFile(graph_, txt_file)) {
     AERROR << "Failed to dump topo data into file " << txt_file;
     return false;
@@ -279,6 +299,74 @@ bool GraphCreator::Create() {
   return true;
 }
 ```
+小结一下就是，创建的图的流程，首先是从base_map中读取道路信息，之后遍历道路，先创建节点，然后创建节点的边，之后把图(点和边的信息)保存到routing_map中，所以routing_map中就是grap_ protobuf格式的固化，后面routing模块会读取创建好的routing_map通过astar算法来进行路径规划。  
+
+#### 创建节点
+接下来看下创建节点的过程，在函数"GetPbNode()"中:  
+```
+void GetPbNode(const hdmap::Lane& lane, const std::string& road_id,
+               const RoutingConfig& routingconfig, Node* const node) {
+  // 初始化节点信息
+  InitNodeInfo(lane, road_id, node);
+  // 初始化节点代价
+  InitNodeCost(lane, routingconfig, node);
+}
+
+```
+初始化哪些节点信息呢？  
+```
+void InitNodeInfo(const Lane& lane, const std::string& road_id,
+                  Node* const node) {
+  double lane_length = GetLaneLength(lane);
+  node->set_lane_id(lane.id().id());
+  node->set_road_id(road_id);
+  // 根据lane的边界，添加能够变道的路段
+  AddOutBoundary(lane.left_boundary(), lane_length, node->mutable_left_out());
+  AddOutBoundary(lane.right_boundary(), lane_length, node->mutable_right_out());
+  node->set_length(lane_length);
+  node->mutable_central_curve()->CopyFrom(lane.central_curve());
+  node->set_is_virtual(true);
+  if (!lane.has_junction_id() ||
+      lane.left_neighbor_forward_lane_id_size() > 0 ||
+      lane.right_neighbor_forward_lane_id_size() > 0) {
+    node->set_is_virtual(false);
+  }
+}
+```
+如何计算节点的代价呢？  
+```
+void InitNodeCost(const Lane& lane, const RoutingConfig& routing_config,
+                  Node* const node) {
+  double lane_length = GetLaneLength(lane);
+  double speed_limit = (lane.has_speed_limit()) ? lane.speed_limit()
+                                                : routing_config.base_speed();
+  double ratio = (speed_limit >= routing_config.base_speed())
+                     ? (1 / sqrt(speed_limit / routing_config.base_speed()))
+                     : 1.0;
+  // 1. 根据道路长度和速度限制来计算代价
+  double cost = lane_length * ratio;
+  if (lane.has_turn()) {
+    // 掉头代价 > 左转代价 > 右转的代价
+    // left_turn_penalty: 50.0
+    // right_turn_penalty: 20.0
+    // uturn_penalty: 100.0
+    if (lane.turn() == Lane::LEFT_TURN) {
+      cost += routing_config.left_turn_penalty();
+    } else if (lane.turn() == Lane::RIGHT_TURN) {
+      cost += routing_config.right_turn_penalty();
+    } else if (lane.turn() == Lane::U_TURN) {
+      cost += routing_config.uturn_penalty();
+    }
+  }
+  node->set_cost(cost);
+}
+```
+
+#### 创建节点的边
+接下来分析如何创建边，创建边的流程在函数"GetPbEdge()"中  
+
+
+
 
 ## Routing主流程
 
