@@ -32,7 +32,8 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 <a name="demo" />
 
 #### Demo
-我们通过"OSM Pathfinding"作为例子，来详细讲解整个过程。[演示地址](https://daohu527.github.io/)，感谢@mplewis提供的展示。  
+[演示地址](https://daohu527.github.io/)  
+我们通过"OSM Pathfinding"作为例子，来详细讲解整个过程，感谢@mplewis。  
 首先我们通过如下的视频演示看下Routing寻找路径的过程，查找的是深圳南山区的地图：
 ![]()
 1. 首先选择查找算法，有: A*, Breadth First Search, Greedy Best First Search, Uniform Cost Search, Depth First Search。
@@ -400,8 +401,19 @@ void GetPbEdge(const Node& node_from, const Node& node_to,
 
 
 ## Routing主流程
+Routing模块的流程相对比较简单，主流程见下图：  
+![main](img/main.jpg)  
+把一些主要的流程摘要如下：  
+1. 在cyber中注册component，接收request请求，响应请求结果response
+2. 读取routing_map并且建图graph
+3. 获取request中的routing请求节点
+4. 根据black_map生成子图sub_graph
+5. 通过astar算法查找最短路径
+6. 合并请求结果并且返回
 
-下面我们开始分析Apollo Routing模块的流程。首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，所以**每次开始查看一个模块时，都是从component文件开始**。  
+下面在结合具体的流程进行分析，这里主要要弄清楚2点：1.为什么要生成子图？ 2.如何通过astar算法查找最优路径？  
+
+首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，所以**每次开始查看一个模块时，都是从component文件开始**。  
 ```
 class RoutingComponent final
     : public ::apollo::cyber::Component<RoutingRequest> {
@@ -477,10 +489,7 @@ bool RoutingComponent::Init() {
 }
 ```
 
-
-
-
-接下来看"Proc"实现了哪些功能:  
+接下来当routing模块收到routing_request时，会触发"Proc()"，返回routing_response:  
 ```
 bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
   auto response = std::make_shared<RoutingResponse>();
@@ -498,7 +507,7 @@ bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
   return true;
 }
 ```
-从上面的分析可以看出，"RoutingComponent"模块实现的主要功能:  
+从上面的分析可以看出，"RoutingComponent"模块实现的**主要功能**:  
 1. 实现"Init"和"Proc"函数
 2. 接收"RoutingRequest"消息，输出"RoutingResponse"响应。
 
