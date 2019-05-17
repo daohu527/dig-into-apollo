@@ -413,7 +413,7 @@ Routing模块的流程相对比较简单，主流程见下图：
 
 下面在结合具体的流程进行分析，这里主要要弄清楚2点：1.为什么要生成子图？ 2.如何通过astar算法查找最优路径？  
 
-首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，所以**每次开始查看一个模块时，都是从component文件开始**。  
+首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，**每次开始查看一个模块时，都是从component文件开始**。  
 ```
 class RoutingComponent final
     : public ::apollo::cyber::Component<RoutingRequest> {
@@ -524,63 +524,25 @@ bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
 #include "modules/routing/core/navigator.h"
 #include "modules/routing/proto/routing_config.pb.h"
 ```
-看代码之前先看下头文件是个很好的习惯。通过头文件，我们可以知道当前模块的依赖项，从而搞清楚各个模块之间的依赖关系。可以看到"Routing"模块是一个相对比较独立的模块，只依赖于地图。  
-Routing类的实现：  
-```
-class Routing {
- public:
-  Routing();
-  // 初始化
-  apollo::common::Status Init();
-  // 启动
-  apollo::common::Status Start();
-  // 执行
-  bool Process(const std::shared_ptr<RoutingRequest> &routing_request,
-               RoutingResponse *const routing_response);
-
- private:
-  // 导航
-  std::unique_ptr<Navigator> navigator_ptr_;
-  // routing模块配置
-  RoutingConfig routing_conf_;
-  // 高精度地图，用来获取高精度地图信息
-  const hdmap::HDMap *hdmap_ = nullptr;
-};
-```
-下面看下"routing.cc"具体的实现：  
-Routing模块初始化
+看代码之前先看下头文件是个很好的习惯。通过头文件，我们可以知道当前模块的依赖项，从而搞清楚各个模块之间的依赖关系。可以看到"Routing"模块是一个相对比较独立的模块，只依赖于地图。我们先看下Routing的初始化函数。  
 ```
 apollo::common::Status Routing::Init() {
-  // 根据规划地图文件(todo 规划地图文件和地图的区别？)，生成导航
+  // 读取routing_map，也就是点和边
   const auto routing_map_file = apollo::hdmap::RoutingMapFile();
   navigator_ptr_.reset(new Navigator(routing_map_file));
-  // 加载规划配置
-  CHECK(
-      cyber::common::GetProtoFromFile(FLAGS_routing_conf_file, &routing_conf_))
-      << "Unable to load routing conf file: " + FLAGS_routing_conf_file;
-  // 读取地图
+
+  // 读取地图，用来查找routing request请求的点距离最近的lane，
+  // 并且返回对应的lane id，这里很好理解，比如你在小区里面，需要打车，
+  // 需要找到最近的乘车点，说直白点，就是找到最近的路。
   hdmap_ = apollo::hdmap::HDMapUtil::BaseMapPtr();
 }
 ```
-Routing模块启动
-```
-apollo::common::Status Routing::Start() {
-  // 导航是否准备好
-  if (!navigator_ptr_->IsReady()) {
-    return apollo::common::Status(ErrorCode::ROUTING_ERROR,
-                                  "Navigator not ready");
-  }
-  // 规划模块启动成功
-  AINFO << "Routing service is ready.";
-  monitor_logger_buffer_.INFO("Routing started");
-  return apollo::common::Status::OK();
-}
-```
-Routing模块运行
+
+之后会执行"Process"主流程，执行的过程如下：  
 ```
 bool Routing::Process(const std::shared_ptr<RoutingRequest>& routing_request,
                       RoutingResponse* const routing_response) {
-  // 填充缺失Lane信息
+  // 找到routing_request节点最近的路
   const auto& fixed_request = FillLaneInfoIfMissing(*routing_request);
   // 是否能够找到规划路径
   if (!navigator_ptr_->SearchRoute(fixed_request, routing_response)) {
@@ -601,7 +563,7 @@ RoutingRequest Routing::FillLaneInfoIfMissing(
   // 遍历routing请求的点
   for (int i = 0; i < routing_request.waypoint_size(); ++i) {
     const auto& lane_waypoint = routing_request.waypoint(i);
-    // lane是否有id
+    // routing_request请求的点有lane_id，则表示在路上，不用查找
     if (lane_waypoint.has_id()) {
       continue;
     }
@@ -627,7 +589,7 @@ RoutingRequest Routing::FillLaneInfoIfMissing(
   return fixed_request;
 }
 ```
-遍历规划请求的点，简单的规划只有起点和终点，而复杂的规划可以在起点和终点之间设置途经点。如果规划请求中的某一点找不到道路(lane)信息，那么则直接返回，如果找到，则填充缺失信息。而规划的主要流程就是在"navigator_ptr_->SearchRoute()"中。
+上述的过程总结一下就是，首先读取routing_map并初始化Navigator类，接着遍历routing_request，因为routing_request请求为一个个的点，所以先查看routing_request的点是否在路上，不在路上则找到最近的路，并且补充信息（不在路上的点则过不去），最后调用"navigator_ptr_->SearchRoute"返回routing响应。  
 
 
 <a name="navigator_class" />
@@ -638,89 +600,30 @@ Navigator初始化
 bool Navigator::Init(const RoutingRequest& request, const TopoGraph* graph,
                      std::vector<const TopoNode*>* const way_nodes,
                      std::vector<double>* const way_s) {
-  // 清除上次规划
-  Clear();
-  // 根据请求获取节点
+  // 获取routing请求，对应图中的节点
   if (!GetWayNodes(request, graph_.get(), way_nodes, way_s)) {
     AERROR << "Failed to find search terminal point in graph!";
     return false;
   }
-  // 黑名单
+  // 根据请求生成对应的黑名单lane
   black_list_generator_->GenerateBlackMapFromRequest(request, graph_.get(),
                                                      &topo_range_manager_);
 }
 ```
-GetWayNodes查看规划请求的点是否能够在图中找到，如果找到则放入"way_nodes"，并且记录起始点。
-```
-bool GetWayNodes(const RoutingRequest& request, const TopoGraph* graph,
-                 std::vector<const TopoNode*>* const way_nodes,
-                 std::vector<double>* const way_s) {
-  for (const auto& point : request.waypoint()) {
-    const auto* cur_node = graph->GetNode(point.id());
-    if (cur_node == nullptr) {
-      AERROR << "Cannot find way point in graph! Id: " << point.id();
-      return false;
-    }
-    way_nodes->push_back(cur_node);
-    way_s->push_back(point.s());
-  }
-  return true;
-}
-```
-生成黑名单路段，// todo 即不经过该区域？
-```
-void BlackListRangeGenerator::GenerateBlackMapFromRequest(
-    const RoutingRequest& request, const TopoGraph* graph,
-    TopoRangeManager* const range_manager) const {
-  AddBlackMapFromLane(request, graph, range_manager);
-  AddBlackMapFromRoad(request, graph, range_manager);
-  range_manager->SortAndMerge();
-}
-```
-
-SearchRoute查找规划线路
-```
-bool Navigator::SearchRoute(const RoutingRequest& request,
-                            RoutingResponse* const response) {
-  ...
-  // 初始化规划点和起点
-  std::vector<const TopoNode*> way_nodes;
-  std::vector<double> way_s;
-  if (!Init(request, graph_.get(), &way_nodes, &way_s)) {
-    return false;
-  }
-  // 根据节点和起点，查找返回结果，注意这里返回的是一段范围
-  std::vector<NodeWithRange> result_nodes;
-  if (!SearchRouteByStrategy(graph_.get(), way_nodes, way_s, &result_nodes)) {
-    return false;
-  }
-  if (result_nodes.empty()) {
-    return false;
-  }
-  // 插入起点和终点
-  result_nodes.front().SetStartS(request.waypoint().begin()->s());
-  result_nodes.back().SetEndS(request.waypoint().rbegin()->s());
-  // 生成通道区域
-  if (!result_generator_->GeneratePassageRegion(
-          graph_->MapVersion(), request, result_nodes, topo_range_manager_,
-          response)) {
-    return false;
-  }
-  ...
-}
-```
-接着看"SearchRouteByStrategy"如何处理
+在routing请求中可以指定黑名单路和车道，这样routing请求将不会计算这些车道。应用场景是需要避开拥堵路段，这需要能够根据情况实时请求，在routing_request中可以设置黑名单也刚好可以满足上面的需求，如果直接把黑名单路段固定，则是一个比较蠢的设计。  
+剩下的一些过程比较简单，我们直接看主函数"SearchRouteByStrategy":  
 ```
 bool Navigator::SearchRouteByStrategy(
     const TopoGraph* graph, const std::vector<const TopoNode*>& way_nodes,
     const std::vector<double>& way_s,
     std::vector<NodeWithRange>* const result_nodes) const {
-  std::unique_ptr<Strategy> strategy_ptr;
-  // 设置Astar策略来查找规划路径
+
+  // 通过Astar算法来查找路径
   strategy_ptr.reset(new AStarStrategy(FLAGS_enable_change_lane_in_result));
 
-  result_nodes->clear();
+
   std::vector<NodeWithRange> node_vec;
+  // 编译routing_request节点
   for (size_t i = 1; i < way_nodes.size(); ++i) {
     const auto* way_start = way_nodes[i - 1];
     const auto* way_end = way_nodes[i];
@@ -728,26 +631,26 @@ bool Navigator::SearchRouteByStrategy(
     double way_end_s = way_s[i];
 
     TopoRangeManager full_range_manager = topo_range_manager_;
+    // 添加黑名单，这里主要是把车道根据起点和终点做分割。
     black_list_generator_->AddBlackMapFromTerminal(
         way_start, way_end, way_start_s, way_end_s, &full_range_manager);
-    // 获取起点
+    // 因为对车道做了分割，这里会创建子图，比如一个车道分成2个子节点，
+    // 2个子节点会创建一张子图。
     SubTopoGraph sub_graph(full_range_manager.RangeMap());
+    
+    // 获取起点
     const auto* start = sub_graph.GetSubNodeWithS(way_start, way_start_s);
-    if (start == nullptr) {
-      return false;
-    }
+
     // 获取终点
     const auto* end = sub_graph.GetSubNodeWithS(way_end, way_end_s);
-    if (end == nullptr) {
-      return false;
-    }
-    // 通过策略器(Astar)查找结果
+
+    // 通过Astar查找最优路径
     std::vector<NodeWithRange> cur_result_nodes;
     if (!strategy_ptr->Search(graph, &sub_graph, start, end,
                               &cur_result_nodes)) {
       return false;
     }
-    // 插入节点
+    // 保存结果到node_vec
     node_vec.insert(node_vec.end(), cur_result_nodes.begin(),
                     cur_result_nodes.end());
   }
@@ -759,6 +662,8 @@ bool Navigator::SearchRouteByStrategy(
   return true;
 }
 ```
+下面我们把子图的概念讲解一下，"AddBlackMapFromTerminal"中会把节点(这里的节点就是lane)切分，切分之后的数据保存在"TopoRangeManager"中，而"SubTopoGraph"会根据"TopoRangeManager"中的数据初始化子图。  
+
 
 
 
