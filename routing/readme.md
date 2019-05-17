@@ -392,31 +392,16 @@ void GetPbEdge(const Node& node_from, const Node& node_to,
   }
 }
 ```
+我们可以看下edge cost的曲线，因为"changing_area_length / routing_config.base_changing_length() < 1"，这个函数最小值为1，最大值为无穷。  
+![edge_cost](edge_cost.png)  
+
+
 到这里制作routing_map的流程就结束了，建图的主要目的是把base结构的map转换为graph结构的map，从而利用图结构来查找最佳路径，下面会分析如何通过routing_map得到规划好的路线。  
 
 
 ## Routing主流程
 
-
-下面我们开始分析Apollo Routing模块的代码流程。  
-首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，所以开始查看一个模块时，都是从component文件开始。  
-可以看到"RoutingComponent"继承至"cyber::Component"，并且申明为"public"继承方式，"cyber::Component"是一个模板类，它定义了"Initialize"和"Process"方法。而"Proc"为纯虚函数由子类实现。  
-```
-template <typename M0>
-class Component<M0, NullType, NullType, NullType> : public ComponentBase {
- public:
-  Component() {}
-  ~Component() override {}
-  bool Initialize(const ComponentConfig& config) override;
-  bool Process(const std::shared_ptr<M0>& msg);
-
- private:
-  virtual bool Proc(const std::shared_ptr<M0>& msg) = 0;
-};
-```
-// todo 模板方法中为虚函数，而继承类中为公有方法？为什么？
-
-
+下面我们开始分析Apollo Routing模块的流程。首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，所以**每次开始查看一个模块时，都是从component文件开始**。  
 ```
 class RoutingComponent final
     : public ::apollo::cyber::Component<RoutingRequest> {
@@ -426,13 +411,12 @@ class RoutingComponent final
   ~RoutingComponent() = default;
 
  public:
-  // 初始化 todo 从哪里override?
   bool Init() override;
-  // 收到routing request的时候触发执行
+  // 收到routing request的时候触发
   bool Proc(const std::shared_ptr<RoutingRequest>& request) override;
 
  private:
-  // 申明routing请求发布
+  // routing消息发布handle
   std::shared_ptr<::apollo::cyber::Writer<RoutingResponse>> response_writer_ =
       nullptr;
   std::shared_ptr<::apollo::cyber::Writer<RoutingResponse>>
@@ -449,6 +433,7 @@ class RoutingComponent final
 // 在cyber框架中注册routing模块
 CYBER_REGISTER_COMPONENT(RoutingComponent)
 ```
+routing模块都按照cyber的模块申明和注册，cyber框架负责调用Init进行初始化，并且收到消息时候触发Proc执行。  
 我们先看下"Init"函数:  
 ```
 bool RoutingComponent::Init() {
@@ -464,10 +449,10 @@ bool RoutingComponent::Init() {
   response_writer_ = node_->CreateWriter<RoutingResponse>(attr);
 
   ...
-  // 设置消息qos，创建历史消息发布，和response_writer_类似
+  // 历史消息发布，和response_writer_类似
   response_history_writer_ = node_->CreateWriter<RoutingResponse>(attr_history);
   
-  // todo 启动定时器，发布历史消息，todo，为什么要赋值，并且保证锁？
+  // 创建定时器
   std::weak_ptr<RoutingComponent> self =
       std::dynamic_pointer_cast<RoutingComponent>(shared_from_this());
   timer_.reset(new ::apollo::cyber::Timer(
@@ -487,10 +472,13 @@ bool RoutingComponent::Init() {
       false));
   timer_->Start();
 
-  // routing模块初始化和启动是否成功，todo routing_在哪里实例化？
+  // 执行Routing类
   return routing_.Init().ok() && routing_.Start().ok();
 }
 ```
+
+
+
 
 接下来看"Proc"实现了哪些功能:  
 ```
