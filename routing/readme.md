@@ -635,15 +635,14 @@ bool Navigator::SearchRouteByStrategy(
 
 
 #### 节点切分
-节点的切分是根据TopoRangeManager生成好的区间，然后进行切分生成子节点。我们先看下如何生成"TopoRangeManager"，在"AddBlackMapFromTerminal"**输入参数为routing_request的开始lane，结束的lane，开始位置，结束位置，输出参数为分段好的区间(range)**，在"range_map_"中保存lane和lane中range的关系，其中key为节点，value为区间(range)。  
-我们还是先看一张图，来描述这个过程：  
+节点的切分是根据TopoRangeManager生成好的区间，然后进行切分生成子节点。我们先看下如何生成"TopoRangeManager"，在"AddBlackMapFromTerminal"**输入参数为routing_request的开始lane，结束的lane，开始位置，结束位置，输出参数为分段好的区间(range)**，在"range_map_"中保存lane和lane中range的关系，其中key为节点，value为区间(range)。我们还是先看一张图，来描述这个过程：  
 ![range](img/range.jpg)  
 可以看到上图中有2条lane，lane1为[0, length1]，lan2为[0, length2]，routing_request的起点为start_s，终点为end_s（注意这里的起点和终点都是在对应lane中的位置，而不是整条路的长度）。之后会生成一个range_map，其中的键为node即对应的lane，值为切分好的range，只是这里的range比较特殊，拿lane1举例子，这里range的起点和终点都是start_s。之后再通过"GetSortedValidRange"找到合法的区间，这里就看到找到range为[0,start_s],[start_s,length1]。这样这个节点就切分成2个子节点。
 实际上上述特殊的例子只是为了把routing请求的起点和终点对lane做切分，这样做的好处可能是模块的功能能够统一，方便计算节点的代价。实际上真正的功能没用到，我们还是根据图来解释这个过程：  
 ![range_rank](img/range_rank.jpg)  
 上述的过程是根据一段range[a,b]，即[a,b]为黑名单，或者禁止停车区域，那么最后生成的range_map，其中的键为node即对应的lane，值为黑名单的range[a,b]，和上面的例子不一样的地方在于，这里起点和终点不是一个点，而是一个range，这样生成的valid_range则为[0,a],[b,length1]，生成的2个子节点就是可以通过的区域，而这2个节点不是连续的，不能直接通过。也就是说routing_request是这种情况的特例，即黑名单range的起点和终点都是一个点，生成的2个子节点也就是连续的。apollo的代码做了冗余设计，但是实际没有用到，我们在总结下2种添加黑名单的设计:  
 1. **GenerateBlackMapFromRequest** - 通过request请求传入黑名单lane和road，每次直接屏蔽一整条road或者lane。
-2. **AddBlackMapFromTerminal** - 虽然range_manager支持传入range，但是这种场景只是针对routing_request传入的点对lane做切割，方便计算，每次切割的区间的起点和终点重合，是一个特殊场景，后续应该有用到比如在一条lane里，有某一段不能行驶的功能。
+2. **AddBlackMapFromTerminal** - 虽然range_manager支持传入range，但是这种场景只是针对routing_request传入的点对lane做切割，方便计算，每次切割的区间的起点和终点重合，是一个特殊场景，后续应该有用到比如在一条lane里，有某一段不能行驶的功能。  
 接下来看具体的实现：  
 ```
 void BlackListRangeGenerator::AddBlackMapFromTerminal(
@@ -698,7 +697,53 @@ void GetSortedValidRange(const TopoNode* topo_node,
 #### 生成子图
 然后我们再回过头去看下如何生成子图，生成子图的流程如下：  
 ![black_map](img/black_map.jpg)  
+生成子图主要在构造函数中：  
+```
+SubTopoGraph::SubTopoGraph(
+    const std::unordered_map<const TopoNode*, std::vector<NodeSRange>>&
+        black_map) {
+  std::vector<NodeSRange> valid_range;
+  for (const auto& map_iter : black_map) {
+    valid_range.clear();
+    GetSortedValidRange(map_iter.first, map_iter.second, &valid_range);
+    // 生成子节点
+    InitSubNodeByValidRange(map_iter.first, valid_range);
+  }
 
+  for (const auto& map_iter : black_map) {
+    // 生成子边
+    InitSubEdge(map_iter.first);
+  }
+
+  for (const auto& map_iter : black_map) {
+    AddPotentialEdge(map_iter.first);
+  }
+}
+```
+上述过程比较简单，浏览代码即可以理解。我们主要看下如何使用subgraph。  
+
+由于Graph节点中已经有边的信息，因此原先的Graph中的边的信息实际上已经保存在节点中了，最后Astar实际上只用到了子图的信息，因为节点有自己边的信息。subgraph的核心就是"GetSubInEdgesIntoSubGraph"和"GetSubOutEdgesIntoSubGraph"通过边找到子边，如果节点不存在子节点，那么返回原先的边，通过该函数可以同时找到边和子边，这样节点和子节点都可以找到了。我们下面重点分析下"GetSubInEdgesIntoSubGraph"，另外一个类似:  
+```
+void SubTopoGraph::GetSubInEdgesIntoSubGraph(
+    const TopoEdge* edge,
+    std::unordered_set<const TopoEdge*>* const sub_edges) const {
+  const auto* from_node = edge->FromNode();
+  const auto* to_node = edge->ToNode();
+  std::unordered_set<TopoNode*> sub_nodes;
+  if (from_node->IsSubNode() || to_node->IsSubNode() ||
+      !GetSubNodes(to_node, &sub_nodes)) {
+    sub_edges->insert(edge);
+    return;
+  }
+  for (const auto* sub_node : sub_nodes) {
+    for (const auto* in_edge : sub_node->InFromAllEdge()) {
+      if (in_edge->FromNode() == from_node) {
+        sub_edges->insert(in_edge);
+      }
+    }
+  }
+}
+```
 
 
 
