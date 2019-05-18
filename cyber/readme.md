@@ -490,6 +490,12 @@ RoleAttributes
 
 #### cyber
 
+设置日志等级在"cyber/setup.bash"中设置  
+```
+# for DEBUG log
+#export GLOG_minloglevel=-1
+#export GLOG_v=4
+```
 
 
 <a name="reference" />
