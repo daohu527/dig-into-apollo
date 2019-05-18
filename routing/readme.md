@@ -6,12 +6,25 @@
 ## Table of Contents
 - [Routing模块简介](#introduction)
 - [基础知识](#base)
+  - [Demo](#demo)
   - [地图](#map)
   - [最短距离](#shortest_path)
-  - [Demo](#demo)
 - [Routing模块分析](#routing)
-  - [Routing类](#routing_class)
-  - [Navigator类](#navigator_class)
+  - [创建Routing地图](#create_routing_map)
+    - [建图流程](#create_map_main)
+    - [创建节点](#create_node)
+    - [创建边](#create_edge)
+  - [Routing主流程](#routing_main)
+    - [Routing类](#routing_class)
+    - [导航](#navigator_class)
+    - [子节点](#subnode)
+    - [节点切分](#generate_subnode)
+    - [生成子图](#generate_subgraph)
+    - [Astar算法](#astar)
+- [调试工具](#tools)
+- [问题](#question)
+- [OSM数据查找](#osm_find)
+- [Reference](#reference)
   
 
 <a name="introduction" />
@@ -127,7 +140,7 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 
 <a name="routing" />
 
-## Routing模块分析
+# Routing模块分析
 分析Routing模块之前，我们只需要能够解决以下几个问题，就算是把routing模块掌握清楚了。  
 1. 如何从A点到B点
 2. 如何规避某些点 - 查找的时候发现是黑名单里的节点，则选择跳过。
@@ -135,7 +148,9 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 4. 如何设置固定线路，而且不会变？最后routing输出的结果是什么？固定成文件的形式。
 
 
-## 建图
+<a name="create_routing_map" />
+
+## 创建Routing地图
 通过上面的介绍可以知道，routing需要的是一个拓扑结构的图，要想做routing，第一步就是要把原始的地图转换成包含拓扑结构的图，apollo中也实现了类似的操作，把base_map转换为routing_map，这里的base_map就是高精度地图，而routing_map则是导航地图，routing_map的结构为一个有向图。对应的例子在"modules/map/data/demo"中，这个例子比较简陋，因为routing_map.txt中只包含一个节点(Node)，没有边(Edge)信息。  
 apollo建图的实现在"routing/topo_creator"中，首先apollo的拓扑图中的节点和上面介绍的传统的节点不一样，我们前面的例子中，节点就是路的起点和终点，边就是路，而自动驾驶中的道路是车道线级别的，原来的这种定义点和边的方式就不适用了（定义不了车道），所以apollo中引用的新的概念，apollo中的点就是一条车道，而边则是车道和车道之间的连接，点对应具体的车道，而边则是一个虚拟的概念，表示车道之间的关系。下面我们可以先看下apollo中道路(road)和车道(lane)的概念。  
 ![lane](img/lane.png)  
@@ -168,8 +183,9 @@ turn                            = NO_TURN  // 没有拐弯，有些车道本身�
 direction                       = FORWARD  // 前向，反向，或者双向
 speed_limit                     = 30       // 限速30km/h
 ```
+<a name="create_map_main" />
 
-#### 主流程
+#### 建图流程
 可以看到对比map结构中的lane，graph中的节点和边省去了很多信息，主要关注的是lane之间的关系。在理解了上述数据结构之后，理解建图的过程就轻松多了，下面我们结合代码来分析具体的建图流程。建图的代码目录为"routing/topo_creator"，其文件结构如下：  
 ```
 .
@@ -302,6 +318,9 @@ bool GraphCreator::Create() {
 ```
 小结一下创建的图的流程，首先是从base_map中读取道路信息，之后遍历道路，先创建节点，然后创建节点的边，之后把图(点和边的信息)保存到routing_map中，所以routing_map中就是grap_ protobuf格式的固化，后面routing模块会读取创建好的routing_map通过astar算法来进行路径规划。  
 
+
+<a name="create_node" />
+
 #### 创建节点
 接下来看下创建节点的过程，在函数"GetPbNode()"中:  
 ```
@@ -363,7 +382,9 @@ void InitNodeCost(const Lane& lane, const RoutingConfig& routing_config,
 }
 ```
 
-#### 创建节点的边
+<a name="create_edge" />
+
+#### 创建边
 接下来分析如何创建边，创建边的流程在函数"GetPbEdge()"中  
 ```
 void GetPbEdge(const Node& node_from, const Node& node_to,
@@ -399,6 +420,8 @@ void GetPbEdge(const Node& node_from, const Node& node_to,
 
 到这里制作routing_map的流程就结束了，建图的主要目的是把base结构的map转换为graph结构的map，从而利用图结构来查找最佳路径，下面会分析如何通过routing_map得到规划好的路线。  
 
+
+<a name="routing_main" />
 
 ## Routing主流程
 Routing模块的流程相对比较简单，主流程见下图：  
@@ -560,7 +583,7 @@ bool Routing::Process(const std::shared_ptr<RoutingRequest>& routing_request,
 
 <a name="navigator_class" />
 
-#### Navigator类
+#### 导航
 Navigator初始化
 ```
 bool Navigator::Init(const RoutingRequest& request, const TopoGraph* graph,
@@ -629,10 +652,13 @@ bool Navigator::SearchRouteByStrategy(
 }
 ```
 
+<a name="subnode" />
+
 #### 子节点
 下面我们把子图的概念讲解一下，"AddBlackMapFromTerminal"中会把节点(这里的节点就是lane)切分，切分之后的数据保存在"TopoRangeManager"中，而"SubTopoGraph"会根据"TopoRangeManager"中的数据初始化子图。我们先理解下子节点的概念，节点就是一条lane，而子节点是对lane做了切割，把一条lane根据黑名单区域，生成几个子节点。用图来说明很形象：  
 
 
+<a name="generate_subnode" />
 
 #### 节点切分
 节点的切分是根据TopoRangeManager生成好的区间，然后进行切分生成子节点。我们先看下如何生成"TopoRangeManager"，在"AddBlackMapFromTerminal"**输入参数为routing_request的开始lane，结束的lane，开始位置，结束位置，输出参数为分段好的区间(range)**，在"range_map_"中保存lane和lane中range的关系，其中key为节点，value为区间(range)。我们还是先看一张图，来描述这个过程：  
@@ -694,6 +720,8 @@ void GetSortedValidRange(const TopoNode* topo_node,
 }
 ```
 
+<a name="generate_subgraph" />
+
 #### 生成子图
 然后我们再回过头去看下如何生成子图，生成子图的流程如下：  
 ![black_map](img/black_map.jpg)  
@@ -750,6 +778,8 @@ void SubTopoGraph::GetSubInEdgesIntoSubGraph(
 
 关于子图的分析就结束了，子图主要是针对一条lane切分为几个子节点的情况，根据切分好的子节点从新生成一张图，比原先根据routing_map建立的图有更细的粒度。  
 
+<a name="astar" />
+
 #### Astar算法
 最后根据生成好的子图，通过Astar算法来查找最佳路径，实现在"routing/strategy"目录。可以看到strategy中实现了一个"Strategy"的基类，也就是说后面可以扩展其他的查找策略。  
 ```
@@ -775,6 +805,9 @@ TODO: 具体算法实现可以参考维基百科的伪代码，由于网上已�
 
 跳过Astar算法找到最优路径之后，发送routing_response，然后planning模块根据生成好的路径，控制车辆行驶。这里routing模块的使命就完成了，除非planning模块需要重新规划，则会重新发送routing_request再进行规划。  
 
+
+<a name="tools" />
+
 ## 调试工具
 在routing/tools目录实现了如下3个功能：
 ```
@@ -783,11 +816,13 @@ routing_dump.cc // 保存routing请求
 routing_tester.cc // 定时发送routing request请求
 ```
 
+<a name="question" />
 
 ## 问题
 如果是曲线转弯，并且需要变道的情况，是否可以规划？比如在十字路口，左转中途有车挡住，这时候需要变道，就是edge左转，再加上node是曲线的情况，是否能够实现，这应该是planning应该考虑的情况？  
 答： 可以实现，lane有直道和弯道的区别，edge有左转和右转的区别，在转弯过程中如果需要左转，继续左转就可以了，这里只描述了道路的信息，不关注是直道还是弯道。  
 
+<a name="osm_find" />
 
 ## OSM数据查找
 通过下面的链接，替换掉网址最后的id，就可以查找到对应的way，node和relation。
@@ -798,6 +833,8 @@ routing_tester.cc // 定时发送routing request请求
 地图可以在下面的链接选择导出，导出格式为OSM格式:  
 * You can download the osm from: https://www.openstreetmap.org/export#map=15/22.5163/113.9380
 
+
+<a name="reference" />
 
 ## Reference
 [OSM地图介绍](https://blog.csdn.net/scy411082514/article/details/7484497)
