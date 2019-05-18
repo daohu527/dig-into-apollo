@@ -871,22 +871,22 @@ bool AStarStrategy::Search(const TopoGraph* graph,
 routing_cast.cc // 定时发送routing response响应
 routing_dump.cc // 保存routing请求
 routing_tester.cc // 定时发送routing request请求
-
 ```
 
 
 ## 问题
-1. 如果是曲线转弯，并且需要变道的情况，是否可以规划？比如在十字路口，左转中途有车挡住，这时候需要变道，就是edge左转，再加上node是曲线的情况，是否能够实现，这应该是planning应该考虑的情况？  
+如果是曲线转弯，并且需要变道的情况，是否可以规划？比如在十字路口，左转中途有车挡住，这时候需要变道，就是edge左转，再加上node是曲线的情况，是否能够实现，这应该是planning应该考虑的情况？  
 答： 可以实现，lane有直道和弯道的区别，edge有左转和右转的区别，在转弯过程中如果需要左转，继续左转就可以了，这里只描述了道路的信息，不关注是直道还是弯道。  
 
 
 ## openstreetmap数据查找
 通过下面的链接，替换掉网址最后的id，就可以查找到对应的way，node和relation。
-1. If it's a polygon, then it's a closed way in the OSM database. You can find ways by id as simple as this: http://www.openstreetmap.org/way/305293190
-2. If a specific node (the building blocks of ways) is giving a problem, the link would be : http://www.openstreetmap.org/node/305293190
-3. If it is a multipolygon (for example a building with a hole in it), the link would be :   http://www.openstreetmap.org/relation/305293190
+* If it's a polygon, then it's a closed way in the OSM database. You can find ways by id as simple as this: http://www.openstreetmap.org/way/305293190
+* If a specific node (the building blocks of ways) is giving a problem, the link would be : http://www.openstreetmap.org/node/305293190
+* If it is a multipolygon (for example a building with a hole in it), the link would be :   http://www.openstreetmap.org/relation/305293190
+  
 地图可以在下面的链接选择导出，导出格式为OSM格式:  
-1. You can download the osm from: https://www.openstreetmap.org/export#map=15/22.5163/113.9380
+* You can download the osm from: https://www.openstreetmap.org/export#map=15/22.5163/113.9380
 
 
 ## Reference
