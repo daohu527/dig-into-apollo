@@ -2,7 +2,7 @@
 
 > Rome wasn't built in a day. - Li Proverbe au Vilain
 
-这个项目是对[apollo](https://github.com/ApolloAuto/apollo)项目拙劣的介绍，主要是根据模块对apollo的代码进行了分析，如果你要了解自动驾驶更多的内容，请参考另外的项目[awesome-self-driving-cars](https://github.com/daohu527/awesome-self-driving-cars)，我相信在不久的将来，科技必将会改变未来。  
+本项目是对[apollo](https://github.com/ApolloAuto/apollo)拙劣的介绍，主要根据各个模块对apollo的代码进行了分析，如果你需要了解自动驾驶更多的内容，请参考另外一个项目[awesome-self-driving-cars](https://github.com/daohu527/awesome-self-driving-cars)，我相信在不久的将来，科技必将改变世界。  
 
 
 ## 目录
@@ -14,9 +14,10 @@
 
 
 
-> 各个模块都在对应的子目录中，主要的流程会放在readme.md中，一些细节的函数和疑问会放在todo.md中，需要了解主流程直接看readme.md，如果需要深挖整个代码可以参考todo.md。
+> 各个模块的介绍都在对应的子目录中，主流程会放在readme.md中，一些细节的函数和疑问会放在todo.md中，需要了解主流程直接看readme.md，如果需要深挖整个代码可以参考todo.md。
+
 ## 鸣谢
-我们非常欢迎对项目的贡献，如果遇到任何问题，欢迎提交issue和pull request，同时我们也欢迎提交建议，如果你觉得项目很酷，请点击下star。
+我们非常欢迎对项目的贡献，欢迎提交issue和pull request，同时我们也欢迎提交建议，如果你觉得项目很酷，请点击下star。我们推崇自由软件和极客精神。
 
 
 
