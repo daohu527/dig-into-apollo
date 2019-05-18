@@ -555,40 +555,6 @@ bool Routing::Process(const std::shared_ptr<RoutingRequest>& routing_request,
   return true;
 }
 ```
-我们再详细看下"FillLaneInfoIfMissing"模块的实现
-```
-RoutingRequest Routing::FillLaneInfoIfMissing(
-    const RoutingRequest& routing_request) {
-  RoutingRequest fixed_request(routing_request);
-  // 遍历routing请求的点
-  for (int i = 0; i < routing_request.waypoint_size(); ++i) {
-    const auto& lane_waypoint = routing_request.waypoint(i);
-    // routing_request请求的点有lane_id，则表示在路上，不用查找
-    if (lane_waypoint.has_id()) {
-      continue;
-    }
-    auto point = common::util::MakePointENU(lane_waypoint.pose().x(),
-                                            lane_waypoint.pose().y(),
-                                            lane_waypoint.pose().z());
-
-    double s = 0.0;
-    double l = 0.0;
-    hdmap::LaneInfoConstPtr lane;
-    // FIXME(all): select one reasonable lane candidate for point=>lane
-    // is one to many relationship.
-    // 找到当前点最近的lane信息
-    if (hdmap_->GetNearestLane(point, &lane, &s, &l) != 0) {
-      AERROR << "Failed to find nearest lane from map at position: "
-             << point.DebugString();
-      return routing_request;
-    }
-    auto waypoint_info = fixed_request.mutable_waypoint(i);
-    waypoint_info->set_id(lane->id().id());
-    waypoint_info->set_s(s);
-  }
-  return fixed_request;
-}
-```
 上述的过程总结一下就是，首先读取routing_map并初始化Navigator类，接着遍历routing_request，因为routing_request请求为一个个的点，所以先查看routing_request的点是否在路上，不在路上则找到最近的路，并且补充信息（不在路上的点则过不去），最后调用"navigator_ptr_->SearchRoute"返回routing响应。  
 
 
@@ -662,7 +628,76 @@ bool Navigator::SearchRouteByStrategy(
   return true;
 }
 ```
-下面我们把子图的概念讲解一下，"AddBlackMapFromTerminal"中会把节点(这里的节点就是lane)切分，切分之后的数据保存在"TopoRangeManager"中，而"SubTopoGraph"会根据"TopoRangeManager"中的数据初始化子图。  
+
+#### 子节点
+下面我们把子图的概念讲解一下，"AddBlackMapFromTerminal"中会把节点(这里的节点就是lane)切分，切分之后的数据保存在"TopoRangeManager"中，而"SubTopoGraph"会根据"TopoRangeManager"中的数据初始化子图。我们先理解下子节点的概念，节点就是一条lane，而子节点是对lane做了切割，把一条lane根据黑名单区域，生成几个子节点。用图来说明很形象：  
+
+
+
+#### 节点切分
+节点的切分是根据TopoRangeManager生成好的区间，然后进行切分生成子节点。我们先看下如何生成"TopoRangeManager"，在"AddBlackMapFromTerminal"**输入参数为routing_request的开始lane，结束的lane，开始位置，结束位置，输出参数为分段好的区间(range)**，在"range_map_"中保存lane和lane中range的关系，其中key为节点，value为区间(range)。  
+我们还是先看一张图，来描述这个过程：  
+![range](img/range.jpg)  
+可以看到上图中有2条lane，lane1为[0, length1]，lan2为[0, length2]，routing_request的起点为start_s，终点为end_s（注意这里的起点和终点都是在对应lane中的位置，而不是整条路的长度）。之后会生成一个range_map，其中的键为node即对应的lane，值为切分好的range，只是这里的range比较特殊，拿lane1举例子，这里range的起点和终点都是start_s。之后再通过"GetSortedValidRange"找到合法的区间，这里就看到找到range为[0,start_s],[start_s,length1]。这样这个节点就切分成2个子节点。
+实际上上述特殊的例子只是为了把routing请求的起点和终点对lane做切分，这样做的好处可能是模块的功能能够统一，方便计算节点的代价。实际上真正的功能没用到，我们还是根据图来解释这个过程：  
+![range_rank](img/range_rank.jpg)  
+上述的过程是根据一段range[a,b]，即[a,b]为黑名单，或者禁止停车区域，那么最后生成的range_map，其中的键为node即对应的lane，值为黑名单的range[a,b]，和上面的例子不一样的地方在于，这里起点和终点不是一个点，而是一个range，这样生成的valid_range则为[0,a],[b,length1]，生成的2个子节点就是可以通过的区域，而这2个节点不是连续的，不能直接通过。也就是说routing_request是这种情况的特例，即黑名单range的起点和终点都是一个点，生成的2个子节点也就是连续的。apollo的代码做了冗余设计，但是实际没有用到，我们在总结下2种添加黑名单的设计:  
+1. **GenerateBlackMapFromRequest** - 通过request请求传入黑名单lane和road，每次直接屏蔽一整条road或者lane。
+2. **AddBlackMapFromTerminal** - 虽然range_manager支持传入range，但是这种场景只是针对routing_request传入的点对lane做切割，方便计算，每次切割的区间的起点和终点重合，是一个特殊场景，后续应该有用到比如在一条lane里，有某一段不能行驶的功能。
+接下来看具体的实现：  
+```
+void BlackListRangeGenerator::AddBlackMapFromTerminal(
+    const TopoNode* src_node, const TopoNode* dest_node, double start_s,
+    double end_s, TopoRangeManager* const range_manager) const {
+  double start_length = src_node->Length();
+  double end_length = dest_node->Length();
+  ...
+
+  double start_cut_s = MoveSBackward(start_s, 0.0);
+  // 注意这里range的起点和终点是同一个点，为routing的起点
+  range_manager->Add(src_node, start_cut_s, start_cut_s);
+  // 把平行的节点也按照比例做相同的切分
+  AddBlackMapFromOutParallel(src_node, start_cut_s / start_length,
+                             range_manager);
+  
+  // 注意这里range的起点和终点是同一个点，为routing的终点
+  double end_cut_s = MoveSForward(end_s, end_length);
+  range_manager->Add(dest_node, end_cut_s, end_cut_s);
+  AddBlackMapFromInParallel(dest_node, end_cut_s / end_length, range_manager);
+  
+  // 排序并且合并
+  range_manager->SortAndMerge();
+}
+```
+接着就是根据上面的range生成valid_range，在"GetSortedValidRange"中实现：  
+```
+void GetSortedValidRange(const TopoNode* topo_node,
+                         const std::vector<NodeSRange>& origin_range,
+                         std::vector<NodeSRange>* valid_range) {
+  std::vector<NodeSRange> block_range;
+  MergeBlockRange(topo_node, origin_range, &block_range);
+  double start_s = topo_node->StartS();
+  double end_s = topo_node->EndS();
+  std::vector<double> all_value;
+  // 添加node起点，边界和node终点
+  all_value.push_back(start_s);
+  for (const auto& range : block_range) {
+    all_value.push_back(range.StartS());
+    all_value.push_back(range.EndS());
+  }
+  all_value.push_back(end_s);
+  
+  // **核心在这里，每次i+2，即跳过balck_range，生成valid_range**
+  for (size_t i = 0; i < all_value.size(); i += 2) {
+    NodeSRange new_range(all_value[i], all_value[i + 1]);
+    valid_range->push_back(std::move(new_range));
+  }
+}
+```
+
+#### 生成子图
+然后我们再回过头去看下如何生成子图，生成子图的流程如下：  
+![black_map](img/black_map.jpg)  
 
 
 
