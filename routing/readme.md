@@ -730,11 +730,14 @@ void SubTopoGraph::GetSubInEdgesIntoSubGraph(
   const auto* from_node = edge->FromNode();
   const auto* to_node = edge->ToNode();
   std::unordered_set<TopoNode*> sub_nodes;
+  // 如果起点是子节点，终点是子节点，或者终点没有子节点，返回边
+  // TODO: **这里传入的是edge，根本不可能是子节点？**
   if (from_node->IsSubNode() || to_node->IsSubNode() ||
       !GetSubNodes(to_node, &sub_nodes)) {
     sub_edges->insert(edge);
     return;
   }
+  // 如果终点有子节点，则返回所有的子边
   for (const auto* sub_node : sub_nodes) {
     for (const auto* in_edge : sub_node->InFromAllEdge()) {
       if (in_edge->FromNode() == from_node) {
@@ -745,10 +748,10 @@ void SubTopoGraph::GetSubInEdgesIntoSubGraph(
 }
 ```
 
-
+关于子图的分析就结束了，子图主要是针对一条lane切分为几个子节点的情况，根据切分好的子节点从新生成一张图，比原先根据routing_map建立的图有更细的粒度。  
 
 #### Astar算法
-apollo的最短路径算法采用的是Astar算法，代码实现在"routing/strategy"目录。可以看到strategy中实现了一个"Strategy"的基类，也就是说后面可以扩展其他的路径策略。  
+最后根据生成好的子图，通过Astar算法来查找最佳路径，实现在"routing/strategy"目录。可以看到strategy中实现了一个"Strategy"的基类，也就是说后面可以扩展其他的查找策略。  
 ```
 class Strategy {
  public:
@@ -759,111 +762,18 @@ class Strategy {
                       std::vector<NodeWithRange>* const result_nodes) = 0;
 };
 ```
-下面看"AStarStrategy"的"Search"方法：  
+下面先介绍astar算法的原理，astar算法这是一种在图形平面上，有多个节点的路径，求出最低通过成本的算法。在此算法中，如果以g(n)表示从起点到任意顶点n的实际距离，h(n)表示任意顶点 n到目标顶点的估算距离（根据所采用的评估函数的不同而变化），那么A*算法的估算函数为：  
 ```
-bool AStarStrategy::Search(const TopoGraph* graph,
-                           const SubTopoGraph* sub_graph,
-                           const TopoNode* src_node, const TopoNode* dest_node,
-                           std::vector<NodeWithRange>* const result_nodes) {
-
-  std::priority_queue<SearchNode> open_set_detail;
-
-  SearchNode src_search_node(src_node);
-  src_search_node.f = HeuristicCost(src_node, dest_node);
-  open_set_detail.push(src_search_node);
-
-  open_set_.insert(src_node);
-  g_score_[src_node] = 0.0;
-  enter_s_[src_node] = src_node->StartS();
-
-  SearchNode current_node;
-  std::unordered_set<const TopoEdge*> next_edge_set;
-  std::unordered_set<const TopoEdge*> sub_edge_set;
-  while (!open_set_detail.empty()) {
-    current_node = open_set_detail.top();
-    const auto* from_node = current_node.topo_node;
-    if (current_node.topo_node == dest_node) {
-      if (!Reconstruct(came_from_, from_node, result_nodes)) {
-        AERROR << "Failed to reconstruct route.";
-        return false;
-      }
-      return true;
-    }
-    open_set_.erase(from_node);
-    open_set_detail.pop();
-
-    if (closed_set_.count(from_node) != 0) {
-      // if showed before, just skip...
-      continue;
-    }
-    closed_set_.emplace(from_node);
-
-    // if residual_s is less than FLAGS_min_length_for_lane_change, only move
-    // forward
-    const auto& neighbor_edges =
-        (GetResidualS(from_node) > FLAGS_min_length_for_lane_change &&
-         change_lane_enabled_)
-            ? from_node->OutToAllEdge()
-            : from_node->OutToSucEdge();
-    double tentative_g_score = 0.0;
-    next_edge_set.clear();
-    for (const auto* edge : neighbor_edges) {
-      sub_edge_set.clear();
-      sub_graph->GetSubInEdgesIntoSubGraph(edge, &sub_edge_set);
-      next_edge_set.insert(sub_edge_set.begin(), sub_edge_set.end());
-    }
-
-    for (const auto* edge : next_edge_set) {
-      const auto* to_node = edge->ToNode();
-      if (closed_set_.count(to_node) == 1) {
-        continue;
-      }
-      if (GetResidualS(edge, to_node) < FLAGS_min_length_for_lane_change) {
-        continue;
-      }
-      tentative_g_score =
-          g_score_[current_node.topo_node] + GetCostToNeighbor(edge);
-      if (edge->Type() != TopoEdgeType::TET_FORWARD) {
-        tentative_g_score -=
-            (edge->FromNode()->Cost() + edge->ToNode()->Cost()) / 2;
-      }
-      double f = tentative_g_score + HeuristicCost(to_node, dest_node);
-      if (open_set_.count(to_node) != 0 && f >= g_score_[to_node]) {
-        continue;
-      }
-      // if to_node is reached by forward, reset enter_s to start_s
-      if (edge->Type() == TopoEdgeType::TET_FORWARD) {
-        enter_s_[to_node] = to_node->StartS();
-      } else {
-        // else, add enter_s with FLAGS_min_length_for_lane_change
-        double to_node_enter_s =
-            (enter_s_[from_node] + FLAGS_min_length_for_lane_change) /
-            from_node->Length() * to_node->Length();
-        // enter s could be larger than end_s but should be less than length
-        to_node_enter_s = std::min(to_node_enter_s, to_node->Length());
-        // if enter_s is larger than end_s and to_node is dest_node
-        if (to_node_enter_s > to_node->EndS() && to_node == dest_node) {
-          continue;
-        }
-        enter_s_[to_node] = to_node_enter_s;
-      }
-
-      g_score_[to_node] = f;
-      SearchNode next_node(to_node);
-      next_node.f = f;
-      open_set_detail.push(next_node);
-      came_from_[to_node] = from_node;
-      if (open_set_.count(to_node) == 0) {
-        open_set_.insert(to_node);
-      }
-    }
-  }
-
-}
+f(n)=g(n)+h(n)
 ```
+这个公式遵循以下特性：  
+如果g(n)为0，即只计算任意顶点n到目标的评估函数h(n)，而不计算起点到顶点n的距离，则算法转化为使用贪心策略的最良优先搜索，速度最快，但可能得不出最优解；
+如果h(n)不大于顶点n到目标顶点的实际距离，则一定可以求出最优解，而且h(n)越小，需要计算的节点越多，算法效率越低，常见的评估函数有——欧几里得距离、曼哈顿距离、切比雪夫距离；
+如果h(n)为0，即只需求出起点到任意顶点n的最短路径g(n)，而不计算任何评估函数h(n)，则转化为单源最短路径问题，即Dijkstra算法，此时需要计算最多的顶点；
 
+TODO: 具体算法实现可以参考维基百科的伪代码，由于网上已经有大量的astar算法的介绍，这里暂时先跳过，后面再增加这一部分的介绍。  
 
-
+跳过Astar算法找到最优路径之后，发送routing_response，然后planning模块根据生成好的路径，控制车辆行驶。这里routing模块的使命就完成了，除非planning模块需要重新规划，则会重新发送routing_request再进行规划。  
 
 ## 调试工具
 在routing/tools目录实现了如下3个功能：
@@ -879,7 +789,7 @@ routing_tester.cc // 定时发送routing request请求
 答： 可以实现，lane有直道和弯道的区别，edge有左转和右转的区别，在转弯过程中如果需要左转，继续左转就可以了，这里只描述了道路的信息，不关注是直道还是弯道。  
 
 
-## openstreetmap数据查找
+## OSM数据查找
 通过下面的链接，替换掉网址最后的id，就可以查找到对应的way，node和relation。
 * If it's a polygon, then it's a closed way in the OSM database. You can find ways by id as simple as this: http://www.openstreetmap.org/way/305293190
 * If a specific node (the building blocks of ways) is giving a problem, the link would be : http://www.openstreetmap.org/node/305293190
@@ -897,3 +807,4 @@ routing_tester.cc // 定时发送routing request请求
 [OpenstreetMap Elements](https://wiki.openstreetmap.org/wiki/Elements)  
 [OpenstreetMap地图渲染](https://wiki.openstreetmap.org/wiki/Zh-hans:Beginners_Guide_1.5)  
 [最短路径问题](https://en.wikipedia.org/wiki/Shortest_path_problem)  
+[A*搜索算法](https://zh.wikipedia.org/wiki/A*%E6%90%9C%E5%B0%8B%E6%BC%94%E7%AE%97%E6%B3%95)  
