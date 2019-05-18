@@ -113,5 +113,86 @@ RoutingRequest Routing::FillLaneInfoIfMissing(
   return fixed_request;
 }
 ```
+BlackListRangeGenerator生成黑名单路段
+通过RoutingRequest中的black_lane和black_road来生成黑名单路段，这里会设置一整段路都为黑名单。
+```
+void BlackListRangeGenerator::GenerateBlackMapFromRequest(
+    const RoutingRequest& request, const TopoGraph* graph,
+    TopoRangeManager* const range_manager) const {
+  AddBlackMapFromLane(request, graph, range_manager);
+  AddBlackMapFromRoad(request, graph, range_manager);
+  range_manager->SortAndMerge();
+}
+```
+通过Terminal来设置黑名单，应用场景是设置routing的起点和终点。这里的起点和终点都是一个点，功能是把lane切分为2个subNode
+```
+void BlackListRangeGenerator::AddBlackMapFromTerminal(
+    const TopoNode* src_node, const TopoNode* dest_node, double start_s,
+    double end_s, TopoRangeManager* const range_manager) const {
+  double start_length = src_node->Length();
+  double end_length = dest_node->Length();
+  if (start_s < 0.0 || start_s > start_length) {
+    AERROR << "Illegal start_s: " << start_s << ", length: " << start_length;
+    return;
+  }
+  if (end_s < 0.0 || end_s > end_length) {
+    AERROR << "Illegal end_s: " << end_s << ", length: " << end_length;
+    return;
+  }
 
+  double start_cut_s = MoveSBackward(start_s, 0.0);
+  range_manager->Add(src_node, start_cut_s, start_cut_s);
+  AddBlackMapFromOutParallel(src_node, start_cut_s / start_length,
+                             range_manager);
+
+  double end_cut_s = MoveSForward(end_s, end_length);
+  range_manager->Add(dest_node, end_cut_s, end_cut_s);
+  AddBlackMapFromInParallel(dest_node, end_cut_s / end_length, range_manager);
+  range_manager->SortAndMerge();
+}
+```
+> TODO: 如果在dreamview里设置多个routing点的情况，那么会出现第一段的终点和第二段的起点有overlap的情况，排序之后，会出现2厘米的gap?目前看起来不会影响，因为会往前开，另外为什么要设置往后偏移1厘米，如果刚好停在边界点上，会如何处理？？？
+
+
+TODO: 判断是否足够进行切换Lane, 
+```
+bool TopoNode::IsOutRangeEnough(const std::vector<NodeSRange>& range_vec,
+                                double start_s, double end_s) {
+  // 是否足够切换Lane
+  if (!NodeSRange::IsEnoughForChangeLane(start_s, end_s)) {
+    return false;
+  }
+  int start_index = BinarySearchForSLarger(range_vec, start_s);
+  int end_index = BinarySearchForSSmaller(range_vec, end_s);
+
+  int index_diff = end_index - start_index;
+  if (start_index < 0 || end_index < 0) {
+    return false;
+  }
+  if (index_diff > 1) {
+    return true;
+  }
+
+  double pre_s_s = std::max(start_s, range_vec[start_index].StartS());
+  double suc_e_s = std::min(end_s, range_vec[end_index].EndS());
+
+  if (index_diff == 1) {
+    double dlt = range_vec[start_index].EndS() - pre_s_s;
+    dlt += suc_e_s - range_vec[end_index].StartS();
+    return NodeSRange::IsEnoughForChangeLane(dlt);
+  }
+  if (index_diff == 0) {
+    return NodeSRange::IsEnoughForChangeLane(pre_s_s, suc_e_s);
+  }
+  return false;
+}
+```
+
+
+## Reference
+城市道路分析：
+https://geoffboeing.com/2016/11/osmnx-python-street-networks/
+https://automating-gis-processes.github.io/2018/notebooks/L6/network-analysis.html
+https://socialhub.technion.ac.il/wp-content/uploads/2017/08/revise_version-final.pdf
+https://stackoverflow.com/questions/29639968/shortest-path-using-openstreetmap-datanodes-and-ways
 

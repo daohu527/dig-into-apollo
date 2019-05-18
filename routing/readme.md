@@ -722,7 +722,7 @@ SubTopoGraph::SubTopoGraph(
 ```
 上述过程比较简单，浏览代码即可以理解。我们主要看下如何使用subgraph。  
 
-由于Graph节点中已经有边的信息，因此原先的Graph中的边的信息实际上已经保存在节点中了，最后Astar实际上只用到了子图的信息，因为节点有自己边的信息。subgraph的核心就是"GetSubInEdgesIntoSubGraph"和"GetSubOutEdgesIntoSubGraph"通过边找到子边，如果节点不存在子节点，那么返回原先的边，通过该函数可以同时找到边和子边，这样节点和子节点都可以找到了。我们下面重点分析下"GetSubInEdgesIntoSubGraph"，另外一个类似:  
+由于Graph节点中已经有边的信息，因此原先的Graph中的边的信息实际上已经保存在节点中了，最后Astar实际上只用到了子图的信息，因为节点有自己边的信息。subgraph的核心是通过边找到子边，如果节点不存在子节点，那么返回原先的边，通过该函数可以同时找到边和子边，这样节点和子节点都可以找到了。我们下面重点分析下"GetSubInEdgesIntoSubGraph"，另外一个类似:  
 ```
 void SubTopoGraph::GetSubInEdgesIntoSubGraph(
     const TopoEdge* edge,
@@ -747,7 +747,7 @@ void SubTopoGraph::GetSubInEdgesIntoSubGraph(
 
 
 
-#### 最短路径
+#### Astar算法
 apollo的最短路径算法采用的是Astar算法，代码实现在"routing/strategy"目录。可以看到strategy中实现了一个"Strategy"的基类，也就是说后面可以扩展其他的路径策略。  
 ```
 class Strategy {
@@ -862,107 +862,11 @@ bool AStarStrategy::Search(const TopoGraph* graph,
 }
 ```
 
-BlackListRangeGenerator生成黑名单路段
-通过RoutingRequest中的black_lane和black_road来生成黑名单路段，这里会设置一整段路都为黑名单。
-```
-void BlackListRangeGenerator::GenerateBlackMapFromRequest(
-    const RoutingRequest& request, const TopoGraph* graph,
-    TopoRangeManager* const range_manager) const {
-  AddBlackMapFromLane(request, graph, range_manager);
-  AddBlackMapFromRoad(request, graph, range_manager);
-  range_manager->SortAndMerge();
-}
-```
-
-通过Terminal来设置黑名单，应用场景是设置routing的起点和终点。这里的起点和终点都是一个点，功能是把lane切分为2个subNode
-```
-void BlackListRangeGenerator::AddBlackMapFromTerminal(
-    const TopoNode* src_node, const TopoNode* dest_node, double start_s,
-    double end_s, TopoRangeManager* const range_manager) const {
-  double start_length = src_node->Length();
-  double end_length = dest_node->Length();
-  if (start_s < 0.0 || start_s > start_length) {
-    AERROR << "Illegal start_s: " << start_s << ", length: " << start_length;
-    return;
-  }
-  if (end_s < 0.0 || end_s > end_length) {
-    AERROR << "Illegal end_s: " << end_s << ", length: " << end_length;
-    return;
-  }
-
-  double start_cut_s = MoveSBackward(start_s, 0.0);
-  range_manager->Add(src_node, start_cut_s, start_cut_s);
-  AddBlackMapFromOutParallel(src_node, start_cut_s / start_length,
-                             range_manager);
-
-  double end_cut_s = MoveSForward(end_s, end_length);
-  range_manager->Add(dest_node, end_cut_s, end_cut_s);
-  AddBlackMapFromInParallel(dest_node, end_cut_s / end_length, range_manager);
-  range_manager->SortAndMerge();
-}
-```
-
-> TODO: 如果在dreamview里设置多个routing点的情况，那么会出现第一段的终点和第二段的起点有overlap的情况，排序之后，会出现2厘米的gap?目前看起来不会影响，因为会往前开，另外为什么要设置往后偏移1厘米，如果刚好停在边界点上，会如何处理？？？
-
-```
-Navigator::Navigator(const std::string& topo_file_path) {
-  Graph graph;
-  if (!common::util::GetProtoFromFile(topo_file_path, &graph)) {
-    AERROR << "Failed to read topology graph from " << topo_file_path;
-    return;
-  }
-
-  graph_.reset(new TopoGraph());
-  if (!graph_->LoadGraph(graph)) {
-    AINFO << "Failed to init navigator graph failed! File path: "
-          << topo_file_path;
-    return;
-  }
-  black_list_generator_.reset(new BlackListRangeGenerator);
-  result_generator_.reset(new ResultGenerator);
-  is_ready_ = true;
-  AINFO << "The navigator is ready.";
-}
-```
 
 
-TODO: 判断是否足够进行切换Lane, 
-```
-bool TopoNode::IsOutRangeEnough(const std::vector<NodeSRange>& range_vec,
-                                double start_s, double end_s) {
-  // 是否足够切换Lane
-  if (!NodeSRange::IsEnoughForChangeLane(start_s, end_s)) {
-    return false;
-  }
-  int start_index = BinarySearchForSLarger(range_vec, start_s);
-  int end_index = BinarySearchForSSmaller(range_vec, end_s);
 
-  int index_diff = end_index - start_index;
-  if (start_index < 0 || end_index < 0) {
-    return false;
-  }
-  if (index_diff > 1) {
-    return true;
-  }
-
-  double pre_s_s = std::max(start_s, range_vec[start_index].StartS());
-  double suc_e_s = std::min(end_s, range_vec[end_index].EndS());
-
-  if (index_diff == 1) {
-    double dlt = range_vec[start_index].EndS() - pre_s_s;
-    dlt += suc_e_s - range_vec[end_index].StartS();
-    return NodeSRange::IsEnoughForChangeLane(dlt);
-  }
-  if (index_diff == 0) {
-    return NodeSRange::IsEnoughForChangeLane(pre_s_s, suc_e_s);
-  }
-  return false;
-}
-```
-
-
-## 调试
-在routing/tools目录
+## 调试工具
+在routing/tools目录实现了如下3个功能：
 ```
 routing_cast.cc // 定时发送routing response响应
 routing_dump.cc // 保存routing请求
@@ -971,51 +875,23 @@ routing_tester.cc // 定时发送routing request请求
 ```
 
 
-
-
-
-
 ## 问题
-如果是曲线转弯，并且需要变道的情况，是否可以规划？比如在十字路口，左转的时候有车挡住，这时候需要变道，就是edge右转，再加上node是曲线的情况，是否能够实现，这应该是planning应该考虑的情况？？？
+1. 如果是曲线转弯，并且需要变道的情况，是否可以规划？比如在十字路口，左转中途有车挡住，这时候需要变道，就是edge左转，再加上node是曲线的情况，是否能够实现，这应该是planning应该考虑的情况？  
+答： 可以实现，lane有直道和弯道的区别，edge有左转和右转的区别，在转弯过程中如果需要左转，继续左转就可以了，这里只描述了道路的信息，不关注是直道还是弯道。  
 
 
-
-## 需求分析
-1. 如何从A点到B点
-2. 如何规避某些点
-3. 如何途径某些点
-4. 如何设置固定线路，而且不会变？
-
-## routing for osm
-https://wiki.openstreetmap.org/wiki/Routing
-
-http://www.patrickklose.com/posts/parsing-osm-data-with-python/
-
-城市道路分析：
-https://geoffboeing.com/2016/11/osmnx-python-street-networks/
-https://automating-gis-processes.github.io/2018/notebooks/L6/network-analysis.html
-
-https://socialhub.technion.ac.il/wp-content/uploads/2017/08/revise_version-final.pdf
-
-https://stackoverflow.com/questions/29639968/shortest-path-using-openstreetmap-datanodes-and-ways
-
-
-## openstreetmap 查找节点
-If it's a polygon, then it's a closed way in the OSM database. You can find ways by id as simple as this: http://www.openstreetmap.org/way/305293190
-
-If a specific node (the building blocks of ways) is giving a problem, the link would be http://www.openstreetmap.org/node/305293190 .
-
-If it is a multipolygon (for example a building with a hole in it), the link would be http://www.openstreetmap.org/relation/305293190
-
-
-## 地图介绍
-https://blog.csdn.net/scy411082514/article/details/7484497
-
-## 地图下载
-https://www.openstreetmap.org/export#map=15/22.5163/113.9380
+## openstreetmap数据查找
+通过下面的链接，替换掉网址最后的id，就可以查找到对应的way，node和relation。
+1. If it's a polygon, then it's a closed way in the OSM database. You can find ways by id as simple as this: http://www.openstreetmap.org/way/305293190
+2. If a specific node (the building blocks of ways) is giving a problem, the link would be : http://www.openstreetmap.org/node/305293190
+3. If it is a multipolygon (for example a building with a hole in it), the link would be :   http://www.openstreetmap.org/relation/305293190
+地图可以在下面的链接选择导出，导出格式为OSM格式:  
+1. You can download the osm from: https://www.openstreetmap.org/export#map=15/22.5163/113.9380
 
 
 ## Reference
+[OSM地图介绍](https://blog.csdn.net/scy411082514/article/details/7484497)
+[OSM Routing](https://wiki.openstreetmap.org/wiki/Routing)  
 [OSM Pathfinding](https://github.com/daohu527/osm-pathfinding)
 [OpenstreetMap](https://www.openstreetmap.org/)  
 [OpenstreetMap Elements](https://wiki.openstreetmap.org/wiki/Elements)  
