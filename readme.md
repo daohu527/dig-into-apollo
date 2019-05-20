@@ -2,7 +2,7 @@
 
 > Rome wasn't built in a day. - Li Proverbe au Vilain
 
-本项目是对[apollo](https://github.com/ApolloAuto/apollo)拙劣的介绍，主要根据各个模块对apollo的代码进行了分析，如果你需要了解自动驾驶更多的内容，请参考另外一个项目[awesome-self-driving-cars](https://github.com/daohu527/awesome-self-driving-cars)，我相信在不久的将来，科技必将改变世界。  
+本项目是对[apollo](https://github.com/ApolloAuto/apollo)拙劣的介绍，主要根据各个模块对apollo的代码进行了分析，如果你需要了解自动驾驶更多的内容，请参考另外一个项目[awesome-self-driving-cars](https://github.com/daohu527/awesome-self-driving-cars)，相信在不久的将来，科技必将改变世界。  
 
 
 ## 目录
