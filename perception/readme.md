@@ -46,3 +46,12 @@ apollo的感知模块没有开放训练模型，只是开放了testdata，下载
 
 
 
+radar模块被"RadarDetectionComponent"引用，perception的入口在onboard中。我们最后分析下"RadarDetectionComponent"模块。  
+
+
+## Reference
+[A Beginner's Guide to Convolutional Neural Networks](https://skymind.ai/wiki/convolutional-network)  
+[cnn](https://cs231n.github.io/convolutional-networks/)  
+[traffic light dataset](https://hci.iwr.uni-heidelberg.de/node/6132/download/3d66608cfb112934ef40175e9a20c81f)  
+[pytorch-tutorial](https://github.com/yunjey/pytorch-tutorial)  
+
