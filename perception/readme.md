@@ -4,9 +4,9 @@
 
 
 ## Table of Contents
-- [基本原理](#cnn)
-    - [什么是CNN？](#cnn)
-    - [CNN的原理](#what_is_cnn)
+- [CNN](#cnn)
+    - [什么是CNN？](#what_is_cnn)
+    - [CNN的原理](#cnn_principle)
         - [卷积层(Convolutional Layer)](#convolutional)
         - [池化层(Max Pooling Layer)](#max_pool)
         - [全连接层(Fully Connected Layer)](#fully_connect)
