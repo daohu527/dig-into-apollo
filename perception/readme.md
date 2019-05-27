@@ -4,7 +4,7 @@
 
 
 ## Table of Contents
-- [CNN](#https://github.com/daohu527/Dig-into-Apollo/blob/master/perception/cnn.md)
+- [CNN](#cnn.md)
     - [什么是CNN？](#what_is_cnn)
     - [CNN的原理](#cnn_principle)
         - [卷积层(Convolutional Layer)](#convolutional)
@@ -32,7 +32,7 @@
 ├── lib          // lib库
 ├── lidar        // 雷达
 ├── map          // 地图
-├── onboard      // 消息处理
+├── onboard      // 各个模块的构建
 ├── production   // 加载模块
 ├── proto        // 数据格式，protobuf
 ├── radar        // 毫米波
@@ -40,7 +40,7 @@
 └── testdata    // 上述几个模块的测试数据，包括训练好的模型
 ```
 apollo的感知模块没有开放训练模型，只是开放了testdata，下载训练好的模型之后来跑一个简单的Demo。  
-
+其中production目录为加载lanuch和dag模块，而感知各个模块的申明和构建在onboard中，
 
 
 

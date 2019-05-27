@@ -73,6 +73,9 @@ https://www.tensorflow.org/tutorials/estimators/cnn
 * **卷积** 卷积可以对应到2个函数叠加，因此用一个filter和图片叠加就可以求出整个图片的情况，可以用在图像的边缘检测，图片锐化，模糊等方面。[Convolution](https://en.wikipedia.org/wiki/Convolution)  
 
 
+## 论文汇总
+// todo
+
 <a name="reference" />
 
 ## 引用
