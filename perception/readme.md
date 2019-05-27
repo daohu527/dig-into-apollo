@@ -11,6 +11,13 @@
 ## 基础知识
 
 ## CNN
+首先CNN是什么呢？当我们给小孩教一个陌生东西的时候，我们往往需要回答以下几个问题：  
+![dog_qa](img/dog_qa.jpg)  
+我们可以参照上面的过程来介绍下CNN，CNN的全称是"Convolutional Neural Network"(卷积神经网络)。  
+![cnn_qa](img/cnn_qa.jpg)  
+
+
+
 
 #### Convolutional layer(卷积层)
 主要功能是提取特征。  
