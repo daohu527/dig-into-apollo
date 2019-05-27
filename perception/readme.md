@@ -4,15 +4,15 @@
 
 
 ## Table of Contents
-- [CNN](#cnn.md)
-    - [什么是CNN？](#what_is_cnn)
-    - [CNN的原理](#cnn_principle)
-        - [卷积层(Convolutional Layer)](#convolutional)
-        - [池化层(Max Pooling Layer)](#max_pool)
-        - [全连接层(Fully Connected Layer)](#fully_connect)
-    - [如何构建CNN](#how_to)
-    - [基本概念](#base_concept)
-    - [引用](#reference)
+- [CNN](cnn)
+    - [什么是CNN？](cnn#what_is_cnn)
+    - [CNN的原理](cnn#cnn_principle)
+        - [卷积层(Convolutional Layer)](cnn#convolutional)
+        - [池化层(Max Pooling Layer)](cnn#max_pool)
+        - [全连接层(Fully Connected Layer)](cnn#fully_connect)
+    - [如何构建CNN](cnn#how_to)
+    - [基本概念](cnn#base_concept)
+    - [引用](cnn#reference)
 
 
 <a name="introduction" />
