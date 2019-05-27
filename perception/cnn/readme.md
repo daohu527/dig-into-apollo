@@ -6,6 +6,7 @@
     - [全连接层(Fully Connected Layer)](#fully_connect)
 - [如何构建CNN](#how_to)
 - [基本概念](#base_concept)
+- [论文汇总](#paper)
 - [引用](#reference)
 
 <a name="what_is_cnn" />
@@ -50,11 +51,15 @@ CNN是一种人工神经网络，CNN的结构可以分为3层：
 那么为什么这样做可行呢？丢失的一部分数据会不会对结果有影响，实际上，池化层不会对数据丢失产生影响，因为我们每次保留的输出都是局部最显著的一个输出，**而池化之后，最显著的特征并没有丢失**。我们只保留了认为最显著的特征，而把其他无用的信息丢掉，来减少运算。池化层的引入还保证了平移不变性，即同样的图像经过翻转变形之后，通过池化层，可以得到相似的结果。  
 既然是降采样，那么是否有其他方法实现降采样，也能达到同样的效果呢？当然有，通过其它的降采样方式，我们同样可以得到和池化层相同的结果，因此就可以拿这种方式替换掉池化层，可以起到相同的效果。  
 
+> 通常卷积层和池化层会重复多次形成具有多个隐藏层的网络，俗称深度神经网络。
 
 <a name="fully_connect" />
 
 #### 全连接层(Fully Connected Layer)
-全连接层的作用主要是分类，前面通过卷积和池化层得出的特征，在全连接层对这些总结好的特征做分类。因为全连接层占用了神经网络80%的参数，因此对全连接层的优化就显得至关重要，现在也有用平均值来做最后的分类的。所以模型的过程也是提取特征->分类。
+全连接层的作用主要是分类，前面通过卷积和池化层得出的特征，在全连接层对这些总结好的特征做分类。全连接层就是一个完全连接的神经网络，根据权重每个神经元反馈的比重不一样，最后通过调整权重和网络得到分类的结果。  
+![fully_connect](../img/fully_connect.png)  
+因为全连接层占用了神经网络80%的参数，因此对全连接层的优化就显得至关重要，现在也有用平均值来做最后的分类的。  
+
 
 
 <a name="how_to" />
@@ -73,6 +78,8 @@ https://www.tensorflow.org/tutorials/estimators/cnn
 * **卷积** 卷积可以对应到2个函数叠加，因此用一个filter和图片叠加就可以求出整个图片的情况，可以用在图像的边缘检测，图片锐化，模糊等方面。[Convolution](https://en.wikipedia.org/wiki/Convolution)  
 
 
+<a name="paper" />
+
 ## 论文汇总
 // todo
 
@@ -83,3 +90,4 @@ https://www.tensorflow.org/tutorials/estimators/cnn
 [A Beginner's Guide To Understanding Convolutional Neural Networks](https://adeshpande3.github.io/A-Beginner%27s-Guide-To-Understanding-Convolutional-Neural-Networks/)  
 [Convolutional Neural Networks (CNNs / ConvNets)](http://cs231n.github.io/convolutional-networks/)  
 [An intuitive guide to Convolutional Neural Networks](https://www.freecodecamp.org/news/an-intuitive-guide-to-convolutional-neural-networks-260c2de0a050/)  
+[Fully Connected Deep Networks](https://www.oreilly.com/library/view/tensorflow-for-deep/9781491980446/ch04.html)  
