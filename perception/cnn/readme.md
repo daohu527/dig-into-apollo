@@ -56,7 +56,7 @@ CNN是一种人工神经网络，CNN的结构可以分为3层：
 <a name="fully_connect" />
 
 #### 全连接层(Fully Connected Layer)
-全连接层的作用主要是分类，前面通过卷积和池化层得出的特征，在全连接层对这些总结好的特征做分类。全连接层就是一个完全连接的神经网络，根据权重每个神经元反馈的比重不一样，最后通过调整权重和网络得到分类的结果。  
+全连接层的作用主要是进行分类。**前面通过卷积和池化层得出的特征，在全连接层对这些总结好的特征做分类**。全连接层就是一个完全连接的神经网络，根据权重每个神经元反馈的比重不一样，最后通过调整权重和网络得到分类的结果。  
 ![fully_connect](../img/fully_connect.png)  
 因为全连接层占用了神经网络80%的参数，因此对全连接层的优化就显得至关重要，现在也有用平均值来做最后的分类的。  
 
@@ -66,9 +66,111 @@ CNN是一种人工神经网络，CNN的结构可以分为3层：
 
 ## 如何构建CNN
 现在我们已经清楚了CNN的原理，那么现在你想不想动手做一个CNN呢？下面我们通过tensorflow来实现一个CNN神经网络的例子：  
-首先读取数据，然后用tensorflow创建网络，之后就可以训练模型，并且查看模型训练的情况，最后保存训练好的模型。  
+1. 首先我们需要载入tensorflow环境，python代码如下:  
+```
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-https://www.tensorflow.org/tutorials/estimators/cnn  
+# Imports
+import numpy as np
+import tensorflow as tf
+
+tf.logging.set_verbosity(tf.logging.INFO)
+
+# Our application logic will be added here
+
+if __name__ == "__main__":
+  tf.app.run()
+```
+其中tf.layers模块包含用于创建上述3种层的方法：  
+* conv2d()。构建一个二维卷积层。接受的参数为过滤器数量，过滤器核大小，填充和激活函数。  
+* max_pooling2d()。构建一个使用最大池化算法的二维池化层。接受的参数为池化过滤器大小和步长。  
+* dense()。构建全连接层，接受的岑姝为神经元数量和激活函数。  
+上述这些方法都接受张量作为输入，并返回转换后的张量作为输出。这样可轻松地将一个层连接到另一个层：只需从一个层创建方法中获取输出，并将其作为输入提供给另一个层即可。  
+
+#### 输入层
+对输入进行转换，输入的张量的形状应该为[batch_size, image_height, image_width, channels]。  
+* batch_size。在训练期间执行梯度下降法时使用的样本子集的大小。
+* image_height。样本图像的高度。
+* image_width。样本图像的宽度。
+* channels。样本图像中颜色通道的数量。彩色图像有 3 个通道（红色、绿色、蓝色）。单色图像只有 1 个通道（黑色）。
+
+```
+input_layer = tf.reshape(features["x"], [-1, 28, 28, 1])
+```
+
+#### 卷积层
+我们的第一个卷积层创建32个5 * 5的过滤器。  
+```
+conv1 = tf.layers.conv2d(
+    inputs=input_layer,
+    filters=32,
+    kernel_size=[5, 5],
+    padding="same",
+    activation=tf.nn.relu)
+```
+
+#### 池化层
+接下来，我们将第一个池化层连接到刚刚创建的卷积层。
+```
+pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+```
+
+#### 卷积层2和池化层2
+对于卷积层 2，我们配置 64 个 5x5 过滤器，并应用 ReLU 激活函数；对于池化层 2，我们使用与池化层 1 相同的规格（一个 2x2 最大池化过滤器，步长为2）：  
+```
+conv2 = tf.layers.conv2d(
+    inputs=pool1,
+    filters=64,
+    kernel_size=[5, 5],
+    padding="same",
+    activation=tf.nn.relu)
+
+pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+```
+
+#### 全连接层
+接下来，我们需要向CNN添加全连接层（具有1024个神经元和ReLU激活函数），以对卷积/池化层提取的特征执行分类。不过，在我们连接该层之前，我们需要先扁平化特征图(pool2)，以将其变形为 [batch_size, features]，使张量只有两个维度：
+```
+pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
+```
+在上面的 reshape() 操作中，-1 表示 batch_size 维度将根据输入数据中的样本数量动态计算。每个样本都具有 7（pool2 高度）* 7（pool2 宽度）* 64（pool2 通道）个特征。
+```
+dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+```
+为了改善模型的结果，我们还会使用 layers 中的 dropout 方法，向密集层应用丢弃正则化：  
+```
+dropout = tf.layers.dropout(
+    inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
+```
+
+#### 对数层
+我们的神经网络中的最后一层是对数层，该层返回预测的原始值。我们创建一个具有 10 个神经元（介于 0 到 9 之间的每个目标类别对应一个神经元）的密集层，并应用线性激活函数（默认函数）：  
+```
+logits = tf.layers.dense(inputs=dropout, units=10)
+```
+
+#### 生成预测
+```
+tf.argmax(input=logits, axis=1)
+```
+
+我们可以使用 tf.nn.softmax 应用 softmax 激活函数，以从对数层中得出概率：  
+```
+tf.nn.softmax(logits, name="softmax_tensor")
+```
+我们将预测编译为字典，并返回:  
+```
+predictions = {
+    "classes": tf.argmax(input=logits, axis=1),
+    "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
+}
+if mode == tf.estimator.ModeKeys.PREDICT:
+  return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+```
+
+
 
 
 <a name="base_concept" />
@@ -91,3 +193,4 @@ https://www.tensorflow.org/tutorials/estimators/cnn
 [Convolutional Neural Networks (CNNs / ConvNets)](http://cs231n.github.io/convolutional-networks/)  
 [An intuitive guide to Convolutional Neural Networks](https://www.freecodecamp.org/news/an-intuitive-guide-to-convolutional-neural-networks-260c2de0a050/)  
 [Fully Connected Deep Networks](https://www.oreilly.com/library/view/tensorflow-for-deep/9781491980446/ch04.html)  
+[使用 Estimator 构建卷积神经网络](https://www.tensorflow.org/tutorials/estimators/cnn?hl=zh-cn)  
