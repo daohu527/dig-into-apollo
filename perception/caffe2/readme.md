@@ -13,8 +13,8 @@
 <a name="env" />
 
 ## Caffe2环境准备
-我们以有显卡的情况为例，来安装caffe2环境，首先安装caffe2之前需要按照英伟达的显卡驱动，之后需要安装cuda toolkit和cuDNN，最后我们来安装Caffe2。  
-我们先把**需要安装的软件**列出来，再告诉如何选择对应的版本：  
+我们以有显卡的情况为例，来安装caffe2环境，安装caffe2之前需要先安装英伟达的显卡驱动，之后还要安装cuda toolkit和cuDNN，最后再安装Caffe2。  
+我们先把**需要安装的软件**列出来，再告诉你如何选择对应的版本：  
 * 操作系统: Ubuntu 16.04.5 LTS
 * 显卡驱动版本: 384.130
 * CUDA Toolkit版本: CUDA Toolkit 9.0
@@ -24,7 +24,7 @@
 <a name="drivers" />
 
 ## 安装显卡驱动
-由于是ubuntu 16.04可以在设置"System Settings - Software & Updates"中选择Using NVIDIA驱动。  
+ubuntu 16.04可以在设置"System Settings - Software & Updates"中选择Using NVIDIA驱动。  
 ![nvidia_drivers](../img/nvidia_drivers.png)  
 安装好驱动后可以通过下面的命令来验证驱动是否安装成功：  
 ```
