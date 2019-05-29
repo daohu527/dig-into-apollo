@@ -13,7 +13,17 @@
     - [如何构建CNN](cnn#how_to)
     - [基本概念](cnn#base_concept)
     - [引用](cnn#reference)
-
+- [Caffe2](caffe2)
+    - [Caffe2环境准备](caffe2#env)
+    - [安装显卡驱动](caffe2#drivers)
+    - [安装CUDA](caffe2#cuda)
+        - [选择CUDA版本](caffe2#cuda_version)
+        - [安装CUDA](caffe2#cuda_install)
+        - [设置环境变量](caffe2#cuda_env)
+        - [检验安装](caffe2#cuda_check)
+    - [安装cuDNN](caffe2#cudnn)
+    - [安装Caffe2](caffe2#caffe2)
+    - [参考](caffe2#reference)
 
 <a name="introduction" />
 

@@ -1,3 +1,11 @@
+# URL
+https://blog.csdn.net/jinzhuojun/article/details/80875264  
+https://blog.csdn.net/jinzhuojun/article/details/83038279  
+https://zhuanlan.zhihu.com/p/33416142  
+https://github.com/ApolloAuto/apollo/blob/master/docs/specs/3d_obstacle_perception_cn.md  
+
+
+
 ## ContiArsDetector::RawObs2Frame
 功能: 雷达原始数据转换为一帧  
 输入: 其中ContiRadar的消息格式在"modules/drivers/proto/conti_radar.proto"中，这部分是Radar输出的数据。  
