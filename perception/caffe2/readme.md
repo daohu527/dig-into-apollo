@@ -14,7 +14,7 @@
 
 ## Caffe2环境准备
 我们以有显卡的情况为例，来安装caffe2环境，首先安装caffe2之前需要按照英伟达的显卡驱动，之后需要安装cuda toolkit和cuDNN，最后我们来安装Caffe2。  
-我们先把需要的按照的软件列出来，再告诉如何选择对应的版本：  
+我们先把**需要安装的软件**列出来，再告诉如何选择对应的版本：  
 * 操作系统: Ubuntu 16.04.5 LTS
 * 显卡驱动版本: 384.130
 * CUDA Toolkit版本: CUDA Toolkit 9.0
@@ -69,16 +69,16 @@ Linux version 4.15.0-50-generic (buildd@lgw01-amd64-029) (gcc version 5.4.0 2016
 
 ```
 
-这里提供的是支持的CUDA10.1需要支持的设置，ubuntu 16.04已经支持了，所以9.0肯定也没有问题。  
+这里提供的是支持CUDA10.1需要的配置，我目前的ubuntu 16.04已经都支持了，所以9.0肯定没有问题。  
 
 <a name="cuda_install" />
 
 #### 安装CUDA
-之后下载CUDA，CUDA官方的[下载地址](https://developer.nvidia.com/cuda-toolkit-archive)，下载完成之后运行：  
+选择好版本后，就可以下载安装CUDA了，CUDA官方的[下载地址](https://developer.nvidia.com/cuda-toolkit-archive)，选择对应的版本，下载之后运行：  
 ```
 sudo sh cuda_9.0.176_384.81_linux.run
 ```
-**记住前面已经安装了驱动，所以安装CUDA的时候第一步需要跳过安装驱动，只安装CUDA Toolkit**，之后按照提示安装好之后就可以了。
+**记住前面已经安装了驱动，所以安装CUDA的时候第一步需要跳过安装驱动，只安装CUDA Toolkit**，接着按照提示安装就可以了。
 
 
 <a name="cuda_env" />
@@ -93,7 +93,7 @@ sudo vi ~/.bashrc
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda-9.0/lib64:/usr/local/cuda-9.0/extras/CUPTI/lib64"
 export CUDA_HOME=/usr/local/cuda-9.0
 ```
-将环境生效:  
+将环境变量生效:  
 ```
 source ~/.bashrc
 ```
@@ -101,13 +101,13 @@ source ~/.bashrc
 <a name="cuda_check" />
 
 #### 检验安装
-检验安装是否成功，我们通过samples的deviceQuery来检验是否安装成功。  
+我们可以通过samples的deviceQuery来检验CUDA是否安装成功。  
 ```
 cd /usr/local/cuda/samples/1_Utilities/deviceQuery 
 sudo make
 ./deviceQuery
 ```
-如果"Result = PASS"，则表示安装成功，如果提示"Result = FAIL"，则表示安装失败：  
+如果提示"Result = PASS"，则表示安装成功，如果提示"Result = FAIL"，则表示安装失败：  
 ```
 $ ./deviceQuery 
 ./deviceQuery Starting...
@@ -158,9 +158,9 @@ Result = PASS
 <a name="cudnn" />
 
 ## 安装cuDNN
-我们安装好了CUDA之后，如果希望进行深度学习训练的时候能够加速，则需要安装"cuDNN"，这一部很简单，只需要根据CUDA的版本选择对应cuDNN的版本就可以了。  
-可以在[官网](https://developer.nvidia.com/rdp/cudnn-download)上下载，CUDA 9.0对应的cuDNN版本为 v7.6.0，下载对应的linux版本。  
-下载之后解压：  
+我们安装好了CUDA之后，如果希望深度学习训练的时候能够加速，则需要安装"cuDNN"，这一步很简单，只需要根据CUDA的版本选择对应的cuDNN版本就可以了。  
+可以在[官网](https://developer.nvidia.com/rdp/cudnn-download)下载，CUDA 9.0对应的cuDNN版本为v7.6.0，下载选择linux版本。  
+下载完成之后解压文件：  
 ```
 tar -xzvf cudnn-9.0-linux-x64-v7.6.0.64.tgz
 ```
@@ -176,24 +176,26 @@ tar -xzvf cudnn-9.0-linux-x64-v7.6.0.64.tgz
 │   │   └── libcudnn_static.a
 │   └── NVIDIA_SLA_cuDNN_Support.txt
 ```
-之后把文件拷贝到CUDA的目录下就可以了：  
+然后把文件拷贝到CUDA的目录下就可以了：  
 ```
 sudo cp cuda/include/cudnn.h /usr/local/cuda-9.0/include
 sudo cp cuda/lib64/libcudnn* /usr/local/cuda-9.0/lib64
 ```
 
-经过上面的步骤，我们就安装好了CUDA的环境，主要是确认好CUDA的版本，如果版本不对，对应的检测就不通过。需要确认好支持的版本。  
+经过上面的步骤，我们就安装好了整个CUDA环境，主要是确认好CUDA版本，如果版本不对，对应的检测就不通过。需要仔细确认系统支持的CUDA版本。  
 
 
 <a name="caffe2" />
 
 ## 安装Caffe2
-caffe2的环境选择直接用anaconda，因为anaconda集成大部分的工具，安装起来也很简单：
+caffe2选择直接用anaconda安装，因为anaconda集成了大部分的工具，安装起来也很简单：
 ```
 conda install pytorch-nightly -c pytorch
 ```
 这是官网的[安装说明](https://caffe2.ai/docs/getting-started.html?platform=ubuntu&configuration=prebuilt)  
 
+
+至此所有的安装就已经完成了，可以开始深度学习的尝试了。  
 
 <a name="reference" />
 
