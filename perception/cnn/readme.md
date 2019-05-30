@@ -183,7 +183,7 @@ if mode == tf.estimator.ModeKeys.PREDICT:
 <a name="paper" />
 
 ## 论文汇总  
-####　ImageNet分类
+#### ImageNet分类
 ![imageNet](../img/imageNet.PNG)  
 - Microsoft (Deep Residual Learning) [Paper](https://arxiv.org/pdf/1512.03385v1.pdf) [Slide](http://image-net.org/challenges/talks/ilsvrc2015_deep_residual_learning_kaiminghe.pdf)  
     - Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun, Deep Residual Learning for Image Recognition, arXiv:1512.03385.
@@ -283,7 +283,7 @@ if mode == tf.estimator.ModeKeys.PREDICT:
     - Jure Žbontar, Yann LeCun, Computing the Stereo Matching Cost with a Convolutional Neural Network, CVPR, 2015.
 - Colorful Image Colorization Richard Zhang, Phillip Isola, Alexei A. Efros, ECCV, 2016 [Paper](http://arxiv.org/pdf/1603.08511.pdf), [Code](https://github.com/richzhang/colorization)
 - Ryan Dahl, [Blog](https://tinyclouds.org/colorize/)
-- Feature Learning by Inpainting[Paper](https://arxiv.org/pdf/1604.07379v1.pdf) [Code](https://github.com/pathak22/context-encoder)
+- Feature Learning by Inpainting [Paper](https://arxiv.org/pdf/1604.07379v1.pdf) [Code](https://github.com/pathak22/context-encoder)
     - Deepak Pathak, Philipp Krahenbuhl, Jeff Donahue, Trevor Darrell, Alexei A. Efros, Context Encoders: Feature Learning by Inpainting, CVPR, 2016
 
 #### 边缘检测(Edge Detection)
@@ -297,11 +297,29 @@ if mode == tf.estimator.ModeKeys.PREDICT:
 
 
 #### 语义分割(Semantic Segmentation)
-
-
-
-
-
+![semantic](../img/semantic.PNG)
+- PASCAL VOC2012 Challenge Leaderboard (01 Sep. 2016) 
+![](../img/pascal.png)
+[from PASCAL VOC2012 leaderboards](http://host.robots.ox.ac.uk:8080/leaderboard/displaylb.php?challengeid=11&compid=6)
+- SEC: Seed, Expand and Constrain
+    - Alexander Kolesnikov, Christoph Lampert, Seed, Expand and Constrain: Three Principles for Weakly-Supervised Image Segmentation, ECCV, 2016. [Paper](http://pub.ist.ac.at/~akolesnikov/files/ECCV2016/main.pdf) [Code](https://github.com/kolesman/SEC)
+- Adelaide
+    - Guosheng Lin, Chunhua Shen, Ian Reid, Anton van dan Hengel, Efficient piecewise training of deep structured models for semantic segmentation, arXiv:1504.01013. [Paper](https://arxiv.org/pdf/1504.01013.pdf) (1st ranked in VOC2012)
+    - Guosheng Lin, Chunhua Shen, Ian Reid, Anton van den Hengel, Deeply Learning the Messages in Message Passing Inference, arXiv:1508.02108. [Paper](https://arxiv.org/pdf/1506.02108.pdf) (4th ranked in VOC2012)
+- Deep Parsing Network (DPN)
+    - Ziwei Liu, Xiaoxiao Li, Ping Luo, Chen Change Loy, Xiaoou Tang, Semantic Image Segmentation via Deep Parsing Network, arXiv:1509.02634 / ICCV 2015 [Paper](https://arxiv.org/pdf/1509.02634.pdf) (2nd ranked in VOC 2012)
+- CentraleSuperBoundaries, INRIA [Paper](https://arxiv.org/pdf/1511.07386.pdf)
+    - Iasonas Kokkinos, Surpassing Humans in Boundary Detection using Deep Learning, arXiv:1411.07386 (4th ranked in VOC 2012)
+- BoxSup [Paper](http://arxiv.org/pdf/1503.01640.pdf)
+    - Jifeng Dai, Kaiming He, Jian Sun, BoxSup: Exploiting Bounding Boxes to Supervise Convolutional Networks for Semantic Segmentation, arXiv:1503.01640. (6th ranked in VOC2012)
+- POSTECH
+    - Hyeonwoo Noh, Seunghoon Hong, Bohyung Han, Learning Deconvolution Network for Semantic Segmentation, arXiv:1505.04366. [Paper](https://arxiv.org/pdf/1505.04366.pdf) (7th ranked in VOC2012)
+    - Seunghoon Hong, Hyeonwoo Noh, Bohyung Han, Decoupled Deep Neural Network for Semi-supervised Semantic Segmentation, arXiv:1506.04924. [Paper](https://arxiv.org/pdf/1506.04924.pdf)
+    - Seunghoon Hong,Junhyuk Oh,	Bohyung Han, and	Honglak Lee, Learning Transferrable Knowledge for Semantic Segmentation with Deep Convolutional Neural Network, arXiv:1512.07928 [Paper](https://arxiv.org/pdf/1512.07928.pdf) [Project Page](http://cvlab.postech.ac.kr/research/transfernet/)
+- Conditional Random Fields as Recurrent Neural Networks [Paper](https://arxiv.org/pdf/1502.03240.pdf)
+    - Shuai Zheng, Sadeep Jayasumana, Bernardino Romera-Paredes, Vibhav Vineet, Zhizhong Su, Dalong Du, Chang Huang, Philip H. S. Torr, Conditional Random Fields as Recurrent Neural Networks, arXiv:1502.03240. (8th ranked in VOC2012)
+- DeepLab
+    - Liang-Chieh Chen, George Papandreou, Kevin Murphy, Alan L. Yuille, Weakly-and semi-supervised learning of a DCNN for semantic image segmentation, arXiv:1502.02734. [Paper](https://arxiv.org/pdf/1502.02734.pdf) (9th ranked in VOC2012)
 
 
 
