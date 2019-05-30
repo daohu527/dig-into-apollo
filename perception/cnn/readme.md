@@ -182,31 +182,31 @@ if mode == tf.estimator.ModeKeys.PREDICT:
 
 <a name="paper" />
 
-## 论文汇总
+## 论文汇总  
 ####　ImageNet分类
-![imageNet](../img/imageNet.png)  
-- Microsoft (Deep Residual Learning)[Paper](https://arxiv.org/pdf/1512.03385v1.pdf)[Slide](http://image-net.org/challenges/talks/ilsvrc2015_deep_residual_learning_kaiminghe.pdf)  
+![imageNet](../img/imageNet.PNG)  
+- Microsoft (Deep Residual Learning) [Paper](https://arxiv.org/pdf/1512.03385v1.pdf) [Slide](http://image-net.org/challenges/talks/ilsvrc2015_deep_residual_learning_kaiminghe.pdf)  
     - Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun, Deep Residual Learning for Image Recognition, arXiv:1512.03385.
-- Microsoft (PReLu/Weight initialization)[Paper](https://arxiv.org/pdf/1502.01852.pdf)  
+- Microsoft (PReLu/Weight initialization) [Paper](https://arxiv.org/pdf/1502.01852.pdf)  
     - Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun, Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification, arXiv:1502.01852.
 - Batch Normalization [Paper](https://arxiv.org/pdf/1502.03167.pdf)  
     - Sergey Ioffe, Christian Szegedy, Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift, arXiv:1502.03167.
-- GoogLeNet[Paper]()
+- GoogLeNet [Paper](http://arxiv.org/pdf/1409.4842)
     - Christian Szegedy, Wei Liu, Yangqing Jia, Pierre Sermanet, Scott Reed, Dragomir Anguelov, Dumitru Erhan, Vincent Vanhoucke, Andrew Rabinovich, CVPR, 2015.
-- VGG-Net[Web](http://www.robots.ox.ac.uk/~vgg/research/very_deep/)[Paper](https://arxiv.org/pdf/1409.1556.pdf)
+- VGG-Net [Web](http://www.robots.ox.ac.uk/~vgg/research/very_deep/) [Paper](https://arxiv.org/pdf/1409.1556.pdf)
     - Karen Simonyan and Andrew Zisserman, Very Deep Convolutional Networks for Large-Scale Visual Recognition, ICLR, 2015.
-- AlexNet [Paper]()
+- AlexNet [Paper](http://papers.nips.cc/book/advances-in-neural-information-processing-systems-25-2012)
     - Alex Krizhevsky, Ilya Sutskever, Geoffrey E. Hinton, ImageNet Classification with Deep Convolutional Neural Networks, NIPS, 2012.
 
 #### 物体检测(Object Detection)
 ![object_detection](../img/object_detection.PNG)
-- PVANET [paper](https://arxiv.org/pdf/1608.08021.pdf)[Code](https://github.com/sanghoon/pva-faster-rcnn)
+- PVANET [paper](https://arxiv.org/pdf/1608.08021.pdf) [Code](https://github.com/sanghoon/pva-faster-rcnn)
     - Kye-Hyeon Kim, Sanghoon Hong, Byungseok Roh, Yeongjae Cheon, Minje Park, PVANET: Deep but Lightweight Neural Networks for Real-time Object Detection, arXiv:1608.08021
 - OverFeat, NYU [Paper](https://arxiv.org/pdf/1312.6229.pdf)
     - OverFeat: Integrated Recognition, Localization and Detection using Convolutional Networks, ICLR, 2014.
-- R-CNN, UC Berkeley [Paper-CVPR14](https://www.cv-foundation.org/openaccess/content_cvpr_2014/papers/Girshick_Rich_Feature_Hierarchies_2014_CVPR_paper.pdf)[Paper-arXiv14](https://arxiv.org/pdf/1311.2524.pdf)
+- R-CNN, UC Berkeley [Paper-CVPR14](https://www.cv-foundation.org/openaccess/content_cvpr_2014/papers/Girshick_Rich_Feature_Hierarchies_2014_CVPR_paper.pdf) [Paper-arXiv14](https://arxiv.org/pdf/1311.2524.pdf)
     - Ross Girshick, Jeff Donahue, Trevor Darrell, Jitendra Malik, Rich feature hierarchies for accurate object detection and semantic segmentation, CVPR, 2014.
-- SPP, Microsoft Research [Paper]
+- SPP, Microsoft Research [Paper](https://arxiv.org/pdf/1406.4729.pdf)
     - Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun, Spatial Pyramid Pooling in Deep Convolutional Networks for Visual Recognition, ECCV, 2014.
 - Fast R-CNN, Microsoft Research [Paper](https://arxiv.org/pdf/1504.08083.pdf)
     - Ross Girshick, Fast R-CNN, arXiv:1504.08083.
@@ -224,9 +224,9 @@ if mode == tf.estimator.ModeKeys.PREDICT:
 - Deep Residual Network (Current State-of-the-Art) [Paper](https://arxiv.org/abs/1512.03385)
     - Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun, Deep Residual Learning for Image Recognition
 - Weakly Supervised Object Localization with Multi-fold Multiple instance Learning [Paper](https://arxiv.org/pdf/1503.00949.pdf)
-- R-FCN [Paper](https://arxiv.org/abs/1605.06409)[Code](https://github.com/daijifeng001/R-FCN)
+- R-FCN [Paper](https://arxiv.org/abs/1605.06409) [Code](https://github.com/daijifeng001/R-FCN)
     - Jifeng Dai, Yi Li, Kaiming He, Jian Sun, R-FCN: Object Detection via Region-based Fully Convolutional Networks
-- SSD [Paper](https://arxiv.org/pdf/1512.02325v2.pdf)[Code](https://github.com/weiliu89/caffe/tree/ssd)
+- SSD [Paper](https://arxiv.org/pdf/1512.02325v2.pdf) [Code](https://github.com/weiliu89/caffe/tree/ssd)
     - Wei Liu1, Dragomir Anguelov, Dumitru Erhan, Christian Szegedy, Scott Reed, Cheng-Yang Fu, Alexander C. Berg, SSD: Single Shot MultiBox Detector, arXiv:1512.02325
 - Speed/accuracy trade-offs for modern convolutional object detectors [Paper](https://arxiv.org/pdf/1611.10012v1.pdf)
     - Jonathan Huang, Vivek Rathod, Chen Sun, Menglong Zhu, Anoop Korattikara, Alireza Fathi, Ian Fischer, Zbigniew Wojna, Yang Song, Sergio Guadarrama, Kevin Murphy, Google Research, arXiv:1611.10012
@@ -241,9 +241,9 @@ if mode == tf.estimator.ModeKeys.PREDICT:
 - Hanxi Li, Yi Li and Fatih Porikli, DeepTrack: Learning Discriminative Feature Representations by Convolutional Neural Networks for Visual Tracking, BMVC, 2014. [Paper](http://www.bmva.org/bmvc/2014/files/paper028.pdf)
 - N Wang, DY Yeung, Learning a Deep Compact Image Representation for Visual Tracking, NIPS, 2013. [Paper](http://winsty.net/papers/dlt.pdf)
 - N Wang, DY Yeung, Learning a Deep Compact Image Representation for Visual Tracking, NIPS, 2013. [Paper](http://winsty.net/papers/dlt.pdf)
-- Chao Ma, Jia-Bin Huang, Xiaokang Yang and Ming-Hsuan Yang, Hierarchical Convolutional Features for Visual Tracking, ICCV 2015 [Paper](https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/Ma_Hierarchical_Convolutional_Features_ICCV_2015_paper.pdf)[Code](https://github.com/jbhuang0604/CF2)
-- Lijun Wang, Wanli Ouyang, Xiaogang Wang, and Huchuan Lu, Visual Tracking with fully Convolutional Networks, ICCV 2015 [Paper](http://202.118.75.4/lu/Paper/ICCV2015/iccv15_lijun.pdf)[Code](https://github.com/scott89/FCNT)
-- Hyeonseob Namand Bohyung Han, Learning Multi-Domain Convolutional Neural Networks for Visual Tracking, [Paper](https://arxiv.org/pdf/1510.07945.pdf)[Code](https://github.com/HyeonseobNam/MDNet)[Project Page](http://cvlab.postech.ac.kr/research/mdnet/)
+- Chao Ma, Jia-Bin Huang, Xiaokang Yang and Ming-Hsuan Yang, Hierarchical Convolutional Features for Visual Tracking, ICCV 2015 [Paper](https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/Ma_Hierarchical_Convolutional_Features_ICCV_2015_paper.pdf) [Code](https://github.com/jbhuang0604/CF2)
+- Lijun Wang, Wanli Ouyang, Xiaogang Wang, and Huchuan Lu, Visual Tracking with fully Convolutional Networks, ICCV 2015 [Paper](http://202.118.75.4/lu/Paper/ICCV2015/iccv15_lijun.pdf) [Code](https://github.com/scott89/FCNT)
+- Hyeonseob Namand Bohyung Han, Learning Multi-Domain Convolutional Neural Networks for Visual Tracking, [Paper](https://arxiv.org/pdf/1510.07945.pdf) [Code](https://github.com/HyeonseobNam/MDNet) [Project Page](http://cvlab.postech.ac.kr/research/mdnet/)
 
 
 ## 底层视觉(Low-Level Vision)
@@ -283,7 +283,7 @@ if mode == tf.estimator.ModeKeys.PREDICT:
     - Jure Žbontar, Yann LeCun, Computing the Stereo Matching Cost with a Convolutional Neural Network, CVPR, 2015.
 - Colorful Image Colorization Richard Zhang, Phillip Isola, Alexei A. Efros, ECCV, 2016 [Paper](http://arxiv.org/pdf/1603.08511.pdf), [Code](https://github.com/richzhang/colorization)
 - Ryan Dahl, [Blog](https://tinyclouds.org/colorize/)
-- Feature Learning by Inpainting[Paper](https://arxiv.org/pdf/1604.07379v1.pdf)[Code](https://github.com/pathak22/context-encoder)
+- Feature Learning by Inpainting[Paper](https://arxiv.org/pdf/1604.07379v1.pdf) [Code](https://github.com/pathak22/context-encoder)
     - Deepak Pathak, Philipp Krahenbuhl, Jeff Donahue, Trevor Darrell, Alexei A. Efros, Context Encoders: Feature Learning by Inpainting, CVPR, 2016
 
 #### 边缘检测(Edge Detection)
