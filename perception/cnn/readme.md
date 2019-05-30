@@ -514,8 +514,52 @@ Saurabh Singh, Derek Hoiem, David Forsyth, Learning a Sequential Search for Land
     - Yue Wu, Tal Hassner, KangGeon Kim, Gerard Medioni, Prem Natarajan, Facial Landmark Detection with Tweaked Convolutional Neural Networks, 2015. [Paper] [Project]
 
 
+#### Courses
+- Deep Vision
+    - [Stanford] [CS231n: Convolutional Neural Networks for Visual Recognition](http://cs231n.stanford.edu/)
+    - [CUHK] [ELEG 5040: Advanced Topics in Signal Processing(Introduction to Deep Learning)](https://piazza.com/cuhk.edu.hk/spring2015/eleg5040/home)
 
-    
+- More Deep Learning
+    - [Stanford] [CS224d: Deep Learning for Natural Language Processing](http://cs224d.stanford.edu/)
+    - [Oxford] [Deep Learning by Prof. Nando de Freitas](https://www.cs.ox.ac.uk/people/nando.defreitas/machinelearning/)
+    - [NYU] [Deep Learning by Prof. Yann LeCun](https://cilvr.cs.nyu.edu/doku.php?id=courses:deeplearning2014:start)
+
+
+#### Books
+- Free Online Books
+    - [Deep Learning by Ian Goodfellow, Yoshua Bengio, and Aaron Courville](https://www.deeplearningbook.org/)
+    - [Neural Networks and Deep Learning by Michael Nielsen](http://neuralnetworksanddeeplearning.com/)
+    - [Deep Learning Tutorial by LISA lab, University of Montreal](http://deeplearning.net/tutorial/deeplearning.pdf)
+
+#### Videos
+- Talks
+    - Deep Learning, Self-Taught Learning and Unsupervised Feature Learning By Andrew Ng
+    - Recent Developments in Deep Learning By Geoff Hinton
+    - The Unreasonable Effectiveness of Deep Learning by Yann LeCun
+    - Deep Learning of Representations by Yoshua bengio
+
+
+#### Applications
+- Adversarial Training
+    - Code and hyperparameters for the paper “Generative Adversarial Networks” [Web]
+- Understanding and Visualizing
+    - Source code for “Understanding Deep Image Representations by Inverting Them,” CVPR, 2015. [Web]
+- Semantic Segmentation
+    - Source code for the paper “Rich feature hierarchies for accurate object detection and semantic segmentation,” CVPR, 2014. [Web]
+    - Source code for the paper “Fully Convolutional Networks for Semantic Segmentation,” CVPR, 2015. [Web]
+- Super-Resolution
+    - Image Super-Resolution for Anime-Style-Art [Web]
+- Edge Detection
+    - Source code for the paper “DeepContour: A Deep Convolutional Feature Learned by Positive-Sharing Loss for Contour Detection,” CVPR, 2015. [Web]
+    - Source code for the paper “Holistically-Nested Edge Detection”, ICCV 2015. [Web]
+
+#### Blogs
+- Deep down the rabbit hole: CVPR 2015 and beyond@Tombone’s Computer Vision Blog
+- CVPR recap and where we’re going@Zoya Bylinskii (MIT PhD Student)’s Blog
+- Facebook’s AI Painting@Wired
+- Inceptionism: Going Deeper into Neural Networks@Google Research
+- Implementing Neural networks
+
 
 <a name="reference" />
 
