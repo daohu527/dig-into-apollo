@@ -202,10 +202,42 @@ conda install pytorch-nightly -c pytorch
 #### 源码安装
 上面的方法是直接安装编译好的caffe2，而有些选项默认为关闭，想要打开这些选项（例如USE_LMDB），就需要从源码安装caffe2。
 
-从源码安装caffe2可以参考[官网教程]()。
-// todo 安装pytorch
+从源码安装caffe2可以参考[官网教程](https://github.com/pytorch/pytorch#from-source)。
+1. 安装依赖
+```
+conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing
+```
+2. 安装magma
+```
+# Add LAPACK support for the GPU if needed
+conda install -c pytorch magma-cuda90 # or [magma-cuda92 | magma-cuda100 ] depending on your cuda version
+```
+3. 下载PyTorch
+```
+git clone --recursive https://github.com/pytorch/pytorch
+cd pytorch
+# if you are updating an existing checkout
+git submodule sync
+git submodule update --init --recursive
+```
+4. 安装PyTorch
+```
+export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
+python setup.py install
+```
 
-如何修改选项？？ 参考[issue](https://github.com/pytorch/pytorch/issues/21117)  
+如果需要运行MNIST.ipynb的例子，需要同时安装LMDB，参考[issue](https://github.com/pytorch/pytorch/issues/21117)
+```
+1. install lmdb
+conda install lmdb leveldb
+
+2. rebuild caffe2 from source
+USE_LMDB=ON python setup.py install --cmake
+```
+
+这之后整个安装过程就结束了，现在你可以试一试在jupyter-notebook中运行MNIST.ipynb，开始学习caffe2！
+
+  
 
 
 
