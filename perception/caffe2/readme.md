@@ -190,6 +190,7 @@ sudo cp cuda/lib64/libcudnn* /usr/local/cuda-9.0/lib64
 <a name="caffe2" />
 
 ## 安装Caffe2
+#### 直接安装（二进制文件安装）
 caffe2选择直接用anaconda安装，因为anaconda集成了大部分的工具，安装起来也很简单：
 ```
 conda install pytorch-nightly -c pytorch
