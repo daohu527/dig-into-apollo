@@ -390,128 +390,128 @@ Saurabh Singh, Derek Hoiem, David Forsyth, Learning a Sequential Search for Land
 - Pay Less Attention with Lightweight and Dynamic Convolutions [Paper](https://arxiv.org/abs/1901.10430)
 - UCLA / Baidu [Paper](https://arxiv.org/pdf/1410.1090.pdf)
     - Junhua Mao, Wei Xu, Yi Yang, Jiang Wang, Alan L. Yuille, Explain Images with Multimodal Recurrent Neural Networks, arXiv:1410.1090.
-- Toronto [Paper]()
+- Toronto [Paper](https://arxiv.org/pdf/1411.2539.pdf)
     - Ryan Kiros, Ruslan Salakhutdinov, Richard S. Zemel, Unifying Visual-Semantic Embeddings with Multimodal Neural Language Models, arXiv:1411.2539.
-- Berkeley [Paper]
+- Berkeley [Paper](https://arxiv.org/pdf/1411.4389.pdf)
     - Jeff Donahue, Lisa Anne Hendricks, Sergio Guadarrama, Marcus Rohrbach, Subhashini Venugopalan, Kate Saenko, Trevor Darrell, Long-term Recurrent Convolutional Networks for Visual Recognition and Description, arXiv:1411.4389.
-- Google [Paper]
+- Google [Paper](https://arxiv.org/pdf/1411.4555.pdf)
     - Oriol Vinyals, Alexander Toshev, Samy Bengio, Dumitru Erhan, Show and Tell: A Neural Image Caption Generator, arXiv:1411.4555.
-- Stanford [Web] [Paper]
+- Stanford [Web](https://cs.stanford.edu/people/karpathy/deepimagesent/) [Paper](https://cs.stanford.edu/people/karpathy/cvpr2015.pdf)
     - Andrej Karpathy, Li Fei-Fei, Deep Visual-Semantic Alignments for Generating Image Description, CVPR, 2015.
-- UML / UT [Paper]
+- UML / UT [Paper](https://arxiv.org/pdf/1412.4729.pdf)
     - Subhashini Venugopalan, Huijuan Xu, Jeff Donahue, Marcus Rohrbach, Raymond Mooney, Kate Saenko, Translating Videos to Natural Language Using Deep Recurrent Neural Networks, NAACL-HLT, 2015.
-- CMU / Microsoft [Paper-arXiv] [Paper-CVPR]
+- CMU / Microsoft [Paper-arXiv](https://arxiv.org/pdf/1411.5654.pdf)
     - Xinlei Chen, C. Lawrence Zitnick, Learning a Recurrent Visual Representation for Image Caption Generation, arXiv:1411.5654.
     - Xinlei Chen, C. Lawrence Zitnick, Mind’s Eye: A Recurrent Visual Representation for Image Caption Generation, CVPR 2015
-- Microsoft [Paper]
+- Microsoft [Paper](https://arxiv.org/pdf/1411.4952.pdf)
     - Hao Fang, Saurabh Gupta, Forrest Iandola, Rupesh Srivastava, Li Deng, Piotr Dollár, Jianfeng Gao, Xiaodong He, Margaret Mitchell, John C. Platt, C. Lawrence Zitnick, Geoffrey Zweig, From Captions to Visual Concepts and Back, CVPR, 2015.
-- Univ. Montreal / Univ. Toronto [Web] [Paper]
+- Univ. Montreal / Univ. Toronto [Web](http://kelvinxu.github.io/projects/capgen.html) [Paper](http://www.cs.toronto.edu/~zemel/documents/captionAttn.pdf)
     - Kelvin Xu, Jimmy Lei Ba, Ryan Kiros, Kyunghyun Cho, Aaron Courville, Ruslan Salakhutdinov, Richard S. Zemel, Yoshua Bengio, Show, Attend, and Tell: Neural Image Caption Generation with Visual Attention, arXiv:1502.03044 / ICML 2015
-- Idiap / EPFL / Facebook [Paper]
+- Idiap / EPFL / Facebook [Paper](https://arxiv.org/pdf/1502.03671.pdf)
     - Remi Lebret, Pedro O. Pinheiro, Ronan Collobert, Phrase-based Image Captioning, arXiv:1502.03671 / ICML 2015
-- UCLA / Baidu [Paper]
+- UCLA / Baidu [Paper](https://arxiv.org/pdf/1504.06692.pdf)
     - Junhua Mao, Wei Xu, Yi Yang, Jiang Wang, Zhiheng Huang, Alan L. Yuille, Learning like a Child: Fast Novel Visual Concept Learning from Sentence Descriptions of Images, arXiv:1504.06692
 - MS + Berkeley
-    - Jacob Devlin, Saurabh Gupta, Ross Girshick, Margaret Mitchell, C. Lawrence Zitnick, Exploring Nearest Neighbor Approaches for Image Captioning, arXiv:1505.04467 [Paper]
+    - Jacob Devlin, Saurabh Gupta, Ross Girshick, Margaret Mitchell, C. Lawrence Zitnick, Exploring Nearest Neighbor Approaches for Image Captioning, arXiv:1505.04467 [Paper](https://arxiv.org/pdf/1505.04467.pdf)
     - Jacob Devlin, Hao Cheng, Hao Fang, Saurabh Gupta, Li Deng, Xiaodong He, Geoffrey Zweig, Margaret Mitchell, Language Models for Image Captioning: The Quirks and What Works, arXiv:1505.01809 [Paper]
-- Adelaide [Paper]
+- Adelaide [Paper](https://arxiv.org/pdf/1505.01809.pdf)
     - Qi Wu, Chunhua Shen, Anton van den Hengel, Lingqiao Liu, Anthony Dick, Image Captioning with an Intermediate Attributes Layer, arXiv:1506.01144
-- Tilburg [Paper]
+- Tilburg [Paper](https://arxiv.org/pdf/1506.03694.pdf)
     - Grzegorz Chrupala, Akos Kadar, Afra Alishahi, Learning language through pictures, arXiv:1506.03694
-- Univ. Montreal [Paper]
+- Univ. Montreal [Paper](https://arxiv.org/pdf/1507.01053.pdf)
     - Kyunghyun Cho, Aaron Courville, Yoshua Bengio, Describing Multimedia Content using Attention-based Encoder-Decoder Networks, arXiv:1507.01053
-- Cornell [Paper]
+- Cornell [Paper](https://arxiv.org/pdf/1508.02091.pdf)
     - Jack Hessel, Nicolas Savva, Michael J. Wilber, Image Representations and New Domains in Neural Image Captioning, arXiv:1508.02091
-- MS + City Univ. of HongKong [Paper]
+- MS + City Univ. of HongKong [Paper](https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/Yao_Learning_Query_and_ICCV_2015_paper.pdf)
     - Ting Yao, Tao Mei, and Chong-Wah Ngo, “Learning Query and Image Similarities with Ranking Canonical Correlation Analysis”, ICCV, 2015
 
 #### Video Captioning
-- Berkeley [Web] [Paper]
+- Berkeley [Web](http://jeffdonahue.com/lrcn/) [Paper](https://arxiv.org/pdf/1411.4389.pdf)
     - Jeff Donahue, Lisa Anne Hendricks, Sergio Guadarrama, Marcus Rohrbach, Subhashini Venugopalan, Kate Saenko, Trevor Darrell, Long-term Recurrent Convolutional Networks for Visual Recognition and Description, CVPR, 2015.
-- UT / UML / Berkeley [Paper]
+- UT / UML / Berkeley [Paper](https://arxiv.org/pdf/1412.4729.pdf)
     - Subhashini Venugopalan, Huijuan Xu, Jeff Donahue, Marcus Rohrbach, Raymond Mooney, Kate Saenko, Translating Videos to Natural Language Using Deep Recurrent Neural Networks, arXiv:1412.4729.
-- Microsoft [Paper]
+- Microsoft [Paper](https://arxiv.org/pdf/1505.01861.pdf)
     - Yingwei Pan, Tao Mei, Ting Yao, Houqiang Li, Yong Rui, Joint Modeling Embedding and Translation to Bridge Video and Language, arXiv:1505.01861.
-- UT / Berkeley / UML [Paper]
+- UT / Berkeley / UML [Paper](https://arxiv.org/pdf/1505.00487.pdf)
     - Subhashini Venugopalan, Marcus Rohrbach, Jeff Donahue, Raymond Mooney, Trevor Darrell, Kate Saenko, Sequence to Sequence–Video to Text, arXiv:1505.00487.
-- Univ. Montreal / Univ. Sherbrooke [Paper]
+- Univ. Montreal / Univ. Sherbrooke [Paper](https://arxiv.org/pdf/1502.08029.pdf)
     - Li Yao, Atousa Torabi, Kyunghyun Cho, Nicolas Ballas, Christopher Pal, Hugo Larochelle, Aaron Courville, Describing Videos by Exploiting Temporal Structure, arXiv:1502.08029
-- MPI / Berkeley [Paper]
+- MPI / Berkeley [Paper](https://arxiv.org/pdf/1506.01698.pdf)
     - Anna Rohrbach, Marcus Rohrbach, Bernt Schiele, The Long-Short Story of Movie Description, arXiv:1506.01698
-- Univ. Toronto / MIT [Paper]
+- Univ. Toronto / MIT [Paper](https://arxiv.org/pdf/1506.06724.pdf)
     - Yukun Zhu, Ryan Kiros, Richard Zemel, Ruslan Salakhutdinov, Raquel Urtasun, Antonio Torralba, Sanja Fidler, Aligning Books and Movies: Towards Story-like Visual Explanations by Watching Movies and Reading Books, arXiv:1506.06724
-- Univ. Montreal [Paper]
+- Univ. Montreal [Paper](https://arxiv.org/pdf/1507.01053.pdf)
     - Kyunghyun Cho, Aaron Courville, Yoshua Bengio, Describing Multimedia Content using Attention-based Encoder-Decoder Networks, arXiv:1507.01053
-- TAU / USC [paper]
+- TAU / USC [paper](https://arxiv.org/pdf/1612.06950.pdf)
     - Dotan Kaufman, Gil Levi, Tal Hassner, Lior Wolf, Temporal Tessellation for Video Annotation and Summarization, arXiv:1612.06950.
 
 #### Question Answering
 ![question](../img/question.PNG)
-- Virginia Tech / MSR [Web] [Paper]
+- Virginia Tech / MSR [Web](https://visualqa.org/) [Paper](https://arxiv.org/pdf/1505.00468.pdf)
     - Stanislaw Antol, Aishwarya Agrawal, Jiasen Lu, Margaret Mitchell, Dhruv Batra, C. Lawrence Zitnick, Devi Parikh, VQA: Visual Question Answering, CVPR, 2015 SUNw:Scene Understanding workshop.
-- MPI / Berkeley [Web] [Paper]
+- MPI / Berkeley [Web](https://www.mpi-inf.mpg.de/departments/computer-vision-and-multimodal-computing/research/vision-and-language/visual-turing-challenge/) [Paper](https://arxiv.org/pdf/1505.01121.pdf)
     - Mateusz Malinowski, Marcus Rohrbach, Mario Fritz, Ask Your Neurons: A Neural-based Approach to Answering Questions about Images, arXiv:1505.01121.
-- Toronto [Paper] [Dataset]
+- Toronto [Paper](https://arxiv.org/pdf/1505.02074.pdf) [Dataset](http://www.cs.toronto.edu/~mren/imageqa/data/cocoqa/)
     - Mengye Ren, Ryan Kiros, Richard Zemel, Image Question Answering: A Visual Semantic Embedding Model and a New Dataset, arXiv:1505.02074 / ICML 2015 deep learning workshop.
-- Baidu / UCLA [Paper] [Dataset]
+- Baidu / UCLA [Paper](https://arxiv.org/pdf/1505.05612.pdf) [Dataset] //todo
     - Hauyuan Gao, Junhua Mao, Jie Zhou, Zhiheng Huang, Lei Wang, Wei Xu, Are You Talking to a Machine? Dataset and Methods for Multilingual Image Question Answering, arXiv:1505.05612.
-- POSTECH [Paper] [Project Page]
+- POSTECH [Paper](https://arxiv.org/pdf/1511.05756.pdf) [Project Page](http://cvlab.postech.ac.kr/research/dppnet/)
     - Hyeonwoo Noh, Paul Hongsuck Seo, and Bohyung Han, Image Question Answering using Convolutional Neural Network with Dynamic Parameter Prediction, arXiv:1511.05765
-- CMU / Microsoft Research [Paper]
+- CMU / Microsoft Research [Paper](https://arxiv.org/pdf/1511.02274v2.pdf)
     - Yang, Z., He, X., Gao, J., Deng, L., & Smola, A. (2015). Stacked Attention Networks for Image Question Answering. arXiv:1511.02274.
-- MetaMind [Paper]
+- MetaMind [Paper](https://arxiv.org/pdf/1603.01417v1.pdf)
     - Xiong, Caiming, Stephen Merity, and Richard Socher. “Dynamic Memory Networks for Visual and Textual Question Answering.” arXiv:1603.01417 (2016).
-- SNU + NAVER [Paper]
+- SNU + NAVER [Paper](https://arxiv.org/abs/1606.01455)
     - Jin-Hwa Kim, Sang-Woo Lee, Dong-Hyun Kwak, Min-Oh Heo, Jeonghee Kim, Jung-Woo Ha, Byoung-Tak Zhang, Multimodal Residual Learning for Visual QA, arXiv:1606:01455
-- UC Berkeley + Sony [Paper]
+- UC Berkeley + Sony [Paper](https://arxiv.org/pdf/1606.01847.pdf)
     - Akira Fukui, Dong Huk Park, Daylen Yang, Anna Rohrbach, Trevor Darrell, and Marcus Rohrbach, Multimodal Compact Bilinear Pooling for Visual Question Answering and Visual Grounding, arXiv:1606.01847
-- Postech [Paper]
+- Postech [Paper](https://arxiv.org/pdf/1606.03647.pdf)
     - Hyeonwoo Noh and Bohyung Han, Training Recurrent Answering Units with Joint Loss Minimization for VQA, arXiv:1606.03647
-- SNU + NAVER [Paper]
+- SNU + NAVER [Paper](https://arxiv.org/abs/1610.04325)
     - Jin-Hwa Kim, Kyoung Woon On, Jeonghee Kim, Jung-Woo Ha, Byoung-Tak Zhang, Hadamard Product for Low-rank Bilinear Pooling, arXiv:1610.04325.
     
     
 #### Image Generation
 - Convolutional / Recurrent Networks
-    - Aäron van den Oord, Nal Kalchbrenner, Oriol Vinyals, Lasse Espeholt, Alex Graves, Koray Kavukcuoglu. “Conditional Image Generation with PixelCNN Decoders”[Paper][Code]
-    - Alexey Dosovitskiy, Jost Tobias Springenberg, Thomas Brox, “Learning to Generate Chairs with Convolutional Neural Networks”, CVPR, 2015. [Paper]
-    - Karol Gregor, Ivo Danihelka, Alex Graves, Danilo Jimenez Rezende, Daan Wierstra, “DRAW: A Recurrent Neural Network For Image Generation”, ICML, 2015. [Paper]
+    - Aäron van den Oord, Nal Kalchbrenner, Oriol Vinyals, Lasse Espeholt, Alex Graves, Koray Kavukcuoglu. “Conditional Image Generation with PixelCNN Decoders” [Paper](https://arxiv.org/pdf/1606.05328v2.pdf) [Code](https://github.com/kundan2510/pixelCNN)
+    - Alexey Dosovitskiy, Jost Tobias Springenberg, Thomas Brox, “Learning to Generate Chairs with Convolutional Neural Networks”, CVPR, 2015. [Paper](https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Dosovitskiy_Learning_to_Generate_2015_CVPR_paper.pdf)
+    - Karol Gregor, Ivo Danihelka, Alex Graves, Danilo Jimenez Rezende, Daan Wierstra, “DRAW: A Recurrent Neural Network For Image Generation”, ICML, 2015. [Paper](https://arxiv.org/pdf/1502.04623v2.pdf)
 - Adversarial Networks
-    - Ian J. Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, Yoshua Bengio, Generative Adversarial Networks, NIPS, 2014. [Paper]
-    - Emily Denton, Soumith Chintala, Arthur Szlam, Rob Fergus, Deep Generative Image Models using a ￼Laplacian Pyramid of Adversarial Networks, NIPS, 2015. [Paper]
-    - Lucas Theis, Aäron van den Oord, Matthias Bethge, “A note on the evaluation of generative models”, ICLR 2016. [Paper]
-    - Zhenwen Dai, Andreas Damianou, Javier Gonzalez, Neil Lawrence, “Variationally Auto-Encoded Deep Gaussian Processes”, ICLR 2016. [Paper]
-    - Elman Mansimov, Emilio Parisotto, Jimmy Ba, Ruslan Salakhutdinov, “Generating Images from Captions with Attention”, ICLR 2016, [Paper]
-    - Jost Tobias Springenberg, “Unsupervised and Semi-supervised Learning with Categorical Generative Adversarial Networks”, ICLR 2016, [Paper]
-    - Harrison Edwards, Amos Storkey, “Censoring Representations with an Adversary”, ICLR 2016, [Paper]
-    - Takeru Miyato, Shin-ichi Maeda, Masanori Koyama, Ken Nakae, Shin Ishii, “Distributional Smoothing with Virtual Adversarial Training”, ICLR 2016, [Paper]
-    - Jun-Yan Zhu, Philipp Krahenbuhl, Eli Shechtman, and Alexei A. Efros, “Generative Visual Manipulation on the Natural Image Manifold”, ECCV 2016. [Paper] [Code] [Video]
+    - Ian J. Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, Yoshua Bengio, Generative Adversarial Networks, NIPS, 2014. [Paper](https://arxiv.org/abs/1406.2661)
+    - Emily Denton, Soumith Chintala, Arthur Szlam, Rob Fergus, Deep Generative Image Models using a ￼Laplacian Pyramid of Adversarial Networks, NIPS, 2015. [Paper](https://arxiv.org/abs/1506.05751)
+    - Lucas Theis, Aäron van den Oord, Matthias Bethge, “A note on the evaluation of generative models”, ICLR 2016. [Paper](https://arxiv.org/abs/1511.01844)
+    - Zhenwen Dai, Andreas Damianou, Javier Gonzalez, Neil Lawrence, “Variationally Auto-Encoded Deep Gaussian Processes”, ICLR 2016. [Paper](https://arxiv.org/pdf/1511.06455v2.pdf)
+    - Elman Mansimov, Emilio Parisotto, Jimmy Ba, Ruslan Salakhutdinov, “Generating Images from Captions with Attention”, ICLR 2016, [Paper](https://arxiv.org/pdf/1511.02793v2.pdf)
+    - Jost Tobias Springenberg, “Unsupervised and Semi-supervised Learning with Categorical Generative Adversarial Networks”, ICLR 2016, [Paper](https://arxiv.org/pdf/1511.06390v1.pdf)
+    - Harrison Edwards, Amos Storkey, “Censoring Representations with an Adversary”, ICLR 2016, [Paper](https://arxiv.org/pdf/1511.05897v3.pdf)
+    - Takeru Miyato, Shin-ichi Maeda, Masanori Koyama, Ken Nakae, Shin Ishii, “Distributional Smoothing with Virtual Adversarial Training”, ICLR 2016, [Paper](https://arxiv.org/pdf/1507.00677v8.pdf)
+    - Jun-Yan Zhu, Philipp Krahenbuhl, Eli Shechtman, and Alexei A. Efros, “Generative Visual Manipulation on the Natural Image Manifold”, ECCV 2016. [Paper](https://arxiv.org/pdf/1609.03552v2.pdf) [Code](https://github.com/junyanz/iGAN) [Video](https://youtu.be/9c4z6YsBGQ0)
 - Mixing Convolutional and Adversarial Networks
-    - Alec Radford, Luke Metz, Soumith Chintala, “Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks”, ICLR 2016. [Paper]
+    - Alec Radford, Luke Metz, Soumith Chintala, “Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks”, ICLR 2016. [Paper](https://arxiv.org/pdf/1511.06434.pdf)
 
 #### Other Topics
-- Visual Analogy [Paper]
+- Visual Analogy [Paper](https://web.eecs.umich.edu/~honglak/nips2015-analogy.pdf)
     - Scott Reed, Yi Zhang, Yuting Zhang, Honglak Lee, Deep Visual Analogy Making, NIPS, 2015
-- Surface Normal Estimation [Paper]
+- Surface Normal Estimation [Paper](https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Wang_Designing_Deep_Networks_2015_CVPR_paper.pdf)
     - Xiaolong Wang, David F. Fouhey, Abhinav Gupta, Designing Deep Networks for Surface Normal Estimation, CVPR, 2015.
-- Action Detection [Paper]
+- Action Detection [Paper](https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Gkioxari_Finding_Action_Tubes_2015_CVPR_paper.pdf)
     - Georgia Gkioxari, Jitendra Malik, Finding Action Tubes, CVPR, 2015.
-- Crowd Counting [Paper]
+- Crowd Counting [Paper](https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Zhang_Cross-Scene_Crowd_Counting_2015_CVPR_paper.pdf)
     - Cong Zhang, Hongsheng Li, Xiaogang Wang, Xiaokang Yang, Cross-scene Crowd Counting via Deep Convolutional Neural Networks, CVPR, 2015.
-- 3D Shape Retrieval [Paper]
+- 3D Shape Retrieval [Paper](https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Wang_Sketch-Based_3D_Shape_2015_CVPR_paper.pdf)
     - Fang Wang, Le Kang, Yi Li, Sketch-based 3D Shape Retrieval using Convolutional Neural Networks, CVPR, 2015.
 - Weakly-supervised Classification
-    - Samaneh Azadi, Jiashi Feng, Stefanie Jegelka, Trevor Darrell, “Auxiliary Image Regularization for Deep CNNs with Noisy Labels”, ICLR 2016, [Paper]
-- Artistic Style [Paper] [Code]
+    - Samaneh Azadi, Jiashi Feng, Stefanie Jegelka, Trevor Darrell, “Auxiliary Image Regularization for Deep CNNs with Noisy Labels”, ICLR 2016, [Paper](https://arxiv.org/pdf/1511.07069v2.pdf)
+- Artistic Style [Paper](https://arxiv.org/abs/1508.06576) [Code](https://github.com/jcjohnson/neural-style)
     - Leon A. Gatys, Alexander S. Ecker, Matthias Bethge, A Neural Algorithm of Artistic Style.
 - Human Gaze Estimation
-    - Xucong Zhang, Yusuke Sugano, Mario Fritz, Andreas Bulling, Appearance-Based Gaze Estimation in the Wild, CVPR, 2015. [Paper] [Website]
+    - Xucong Zhang, Yusuke Sugano, Mario Fritz, Andreas Bulling, Appearance-Based Gaze Estimation in the Wild, CVPR, 2015. [Paper](https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Zhang_Appearance-Based_Gaze_Estimation_2015_CVPR_paper.pdf) [Website](https://www.mpi-inf.mpg.de/departments/computer-vision-and-multimodal-computing/research/gaze-based-human-computer-interaction/appearance-based-gaze-estimation-in-the-wild-mpiigaze/)
 - Face Recognition
-    - Yaniv Taigman, Ming Yang, Marc’Aurelio Ranzato, Lior Wolf, DeepFace: Closing the Gap to Human-Level Performance in Face Verification, CVPR, 2014. [Paper]
-    - Yi Sun, Ding Liang, Xiaogang Wang, Xiaoou Tang, DeepID3: Face Recognition with Very Deep Neural Networks, 2015. [Paper]
-    - Florian Schroff, Dmitry Kalenichenko, James Philbin, FaceNet: A Unified Embedding for Face Recognition and Clustering, CVPR, 2015. [Paper]
+    - Yaniv Taigman, Ming Yang, Marc’Aurelio Ranzato, Lior Wolf, DeepFace: Closing the Gap to Human-Level Performance in Face Verification, CVPR, 2014. [Paper](https://www.cs.toronto.edu/~ranzato/publications/taigman_cvpr14.pdf)
+    - Yi Sun, Ding Liang, Xiaogang Wang, Xiaoou Tang, DeepID3: Face Recognition with Very Deep Neural Networks, 2015. [Paper](https://arxiv.org/abs/1502.00873)
+    - Florian Schroff, Dmitry Kalenichenko, James Philbin, FaceNet: A Unified Embedding for Face Recognition and Clustering, CVPR, 2015. [Paper](https://arxiv.org/abs/1503.03832)
 - Facial Landmark Detection
-    - Yue Wu, Tal Hassner, KangGeon Kim, Gerard Medioni, Prem Natarajan, Facial Landmark Detection with Tweaked Convolutional Neural Networks, 2015. [Paper] [Project]
+    - Yue Wu, Tal Hassner, KangGeon Kim, Gerard Medioni, Prem Natarajan, Facial Landmark Detection with Tweaked Convolutional Neural Networks, 2015. [Paper](https://arxiv.org/abs/1511.04031) [Project](https://talhassner.github.io/home/publication/2017_TPAMI_2)
 
 
 #### Courses
@@ -533,32 +533,32 @@ Saurabh Singh, Derek Hoiem, David Forsyth, Learning a Sequential Search for Land
 
 #### Videos
 - Talks
-    - Deep Learning, Self-Taught Learning and Unsupervised Feature Learning By Andrew Ng
-    - Recent Developments in Deep Learning By Geoff Hinton
-    - The Unreasonable Effectiveness of Deep Learning by Yann LeCun
-    - Deep Learning of Representations by Yoshua bengio
+    - Deep Learning, Self-Taught Learning and Unsupervised Feature Learning By Andrew Ng [video](https://www.youtube.com/watch?v=n1ViNeWhC24)
+    - Recent Developments in Deep Learning By Geoff Hinton [video](https://www.youtube.com/watch?v=vShMxxqtDDs)
+    - The Unreasonable Effectiveness of Deep Learning by Yann LeCun [video](https://www.youtube.com/watch?v=sc-KbuZqGkI)
+    - Deep Learning of Representations by Yoshua bengio [video](https://www.youtube.com/watch?v=4xsVFLnHC_0)
 
 
 #### Applications
 - Adversarial Training
-    - Code and hyperparameters for the paper “Generative Adversarial Networks” [Web]
+    - Code and hyperparameters for the paper “Generative Adversarial Networks” [Web](https://github.com/goodfeli/adversarial)
 - Understanding and Visualizing
-    - Source code for “Understanding Deep Image Representations by Inverting Them,” CVPR, 2015. [Web]
+    - Source code for “Understanding Deep Image Representations by Inverting Them,” CVPR, 2015. [Web](https://github.com/aravindhm/deep-goggle)
 - Semantic Segmentation
-    - Source code for the paper “Rich feature hierarchies for accurate object detection and semantic segmentation,” CVPR, 2014. [Web]
-    - Source code for the paper “Fully Convolutional Networks for Semantic Segmentation,” CVPR, 2015. [Web]
+    - Source code for the paper “Rich feature hierarchies for accurate object detection and semantic segmentation,” CVPR, 2014. [Web](https://github.com/rbgirshick/rcnn)
+    - Source code for the paper “Fully Convolutional Networks for Semantic Segmentation,” CVPR, 2015. [Web](https://github.com/longjon/caffe/tree/future)
 - Super-Resolution
-    - Image Super-Resolution for Anime-Style-Art [Web]
+    - Image Super-Resolution for Anime-Style-Art [Web](https://github.com/nagadomi/waifu2x)
 - Edge Detection
-    - Source code for the paper “DeepContour: A Deep Convolutional Feature Learned by Positive-Sharing Loss for Contour Detection,” CVPR, 2015. [Web]
-    - Source code for the paper “Holistically-Nested Edge Detection”, ICCV 2015. [Web]
+    - Source code for the paper “DeepContour: A Deep Convolutional Feature Learned by Positive-Sharing Loss for Contour Detection,” CVPR, 2015. [Web](https://github.com/shenwei1231/DeepContour)
+    - Source code for the paper “Holistically-Nested Edge Detection”, ICCV 2015. [Web](https://github.com/s9xie/hed)
 
 #### Blogs
-- Deep down the rabbit hole: CVPR 2015 and beyond@Tombone’s Computer Vision Blog
-- CVPR recap and where we’re going@Zoya Bylinskii (MIT PhD Student)’s Blog
-- Facebook’s AI Painting@Wired
-- Inceptionism: Going Deeper into Neural Networks@Google Research
-- Implementing Neural networks
+- Deep down the rabbit hole: CVPR 2015 and beyond@Tombone’s Computer Vision Blog [Web](http://www.computervisionblog.com/2015/06/deep-down-rabbit-hole-cvpr-2015-and.html)
+- CVPR recap and where we’re going@Zoya Bylinskii (MIT PhD Student)’s Blog [Web](http://zoyathinks.blogspot.kr/2015/06/cvpr-recap-and-where-were-going.html)
+- Facebook’s AI Painting@Wired [Web](https://www.wired.com/2015/06/facebook-googles-fake-brains-spawn-new-visual-reality/)
+- Inceptionism: Going Deeper into Neural Networks@Google Research [Web](http://googleresearch.blogspot.kr/2015/06/inceptionism-going-deeper-into-neural.html)
+- Implementing Neural networks [Web](https://peterroelants.github.io/)
 
 
 <a name="reference" />

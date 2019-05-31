@@ -199,6 +199,16 @@ conda install pytorch-nightly -c pytorch
 
 至此所有的安装就已经完成了，可以开始深度学习的尝试了。  
 
+#### 源码安装
+上面的方法是直接安装编译好的caffe2，而有些选项默认为关闭，想要打开这些选项（例如USE_LMDB），就需要从源码安装caffe2。
+
+从源码安装caffe2可以参考[官网教程]()。
+// todo 安装pytorch
+
+如何修改选项？？ 参考[issue](https://github.com/pytorch/pytorch/issues/21117)  
+
+
+
 <a name="reference" />
 
 ## 参考
