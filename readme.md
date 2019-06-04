@@ -2,7 +2,8 @@
 
 > Rome wasn't built in a day.
 
-👏️此项目是对[apollo](https://github.com/ApolloAuto/apollo)拙劣的介绍，主要根据模块对apollo代码进行介绍，如果你需要了解自动驾驶更多的内容，请参考另外一个项目[awesome-self-driving-cars](https://github.com/daohu527/awesome-self-driving-cars)，我们相信在不久的将来，科技必将改变世界。  
+
+👏️👏️👏️ 此项目是对[apollo](https://github.com/ApolloAuto/apollo)拙劣的介绍，主要根据模块对apollo代码进行讲解，如果你需要了解自动驾驶更多的内容，请参考另外一个项目[awesome-self-driving-cars](https://github.com/daohu527/awesome-self-driving-cars)，我们相信在不久的将来，科技必将改变世界。  
 
 
 ##  📒️ 目录
