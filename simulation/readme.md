@@ -1,71 +1,74 @@
-## sim_control
+## 自动驾驶仿真
+自动驾驶的仿真的好处是可以低成本的发现复现问题，而不需要真实的硬件，可以极大的节省成本和时间。自动驾驶的仿真最早的论文可以参考，主要的目的是通过软件来模拟车以及车所在的环境，实现自动驾驶的集成测试，训练数据，模拟事发现场等功能。那么我们是如何模拟车所在的环境的呢？
 
-初始化，是否设置开始节点？
-```
-void SimControl::Init(bool set_start_point, double start_velocity,
-                      double start_acceleration) {
-  // 1. 设置开始点
-  // 2. 没有使用导航模式
-  if (set_start_point && !FLAGS_use_navigation_mode) {
-    InitStartPoint(start_velocity, start_acceleration);
-  }
-}
-```
+## 仿真软件
+要模拟车的所在的环境，就得把真实世界映射到虚拟世界，并且需要构造真实世界的物理定律，需要模拟真实世界的房子，车，道路，红绿灯，不仅需要大小一致，而且需要能够模拟真实世界的光照，比如树和云层会遮挡住光照，房子或者障碍物会阻挡你的前进，车启动和停止的时候会有加减速曲线，总之，这个虚拟世界得满足真实世界的物理规律才足够真实，模拟才足够好。而这些场景恰恰和游戏很像，游戏就是模拟真实世界，并且展示出来，游戏做的越好，模拟的也就越真实。而实现这一切的原理就是游戏引擎，通过游戏引擎模拟自然界的各种物理定律，可以让游戏世界和真实世界差不多。这也是越来越多的人沉迷游戏的原因，因为有的时候根本分不清是真实世界还是游戏世界。
+那么现在我们找到了一条捷径，用游戏来模拟自动驾驶的仿真，这看起来是一条可行的路，我们把自动驾驶中的场景复制到游戏世界，然后把自动驾驶中各种传感器的数据模拟采集游戏场景中的数据，那么我们就像是在真实世界中开着自动驾驶汽车在测试了。
 
-下面在进一步看如何初始化起点：  
-```
-void SimControl::InitStartPoint(double start_velocity,
-                                double start_acceleration) {
-  TrajectoryPoint point;
-  // Use the latest localization position as start point,
-  // fall back to a dummy point from map
-  
-  // 什么作用？
-  localization_reader_->Observe();
-  // 如果读取不到Localization TOPIC
-  if (localization_reader_->Empty()) {
-    start_point_from_localization_ = false;
-    apollo::common::PointENU start_point;
-    // 从地图读取起点
-    if (!map_service_->GetStartPoint(&start_point)) {
-      AWARN << "Failed to get a dummy start point from map!";
-      return;
-    }
-    point.mutable_path_point()->set_x(start_point.x());
-    point.mutable_path_point()->set_y(start_point.y());
-    point.mutable_path_point()->set_z(start_point.z());
-    double theta = 0.0;
-    double s = 0.0;
-    // 从地图获取
-    map_service_->GetPoseWithRegardToLane(start_point.x(), start_point.y(),
-                                          &theta, &s);
-    point.mutable_path_point()->set_theta(theta);
-    point.set_v(start_velocity);
-    point.set_a(start_acceleration);
-  } else {
-    start_point_from_localization_ = true;
-    // 从Localization读取新的位置
-    const auto& localization = localization_reader_->GetLatestObserved();
-    const auto& pose = localization->pose();
-    point.mutable_path_point()->set_x(pose.position().x());
-    point.mutable_path_point()->set_y(pose.position().y());
-    point.mutable_path_point()->set_z(pose.position().z());
-    point.mutable_path_point()->set_theta(pose.heading());
-    point.set_v(
-        std::hypot(pose.linear_velocity().x(), pose.linear_velocity().y()));
-    // Calculates the dot product of acceleration and velocity. The sign
-    // of this projection indicates whether this is acceleration or
-    // deceleration.
-    double projection =
-        pose.linear_acceleration().x() * pose.linear_velocity().x() +
-        pose.linear_acceleration().y() * pose.linear_velocity().y();
+我们知道了可以用游戏来模拟自动驾驶，而现在大家也都是这么做的，目前主流的仿真软件都是根据游戏引擎来做的，主要有下面几种：
+| 仿真软件 | 引擎 | 介绍 |
+| ------ | ------ | ------ |
+| Udacity |         | 优达学城的自动驾驶仿真平台 |
+| Carla   | Unreal4 | Intel和丰田合作的自动驾驶仿真平台 |
+| AirSim  | Unity   | 微软的仿真平台，还可以用于无人机 |
+| Apollo  |         | Dreamview百度的自动驾驶仿真平台 |
+| lgsvl   | Unity   | LG的自动驾驶仿真平台 |
 
-    // Calculates the magnitude of the acceleration. Negate the value if
-    // it is indeed a deceleration.
-    double magnitude = std::hypot(pose.linear_acceleration().x(),
-                                  pose.linear_acceleration().y());
-    point.set_a(std::signbit(projection) ? -magnitude : magnitude);
-  }
-  SetStartPoint(point);
-}
-```
+
+* Unreal4
+主要的编程方式是c++，完全开源可以查看源码，还可以通过蓝图编程，如果要了解具体原理可以深入了解下Unreal4引擎。比较著名的游戏有：《鬼泣5》《绝地求生：刺激战场》
+* Unity
+主要的编程方式是c#和脚本，源码不开放，超过盈利上限收费，了解原理可以参考[官方教程](https://docs.unity3d.com/Manual/CreatingAndUsingScripts.html)。比较著名的游戏有：《王者荣耀》《炉石传说》
+
+
+
+#### 工作方式
+我们知道了有这么多的仿真软件，那么仿真软件的工作方式是怎样呢？大部分的仿真软件分为2部分：server端和client端，server端主要就是游戏引擎，提供模拟真实世界的传感器数据，并且提供控制车辆状态的接口，游戏中的车以及行人等控制接口，还提供一些辅助接口，例如改变天气状况，检测车辆是否有碰撞等。而client端则根据server端返回的传感器数据进行具体的控制，调整参数等。可以认为server就是游戏机，而client则是游戏手柄，根据游戏中的情况，适当的选择控制方式，知道游戏通关，即测试通过。
+
+
+#### 工作原理
+我们知道游戏引擎模拟了传感器的数据，那么游戏引擎是如何实现模拟自动驾驶中的传感器数据的呢？  
+* 摄像头深度信息
+* 摄像头分割
+* 摄像头长焦
+* 摄像头短焦
+* Lidar点云
+* radar数据
+* Gps信息
+
+除了传感器数据，还需要模拟真实世界的物理规律：  
+* 碰撞检测
+* 光线和天气变化
+* 汽车动力学模型
+
+
+
+
+#### 适配器
+如果是单独实现或者测试一个算法，拿我们做好的算法在仿真软件上进行测试就可以了，但是如果是需要测试已经开发好的软件，比如apollo和autoware系统，那么则需要实现仿真软件和自动驾驶系统的对接。一个简单的想法就是增加一个适配器，就像手机充电器的转换头一样，通过适配器来连接仿真软件和自动驾驶系统。目前carla和lgsvl都实现了通过适配器和自动驾驶系统的对接。可以直接通过仿真软件来测试自动驾驶系统。
+
+
+
+## lg_svl控制
+1. 如何通过仿真器训练lane_follow模型
+https://github.com/lgsvl/simulator/blob/master/Docs/docs/lane-following.md
+
+2. 常见问题
+https://github.com/lgsvl/simulator/blob/master/Docs/docs/faq.md
+
+
+
+
+## carla
+carla基于unreal引擎，语言为c++开发
+
+
+
+## 如何制作地图
+
+
+
+
+## 参考
+[虚幻引擎游戏列表](https://zh.wikipedia.org/wiki/%E8%99%9A%E5%B9%BB%E5%BC%95%E6%93%8E%E6%B8%B8%E6%88%8F%E5%88%97%E8%A1%A8)  
+[Unity3D](https://baike.baidu.com/item/Unity3D)  
