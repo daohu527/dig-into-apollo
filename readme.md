@@ -1,10 +1,8 @@
 # Dig into Apollo ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
 
 
-> Rome wasn't built in a day.
 
-
-👏️👏️👏️ 此项目是对[apollo](https://github.com/ApolloAuto/apollo)拙劣的介绍，主要根据模块对apollo代码进行讲解，如果你需要了解自动驾驶更多的内容，请参考另外一个项目[awesome-self-driving-cars](https://github.com/daohu527/awesome-self-driving-cars)，我们相信在不久的将来，科技必将改变世界。  
+👏️👏️👏️ 创建这个项目的初衷就是为了在学习自动驾驶的过程中留下一些笔记，学习和参考了不少网络上的学习笔记和个人博客，有的时候真想拍案惊呼，为什么仅仅依靠网络和自学就能够做到如此好，有如瞻仰夜空中璀璨的明星。学习过程中查阅了许多资源，遇到了很多用心的博客，教程和视频，因此也敦促自己不断地学习并且能够一样贡献优秀的学习笔记，在这里特此感谢@[百度Apollo项目](https://github.com/ApolloAuto/apollo) @[3Blue1Brown](https://space.bilibili.com/88461692/) @[台大李宏毅](https://www.bilibili.com/video/av23593949/) @[iMorpheusAI](https://i.youku.com/i/UNTMxNDU3NjEwMA==?spm=a2hzp.8244740.0.0) @[阿Paul哥](https://paul.pub/about/)，是你们让我意识到可以做到如此优秀，并且激励我把这个项目不断完善。
 
 
 ##  📒️ 目录
