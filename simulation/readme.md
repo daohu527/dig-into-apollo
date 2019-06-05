@@ -81,6 +81,13 @@
 
 > TODO: 补充原理
 
+下面分析下carla中如何实现上述的模拟，其实也可以看做Unreal4中如何实现上述功能，carla传感器的实现在"carla/Unreal/CarlaUE4/Plugins/Carla/Source/Carla/Sensor"中。  
+1. 其中摄像头深度信息是通过投影"carla/Unreal/CarlaUE4/Plugins/Carla/Content/PostProcessingMaterials"中的材质实现的，这里有点疑惑就是难道深度信息是实现就生成的，还是说材质类似做一层滤镜的操作？  
+2. 而Lidar是通过Raycast来实现的，即发送射线检测距离。主要的疑问是如何模拟点云的角度，参数等信息？  
+3. 天气的变化直接是通过"蓝图"实现的，没有找到具体的地方？  
+4. 汽车动力学模型暂时也没有找到地方？  
+
+
 
 <a name="how_to" />
 
