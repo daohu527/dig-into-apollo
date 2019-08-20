@@ -423,8 +423,11 @@ void Buffer::SubscriptionCallbackImpl(
     const std::shared_ptr<const apollo::transform::TransformStampeds>& msg_evt,
     bool is_static) {
   cyber::Time now = cyber::Time::Now();
+  // authority的用途？？？
   std::string authority =
       "cyber_tf";  // msg_evt.getPublisherName(); // lookup the authority
+
+  // 看起来不可能进入这个条件，除非多线程？？？
   if (now.ToNanosecond() < last_update_.ToNanosecond()) {
     AINFO << "Detected jump back in time. Clearing TF buffer.";
     clear();
@@ -437,6 +440,7 @@ void Buffer::SubscriptionCallbackImpl(
 
   for (int i = 0; i < msg_evt->transforms_size(); i++) {
     try {
+      // 封装消息
       geometry_msgs::TransformStamped trans_stamped;
 
       // header
@@ -461,9 +465,11 @@ void Buffer::SubscriptionCallbackImpl(
       trans_stamped.transform.rotation.z = transform.rotation().qz();
       trans_stamped.transform.rotation.w = transform.rotation().qw();
 
+      // 保存静态转换，用于上面判断条件的时候，重新设置静态转换
       if (is_static) {
         static_msgs_.push_back(trans_stamped);
       }
+      // 调用tf2的函数，保存转换到cache，区分静态和动态的转换
       setTransform(trans_stamped, authority, is_static);
     } catch (tf2::TransformException& ex) {
       std::string temp = ex.what();
@@ -472,6 +478,9 @@ void Buffer::SubscriptionCallbackImpl(
   }
 }
 ```
+接着是lookupTransform和canTransform分别调用tf2的库函数，实现查找转换和判断是否能够转换的实现，由于函数功能比较简单这里就不介绍了。
+
+可以看到主要的缓存实现都是在tf2的库函数中，后面有时间再分析下tf2具体的实现。
 
 
 ## Reference
