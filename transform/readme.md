@@ -198,6 +198,8 @@ void TransformBroadcaster::SendTransform(
 
 ## Buffer
 Buffer实际上提供了一个工具类给其他模块，它的主要作用是接收"/tf"和"/tf_static"的消息，并且保持在buffer中，提供给其他的节点进行查找和转换到对应的坐标系，我们先看BufferInterface的实现：  
+
+#### BufferInterface
 ```
 class BufferInterface {
  public:
