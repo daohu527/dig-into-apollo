@@ -166,7 +166,7 @@ void StaticTransformComponent::SendTransform(
 
 
 ## transform_broadcaster（广播）
-我们再来看下transform_broadcaster（广播消息），transform_broadcaster只是做为一个lib库提供给其他模块，入口在"transform_broadcaster.h"和"transform_broadcaster.cc"中。
+**各个模块通过广播的方式来发布动态变换，实际上就是各个模块通过调用transform_broadcaster的库函数来实现广播转换消息**，我们接下来看下transform_broadcaster是如何实现的，transform_broadcaster做为一个lib库，入口在"transform_broadcaster.h"和"transform_broadcaster.cc"中。
 ```
 class TransformBroadcaster {
  public:
@@ -209,7 +209,7 @@ void TransformBroadcaster::SendTransform(
 
 
 ## Buffer
-Buffer实际上提供了一个工具类给其他模块，它的主要作用是接收"/tf"和"/tf_static"的消息，并且保持在buffer中，提供给其他的节点进行查找和转换到对应的坐标系，我们先看BufferInterface的实现：  
+Buffer实际上提供了一个工具类给其它模块，它的主要作用是接收"/tf"和"/tf_static"的消息，并且保持在buffer中，提供给其它节点进行查找和转换到对应的坐标系，我们先看BufferInterface的实现：  
 
 #### BufferInterface
 ```
@@ -478,9 +478,12 @@ void Buffer::SubscriptionCallbackImpl(
   }
 }
 ```
-接着是lookupTransform和canTransform分别调用tf2的库函数，实现查找转换和判断是否能够转换的实现，由于函数功能比较简单这里就不介绍了。
+接着是lookupTransform和canTransform分别调用tf2的库函数，实现查找转换和判断是否能够转换的实现，由于函数功能比较简单这里就不介绍了。  
+可以看到主要的缓存实现都是在tf2的库函数中，后面有时间再分析下tf2具体的实现。  
 
-可以看到主要的缓存实现都是在tf2的库函数中，后面有时间再分析下tf2具体的实现。
+## 总结
+接下来我们用一张图来总结Apollo中的坐标变换关系，即静态坐标转换由"StaticTransform"模块提供，而动态转换由需要发布的模块自行发布如"NDTLocalization","RTKLocalization"和""Gnss，可以看到动态变换主要是世界坐标到本地坐标的转换，而静态转换主要是各个传感器之间的转换。最后转换关系统一由Buffer模块接收，并且提供查询。  
+![all](img/all.jpg)  
 
 
 ## Reference
