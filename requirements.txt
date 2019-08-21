@@ -1,0 +1,1 @@
+ApolloAuto/apollo==5.0.0
