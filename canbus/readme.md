@@ -4,12 +4,14 @@
 
 
 ## Table of Contents
-- [](#introduction)
+- [canbus介绍](#introduction)
   
 
 <a name="introduction" />
 
-## Canbus
+## Canbus介绍
+控制器局域网 (Controller Area Network，简称CAN或者CAN bus) 是一种车用总线标准。被设计用于在不需要主机（Host）的情况下，允许网络上的节点相互通信。采用广播机制，并利用标识符来定义内容和消息的优先顺序，使得canbus的扩展性良好，同时不基于特殊类型（Host）的节点，增加了升级网络的便利性。  
+
 
 
 

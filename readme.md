@@ -59,6 +59,7 @@
         - [测试场景](simulation#test_case)
         - [功能多样化](simulation#features)
     - [参考](simulation#reference)
+- [Canbus](canbus)
 - [Transform](transform)
     - [Transform模块简介](transform#introduction)
     - [Transform(静态变换)](transform#static_transform)
