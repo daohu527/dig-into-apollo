@@ -47,6 +47,8 @@
     - [Task](planning#task)
       - [DP & QP](planning#dp_qp)
     - [Reference](planning#reference)
+- [Localization](localization)
+- [Map](map)
 - [Simulation](simulation)
     - [为什么需要仿真](simulation#why_simulation)
     - [如何仿真](simulation#how_simulation)
