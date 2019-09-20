@@ -1,11 +1,11 @@
 # Dig into Apollo - Control ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
 
 ## Table of Contents
-- [介绍](#introduce)
+- [Control模块简介](#introduction)
 
   
 
-<a name="introduce" />
+<a name="introduction" />
 
 自动驾驶的控制模块逻辑相对比较简单，目前apollo采用的控制方法主要有2种：PID控制和MPC控制。
 其中校正表的生成主要是通过实际测试过程中运行软件，并且得到速度-加速度/油门刹车之间的关系，这里说明下为什么需要速度加速度和油门刹车的关系，根据高中物理知识，当知道一个物体的速度和加速度信息，就可以知道当前物体一段时间后的位置。这个参照表也就是通过速度，加速度和油门之间的关系，得到一些表格，相当于是建立了速度，加速度和油门刹车之间的模型。最后通过查表的方式来实现控制汽车到指定的位置。  

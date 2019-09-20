@@ -47,6 +47,8 @@
     - [Task](planning#task)
       - [DP & QP](planning#dp_qp)
     - [Reference](planning#reference)
+- [Control](control)
+    - [Control模块简介](control#introduction)  
 - [Localization](localization)
 - [Map](map)
 - [Simulation](simulation)
@@ -103,7 +105,7 @@
 
 ##  ☕️️ 鸣谢
 * 欢迎对项目的贡献，如果觉得项目对你有帮助✌️️，欢迎star❤️！  
-* 欢迎交流和讨论问题，希望这些讨论对大家的学习有帮助!
+* 欢迎交流和提交问题，希望这些对大家的学习有帮助!
 
 ##  📌️ 参考
 [apollo](https://github.com/ApolloAuto/apollo)  
