@@ -34,24 +34,28 @@
 .
 ├── base         // 基础类
 ├── BUILD        // 编译testdata，用于测试
-├── camera       // 摄像头
+├── camera       // 摄像头  --- 子模块流程
 ├── common       // 公共目录
 ├── data
 ├── fusion       // 融合
 ├── inference    // 推理
 ├── lib          // lib库
-├── lidar        // 雷达
+├── lidar        // 雷达    --- 子模块流程
 ├── map          // 地图
-├── onboard      // 各个模块的构建
-├── production   // 加载模块
+├── onboard      // 各个子模块的入口     --- 子模块入口
+├── production   // Cyber加载模块入口    --- Cyber加载入口
 ├── proto        // 数据格式，protobuf
-├── radar        // 毫米波
+├── radar        // 毫米波  --- 子模块流程
 ├── README.md
 └── testdata    // 上述几个模块的测试数据，包括训练好的模型
 ```
-apollo的感知模块没有开放训练模型，只是开放了testdata，下载训练好的模型之后来跑一个简单的Demo。  
-其中production目录为加载lanuch和dag模块，而感知各个模块的申明和构建在onboard中，
+**感知模块的入口在production目录，通过lanuch加载对应的dag，启动感知模块**。可以看到感知启动了多个子模块，来处理不同的传感器信息（Lidar,Radar,Camera）。各个子模块的入口在onboard目录中，各个子模块会订阅不同的传感器Topic，然后进行统一的流水线(Pipeline)作业。每个子模块的流水线作业分别在不同的文件夹中(camera, lidar, radar)。这就是感知模块总体的目录结构。
 
+
+## production
+
+
+## onboard
 
 
 ## radar
