@@ -39,7 +39,7 @@
 
 可以看到规划(planning)模块的上游是Localization, Prediction, Routing模块，而下游是Control模块。Routing模块先规划出一条导航线路，然后Planning模块根据这条线路做局部优化，如果Planning模块发现短期规划的线路行不通（比如前面修路，或者错过了路口），会触发Routing模块重新规划线路，因此这两个模块的数据流是双向的。  
 Planning模块的输入在"planning_component.h"中，接口如下:
-```
+``` c++
   bool Proc(const std::shared_ptr<prediction::PredictionObstacles>&
                 prediction_obstacles,
             const std::shared_ptr<canbus::Chassis>& chassis,

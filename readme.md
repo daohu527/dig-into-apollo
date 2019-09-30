@@ -168,13 +168,13 @@
 
 ##  :unlock: 计划
 * 2019/11/11之前的计划  
-    [ ] planning模块各个控制器的具体实现  
-    [ ] routing模块可视化工具介绍  
-    [ ] cyber的系统调度流程，和消息收发流程  
+    - [ ] planning模块各个控制器的具体实现  
+    - [ ] routing模块可视化工具介绍  
+    - [ ] cyber的系统调度流程，和消息收发流程  
 
 * 2019/12/30之前的计划  
-    [ ] perception模块的流程分析  
-    [ ] prediction模块的流程分析  
+    - [ ] perception模块的流程分析  
+    - [ ] prediction模块的流程分析  
 
 ## :pushpin: 参考
 [apollo](https://github.com/ApolloAuto/apollo)  
