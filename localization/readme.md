@@ -77,7 +77,7 @@ localization模块主要实现了以下2个功能：
 └── rtk_localization_test.cc            // 测试
 ```
 在http://rtk_localization_component.cc中可以看到
-```
+```c++
 RTKLocalizationComponent::RTKLocalizationComponent()
     : localization_(new RTKLocalization()) {}
 ```
@@ -90,7 +90,7 @@ RTKLocalizationComponent::RTKLocalizationComponent()
 1. 通过回调读取gnss驱动发布的消息
 
 在gnss driver中DataParser类通过PublishCorrimu发布IMU的消息，而RTKLocalizationComponent::InitIO中绑定了回调
-```
+```c++
 corrected_imu_listener_ = node_->CreateReader<localization::CorrectedImu>(
       imu_topic_, std::bind(&RTKLocalization::ImuCallback, localization_.get(),
                             std::placeholders::_1));

@@ -334,7 +334,7 @@ message ShmConf {
 ```
 
 cyber的ip地址: 
-```c++
+```bash
 export CYBER_IP=127.0.0.1
 ```
 
