@@ -425,7 +425,7 @@ message Sidewalk {
   optional Polygon polygon = 3;
 }
 ```
-![Sidewalk](Sidewalk.jpg)  
+![Sidewalk](img/Sidewalk.jpg)  
 
 其中还包括剩下的4个没有介绍
 map_id.proto
