@@ -497,6 +497,9 @@ RoleAttributes
 #export GLOG_v=4
 ```
 
+## cyber创建进程
+cyber通过类std::thread表示单个执行线程。
+
 
 <a name="reference" />
 
