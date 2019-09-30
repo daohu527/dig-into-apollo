@@ -39,7 +39,7 @@
 
 可以看到规划(planning)模块的上游是Localization, Prediction, Routing模块，而下游是Control模块。Routing模块先规划出一条导航线路，然后Planning模块根据这条线路做局部优化，如果Planning模块发现短期规划的线路行不通（比如前面修路，或者错过了路口），会触发Routing模块重新规划线路，因此这两个模块的数据流是双向的。  
 Planning模块的输入在"planning_component.h"中，接口如下:
-``` c++
+```c++
   bool Proc(const std::shared_ptr<prediction::PredictionObstacles>&
                 prediction_obstacles,
             const std::shared_ptr<canbus::Chassis>& chassis,
@@ -54,7 +54,7 @@ Planning模块的输入在"planning_component.h"中，接口如下:
 
 Planning模块的输出结果在"PlanningComponent::Proc()"中，为规划好的线路，发布到Control模块订阅的Topic中。  
 输出结果为：规划好的路径。
-```
+```c++
 planning_writer_->Write(std::make_shared<ADCTrajectory>(adc_trajectory_pb));
 ```
 
@@ -81,7 +81,7 @@ planning_writer_->Write(std::make_shared<ADCTrajectory>(adc_trajectory_pb));
 
 #### 模块注册
 Planning模块的入口为"planning_component.h"和"planning_component.cc"两个文件，实现的功能如下：
-```
+```c++
 // 订阅和发布消息
 std::shared_ptr<cyber::Reader<perception::TrafficLightDetection>>
   traffic_light_reader_;
@@ -101,7 +101,7 @@ CYBER_REGISTER_COMPONENT(PlanningComponent)
 #### 模块初始化
 除了注册模块，订阅和发布消息之外，planning模块实现了2个主要函数"init"和"proc"。  
 Init中实现了模块的初始化：
-```
+```c++
   if (FLAGS_open_space_planner_switchable) {
     planning_base_ = std::make_unique<OpenSpacePlanning>();
   } else {
@@ -123,7 +123,7 @@ Init中实现了模块的初始化：
 可以看到"OpenSpacePlanning","NaviPlanning"和"OnLanePlanning"都继承自同一个基类，并且在PlanningComponent中通过配置选择一个具体的实现进行注册。  
 
 Init接下来实现了具体的消息发布和消息订阅，我们只看具体的一个例子：
-```
+```c++
 // 读取routing模块的消息
 routing_reader_ = node_->CreateReader<RoutingResponse>(
       FLAGS_routing_response_topic,
@@ -155,7 +155,7 @@ routing_reader_ = node_->CreateReader<RoutingResponse>(
 
 #### 模块运行
 Proc的主要是检查数据，并且执行注册好的Planning，生成路线并且发布。
-```
+```c++
 bool PlanningComponent::Proc(...) {
   // 1. 检查是否需要重新规划线路。
   CheckRerouting();
@@ -180,7 +180,7 @@ bool PlanningComponent::Proc(...) {
 1. Planning上下文信息
 2. Frame结构体(车辆信息，位置信息等所有规划需要用到的信息，在/planning/common/frame.h中)
 
-```
+```c++
 uint32_t sequence_num_ = 0;
 LocalView local_view_;
 const hdmap::HDMap *hdmap_ = nullptr;
@@ -209,7 +209,7 @@ std::vector<routing::LaneWaypoint> future_route_waypoints_;
 
 #### 初始化
 OnLanePlanning的初始化逻辑在Init中，主要实现分配具体的Planner，启动参考线提供器(reference_line_provider_)，代码分析如下：
-```
+```c++
 Status OnLanePlanning::Init(const PlanningConfig& config) {
   ...
   
@@ -225,7 +225,7 @@ Status OnLanePlanning::Init(const PlanningConfig& config) {
 ```
 
 可以看到"DispatchPlanner"在"OnLanePlanning"实例化的时候就指定了。
-```
+```c++
 class OnLanePlanning : public PlanningBase {
  public:
   OnLanePlanning() {
@@ -233,7 +233,7 @@ class OnLanePlanning : public PlanningBase {
   }
 ```
 在看"OnLanePlannerDispatcher"具体的实现，也是根据配置选择具体的"Planner"，默认为"PUBLIC_ROAD"规划器:
-```
+```c++
 // 配置文件
 standard_planning_config {
   planner_type: PUBLIC_ROAD
@@ -262,7 +262,7 @@ std::unique_ptr<Planner> OnLanePlannerDispatcher::DispatchPlanner() {
 #### 事件触发
 
 OnLanePlanning的主要逻辑在"RunOnce()"中，在Apollo 3.5之前是定时器触发，3.5改为事件触发，即收到对应的消息之后，就触发执行，这样做的好处是增加了实时性 [参考](https://github.com/ApolloAuto/apollo/issues/6572)。  
-```
+```c++
 void OnLanePlanning::RunOnce(const LocalView& local_view,
                              ADCTrajectory* const ptr_trajectory_pb) {
   
@@ -347,7 +347,7 @@ Status OnLanePlanning::Plan(
 
 下面我们主要介绍"PublicRoadPlanner"，主要的实现还是在Init和Plan中。  
 init中主要是注册规划器支持的场景(scenario)。  
-```
+```c++
 Status PublicRoadPlanner::Init(const PlanningConfig& config) {
   // 读取public Road配置
   const auto& public_road_config =
@@ -384,7 +384,7 @@ standard_planning_config {
 
 #### 运行场景
 接着看"Plan"中的实现：
-```
+```c++
 Status PublicRoadPlanner::Plan(const TrajectoryPoint& planning_start_point,
                                Frame* frame,
                                ADCTrajectory* ptr_computed_trajectory) {
@@ -442,7 +442,7 @@ Status PublicRoadPlanner::Plan(const TrajectoryPoint& planning_start_point,
 
 #### 场景转换
 场景转换的实现在"scenario_manager.cc"中，其中实现了场景注册，创建场景和更新场景的功能。  
-```
+```c++
 bool ScenarioManager::Init(
     const std::set<ScenarioConfig::ScenarioType>& supported_scenarios) {
   // 注册场景
@@ -483,7 +483,7 @@ void ScenarioManager::ScenarioDispatch(const common::TrajectoryPoint& ego_point,
 场景的执行在"scenario.cc"和对应的场景目录中，实际上每个场景又分为一个或者多个阶段(stage)，每个阶段又由不同的任务(task)组成。执行一个场景，就是顺序执行不同阶段的不同任务。
 ![Planner结构](https://raw.githubusercontent.com/daohu527/misc/master/blog/planning/Planner.png)  
 下面我们来看一个具体的例子，Scenario对应的stage和task在"planning/conf/scenario"中。
-```
+```c++
 // Scenario对应的Stage
 scenario_type: SIDE_PASS
 stage_type: SIDE_PASS_APPROACH_OBSTACLE
@@ -508,7 +508,7 @@ task_type: QP_SPLINE_ST_SPEED_OPTIMIZER
 ```
 
 由于Scenario都是顺序执行，只需要判断这一阶段是否结束，然后转到下一个阶段就可以了。具体的实现在：  
-```
+```c++
 Scenario::ScenarioStatus Scenario::Process(
     const common::TrajectoryPoint& planning_init_point, Frame* frame) {
   ...
@@ -536,7 +536,7 @@ Scenario::ScenarioStatus Scenario::Process(
 ```
 
 我们接着看一下Stage中"Process"的执行：  
-```
+```c++
 Stage::StageStatus LaneFollowStage::Process(
     const TrajectoryPoint& planning_start_point, Frame* frame) {
     ...
