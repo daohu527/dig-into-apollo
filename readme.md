@@ -1,7 +1,7 @@
 # Dig into Apollo ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
 ![logo](img/logo.jpg)  
 
-创建这个项目的初衷是为了在自动驾驶的学习过程中留下一些笔记，参考了不少网络上的资料和个人博客，有的时候真想拍案惊呼:smiley::heart_eyes:，为什么仅仅依靠网络和自学就能够做到如此优秀:rocket::rocket::rocket:！也因此敦促自己不断学习和贡献优秀的笔记。  
+创建这个项目的初衷是为了在自动驾驶的学习过程中留下一些笔记，参考了不少网络上的资料和个人博客，有的时候真想拍案惊呼:smiley::heart_eyes::heart_eyes:，为什么仅仅依靠网络和自学就能够做到如此优秀:rocket::rocket::rocket:！也因此敦促自己不断学习和贡献优秀的笔记。  
 > 子曰： 知之者不如好之者，好之者不如乐之者。  
 
 :clap::clap::clap:在这里特此感谢@[百度Apollo项目](https://github.com/ApolloAuto/apollo) @[3Blue1Brown](https://space.bilibili.com/88461692/) @[台大李宏毅](https://www.bilibili.com/video/av23593949/) @[iMorpheusAI](https://i.youku.com/i/UNTMxNDU3NjEwMA==?spm=a2hzp.8244740.0.0) @[阿Paul哥](https://paul.pub/about/)  
@@ -164,17 +164,17 @@
 > 各个模块的介绍都在对应的子目录中，主流程放在readme.md中，一些细节的函数和疑问放在todo.md中，需要了解主流程直接看readme.md，如果要深挖整个代码可以参考todo.md。
 
 ## :coffee: 鸣谢
-* 欢迎对项目的贡献，如果觉得项目对你有帮助:kissing_heart::kissing_heart::kissing_heart:，欢迎star:heart::heart::heart:！ 
+* 欢迎对项目的贡献，如果觉得项目对你有帮助:kissing_heart::kissing_heart::kissing_heart:，欢迎star:heart:！ 
 
 ##  :unlock: 计划
 * 2019/11/11之前的计划  
-    [] planning模块各个控制器的具体实现  
-    [] routing模块可视化工具介绍  
-    [] cyber的系统调度流程，和消息收发流程  
+    [ ] planning模块各个控制器的具体实现  
+    [ ] routing模块可视化工具介绍  
+    [ ] cyber的系统调度流程，和消息收发流程  
 
 * 2019/12/30之前的计划  
-    [] perception模块的流程分析  
-    [] prediction模块的流程分析  
+    [ ] perception模块的流程分析  
+    [ ] prediction模块的流程分析  
 
 ## :pushpin: 参考
 [apollo](https://github.com/ApolloAuto/apollo)  
