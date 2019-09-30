@@ -7,7 +7,7 @@
 :clap::clap::clap:在这里特此感谢@[百度Apollo项目](https://github.com/ApolloAuto/apollo) @[3Blue1Brown](https://space.bilibili.com/88461692/) @[台大李宏毅](https://www.bilibili.com/video/av23593949/) @[iMorpheusAI](https://i.youku.com/i/UNTMxNDU3NjEwMA==?spm=a2hzp.8244740.0.0) @[阿Paul哥](https://paul.pub/about/)  
 
 
-## :ledger:目录
+## :ledger: 目录
 - [apollo简介](introduction)
     - [简介](introduction#introduction)
     - [目录结构](introduction#content)
@@ -163,19 +163,19 @@
 
 > 各个模块的介绍都在对应的子目录中，主流程放在readme.md中，一些细节的函数和疑问放在todo.md中，需要了解主流程直接看readme.md，如果要深挖整个代码可以参考todo.md。
 
-## :coffee:鸣谢
+## :coffee: 鸣谢
 * 欢迎对项目的贡献，如果觉得项目对你有帮助:kissing_heart::kissing_heart::kissing_heart:，欢迎star:heart::heart::heart:！ 
 
-##  :unlock:计划
-2019/11/11之前的计划  
-* planning模块各个控制器的具体实现  
-* routing模块可视化工具介绍  
-* cyber的系统调度流程，和消息收发流程  
+##  :unlock: 计划
+* 2019/11/11之前的计划  
+    [] planning模块各个控制器的具体实现  
+    [] routing模块可视化工具介绍  
+    [] cyber的系统调度流程，和消息收发流程  
 
-2019/12/30之前的计划  
-* perception模块的流程分析  
-* prediction模块的流程分析  
+* 2019/12/30之前的计划  
+    [] perception模块的流程分析  
+    [] prediction模块的流程分析  
 
-## :pushpin:参考
+## :pushpin: 参考
 [apollo](https://github.com/ApolloAuto/apollo)  
 [awesome-self-driving-cars](https://github.com/daohu527/awesome-self-driving-cars)  
