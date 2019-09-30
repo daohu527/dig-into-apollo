@@ -188,7 +188,7 @@ cyber的入口在"cyber/mainboard"目录，我们先看下目录结构：
 ```
 根据文件名称也可以大概猜到cyber主目录的工作，cyber主函数通过模块的参数加载cyber中的所有模块，而cyber模块是有依赖顺序的，每个cyber模块都有一个DAG文件，这个文件声明了各个模块的依赖关系，而control模块大概率就是控制模块的加载顺序。接下来我们通过看代码验证我们的猜想是否正确。  
 我们从"mainboard.cc"开始，阅读代码之前的头文件相当关键，头文件可以告诉我们文件之间的依赖关系，引用了哪些模块。我们可以看到主模块引用了"mainboard/module_argument.h"和"mainboard/module_controller.h"，这2个文件相当于是"mainboard.cc"的子函数，所以我们先从"mainboard.cc"开始看，剩下的2个文件自然会在"mainboard.cc"中引用。还有一些其他的引用主要是一些状态和标志位，可以先略过。
-```
+```c++
 #include "cyber/common/global_data.h"
 #include "cyber/common/log.h"
 #include "cyber/init.h"
@@ -199,7 +199,7 @@ cyber的入口在"cyber/mainboard"目录，我们先看下目录结构：
 #include "gflags/gflags.h"
 ```
 接下来我们看下函数的主流程：  
-```
+```c++
 int main(int argc, char** argv) {
   google::SetUsageMessage("we use this program to load dag and run user apps.");
 
@@ -231,7 +231,7 @@ int main(int argc, char** argv) {
 ```
 接下来我们更加详细的分析每个过程。  
 * **解析模块参数** 解析模块参数在"module_argument.h"和"module_argument.cc"中的"ModuleArgument"类中，具体的实现如下
-```
+```c++
 void ModuleArgument::ParseArgument(const int argc, char* const argv[]) {
   
   // 解析输入参数
@@ -254,7 +254,7 @@ void ModuleArgument::ParseArgument(const int argc, char* const argv[]) {
 ```
 
 * **初始化cyber** 初始化cyber就是cyber目录下的"init.h"和"init.cc"中，具体的实现如下：
-```
+```c++
 bool Init(const char* binary_name) {
   // 获取锁，为了改变state状态而获取锁
   std::lock_guard<std::mutex> lg(g_mutex);
@@ -286,7 +286,7 @@ bool Init(const char* binary_name) {
 ```
 
 * **启动模块** 启动模块功能在"module_controller.h"和"module_controller.cc"中实现，具体的流程如下：  
-```
+```c++
 // 1. 构造ModuleController
 
 // 2. ModuleController控制器初始化
@@ -296,7 +296,7 @@ bool Init(const char* binary_name) {
 
 ## Cyber通信方式
 cyber的通信方式有以下几种:
-```
+```c++
   switch (mode) {
     case OptionalMode::INTRA:
       transmitter = std::make_shared<IntraTransmitter<M>>(modified_attr);
@@ -321,7 +321,7 @@ cyber的通信方式有以下几种:
 
 SHM (shared-memory queues)
 SHM模式的配置可以指定IP和Port
-```
+```c++
 message ShmMulticastLocator {
     optional string ip = 1;
     optional uint32 port = 2;
@@ -334,7 +334,7 @@ message ShmConf {
 ```
 
 cyber的ip地址: 
-```
+```c++
 export CYBER_IP=127.0.0.1
 ```
 
@@ -356,7 +356,7 @@ https://zh.wikipedia.org/wiki/%E7%AE%80%E5%8D%95%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8
 1. 首先注册Participant，设置配置，比如广播地址，端口
 2. 然后通过创建发布和订阅者来实现服务注册
 
-```
+```c++
 // 1. 
 void Participant::CreateFastRtpsParticipant(
     const std::string& name, int send_port,
@@ -450,7 +450,7 @@ bool Manager::StartDiscovery(RtpsParticipant* participant) {
 ```
 
 fast-RTPS
-```
+```c++
 ParticipantImpl::createPublisher
 ```
 
@@ -467,7 +467,7 @@ https://www.developershome.com/sms/intraInterInternationalSMS.asp
 #### 广播
 multicast_notifier.cc
 广播
-```
+```c++
   notify_fd_ = socket(AF_INET, SOCK_DGRAM, 0);
   ssize_t nbytes =
       sendto(notify_fd_, info_str.c_str(), info_str.size(), 0,
@@ -475,7 +475,7 @@ multicast_notifier.cc
 ```
 
 监听
-```
+```c++
   listen_fd_ = socket(AF_INET, SOCK_DGRAM, 0);
   bind(listen_fd_, (struct sockaddr*)&listen_addr_, sizeof(listen_addr_)
   ssize_t nbytes = recvfrom(listen_fd_, buf, 32, 0, nullptr, nullptr);
@@ -491,7 +491,7 @@ RoleAttributes
 #### cyber
 
 设置日志等级在"cyber/setup.bash"中设置  
-```
+```bash
 # for DEBUG log
 #export GLOG_minloglevel=-1
 #export GLOG_v=4
