@@ -68,14 +68,14 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 接着看下openstreetmap的基本元素：
 **Node**![node](img/30px-Osm_element_node.svg.png)  
 节点表示由其纬度和经度定义的地球表面上的特定点。每个节点至少包括id号和一对坐标。节点也可用于定义独立点功能。例如，节点可以代表公园长椅或水井。节点也可以定义道路(Way)的形状，节点是一切形状的基础。  
-```json
+```javascipt
 <node id="25496583" lat="51.5173639" lon="-0.140043" version="1" changeset="203496" user="80n" uid="1238" visible="true" timestamp="2007-01-28T11:40:26Z">
     <tag k="highway" v="traffic_signals"/>
 </node>
 ```
 **Way**![way](img/30px-Osm_element_way.svg.png)![way](img/30px-Osm_element_closedway.svg.png)![way](img/30px-Osm_element_area.svg.png)  
 道路是包含2到2,000个有序节点的折线组成，用于表示线性特征，例如河流和道路。道路也可以表示区域（实心多边形）的边界，例如建筑物或森林。在这种情况下，道路的第一个和最后一个节点将是相同的。这被称为“封闭的方式”。  
-```json
+```javascipt
   <way id="5090250" visible="true" timestamp="2009-01-19T19:07:25Z" version="8" changeset="816806" user="Blumpsy" uid="64226">
     <nd ref="822403"/>
     <nd ref="21533912"/>
