@@ -98,7 +98,7 @@ corrected_imu_listener_ = node_->CreateReader<localization::CorrectedImu>(
 当读取imu_topic_的消息时候，调用ImuCallback回调，把数据放到imu_list_中。
 
 2. 通过GpsCallback返回位置信息，下面是GpsCallback的函数调用顺序  
-![location_rtk_flow](location_rtk_flow.jpg)  
+![location_rtk_flow](img/location_rtk_flow.jpg)  
 上面就是RTK模块的工作流程。  
 
 
