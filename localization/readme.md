@@ -87,7 +87,7 @@ RTKLocalizationComponent::RTKLocalizationComponent()
 ![location_rtk](img/location_rtk.jpg)    
 其中RTKLocalization首先读取驱动模块发布的gnss消息，然后再调用GpsCallback输出位置。
 
-1.通过回调读取gnss驱动发布的消息
+1. 通过回调读取gnss驱动发布的消息
 
 在gnss driver中DataParser类通过PublishCorrimu发布IMU的消息，而RTKLocalizationComponent::InitIO中绑定了回调
 ```
