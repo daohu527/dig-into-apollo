@@ -53,16 +53,16 @@
 │   └── navigation_dummy
 └── tools          // 工具
 ```
-apollo的高精度地图采用了openstreet格式，openstreet是一个统一的地图标准，这样保证了地图的通用性。其中map模块主要提供的功能是读取高精度地图，并且转换成apollo程序中的Map对象。直白一点就是说把xml格式的openstreet高精度地图，读取为程序能够识别的格式。  
-map模块没有实现的功能是高精度地图的制作，简略的制图过程可以参考。  
+apollo的高精度地图采用了opendrive格式，opendrive是一个统一的地图标准，这样保证了地图的通用性。其中map模块主要提供的功能是读取高精度地图，并且转换成apollo程序中的Map对象。直白一点就是说把xml格式的opendrive高精度地图，读取为程序能够识别的格式。  
+map模块没有实现的功能是高精度地图的制作，简略的制图过程可以[参考](https://zhuanlan.zhihu.com/p/57958859)。  
 
 <a name="map_data_struct" />
 
 ## 地图数据结构
 由于openstreet格式是一个标准，可以它的参考官方网站。下面主要介绍下apollo是如何读取xml地图，并且使用的。  
-地图的读取在adapter中，其中xml_parser目录提供解析xml的能力。而"opendrive_adapter.cc"则实现了地图的加载，转换为程序中的Map对象。然后地图在"hdmap_impl.cc"中提供一系列api接口给其他模块使用。
+地图的读取在adapter中，其中xml_parser目录提供解析xml的能力。而"opendrive_adapter.cc"则实现了地图的加载，转换为程序中的Map对象。然后地图在"hdmap_impl.cc"中提供一系列api接口给其他模块使用。  
 下面先介绍下地图消息格式，主要在proto目录。  
-"map.proto"分为地图头部信息和结构体，头部信息主要介绍了地图的基本信息，包括版本，时间，投影方法，地图大小，厂家等。结构体主要是道路的不同组成部分，包括人行横道，路口区域，车道，停车观察，信号灯，让路标志，重叠区域，禁止停车，减速带，道路，停车区域，路边的小路，或者行人走的路。  
+"map.proto" 分为地图头部信息和结构体，头部信息主要介绍了地图的基本信息“版本，时间，投影方法，地图大小，厂家等”。结构体主要是道路的不同组成部分，包括“人行横道，路口区域，车道，停车观察，信号灯，让路标志，重叠区域，禁止停车，减速带，道路，停车区域，路边的小路，或者行人走的路”。  
 
 <a name="header" />
 
@@ -85,7 +85,7 @@ message Header {
 }
 ```
 下面是地图的道路信息，其中有2个标志(StopSign，YieldSign)是美国才有的，后来查看了下知乎发现对应到国内是(停，让)，具体的含义都是一样，停车的意思是到路口先停止，看下有没有车，然后再开始启动，让车就是先让行，比如交汇路口，理应让直行的车辆先通过，然后再汇入道路。[参考](https://www.zhihu.com/question/20512694)  
-下面再介绍下overlap，overlap在注释里的解释是“任何一对在地图上重合的东西，包括（车道，路口，人行横道）”，比如路口的人行横道和道路是重叠的，还有一些交通标志和道路也是重叠的。（不知道这样理解是否正确）  
+下面在介绍下overlap，overlap在注释里的解释是“任何一对在地图上重合的东西，包括（车道，路口，人行横道）”，比如路口的人行横道和道路是重叠的，还有一些交通标志和道路也是重叠的，这是创造的一个逻辑概念。（不知道这样理解是否正确）  
 
 ```
 message Map {
@@ -119,6 +119,7 @@ message Crosswalk {
   repeated Id overlap_id = 3;   //重叠ID
 }
 ```
+![crosswalk](img/crosswalk.jpg)  
 
 <a name="junction" />
 
@@ -133,6 +134,7 @@ message Junction {
   repeated Id overlap_id = 3;    //重叠id
 }
 ```
+![junction](img/junction.jpg)  
 
 <a name="lane" />
 
@@ -206,6 +208,7 @@ message Lane {
   repeated LaneSampleAssociation right_road_sample = 21;    //中心点与最近右路边界之间的关联
 }
 ```
+![lane](img/lane.jpg)  
 
 <a name="stop_sign" />
 
@@ -232,6 +235,7 @@ message StopSign {
   optional StopType type = 4;
 }
 ```
+![StopSign](img/StopSign.jpg)  
 
 <a name="signal" />
 
@@ -278,6 +282,7 @@ message Signal {
   repeated Curve stop_line = 6;     //在哪里结束？
 }
 ```
+![Signal](img/Signal.jpg)    
 
 <a name="yield" />
 
@@ -293,7 +298,7 @@ message YieldSign {
   repeated Id overlap_id = 3;     //重叠id
 }
 ```
-
+![YieldSign](img/YieldSign.jpg)    
 
 <a name="overlap" />
 
@@ -333,6 +338,7 @@ message Overlap {
   repeated ObjectOverlapInfo object = 2;
 }
 ```
+> 逻辑概念，没有具体的规则显示这个区域
 
 <a name="cleararea" />
 
@@ -347,6 +353,7 @@ message ClearArea {
   optional Polygon polygon = 3;  //多边形
 }
 ```
+![ClearArea](img/ClearArea.jpg)  
 
 map_speed_bump.proto  减速带
 ```
@@ -356,6 +363,7 @@ message SpeedBump {
     repeated Curve position = 3;  //曲线位置
 }
 ```
+![SpeedBump](img/SpeedBump.jpg)  
 
 <a name="road" />
 
@@ -382,6 +390,7 @@ message Road {
   optional Id junction_id = 3;
 }
 ```
+![Road](img/Road.jpg)    
 
 <a name="parking" />
 
@@ -400,6 +409,7 @@ message ParkingSpace {
   optional double heading = 4;
 }
 ```
+![ParkingSpace](img/ParkingSpace.jpg)  
 
 <a name="sidewalk" />
 
@@ -415,6 +425,7 @@ message Sidewalk {
   optional Polygon polygon = 3;
 }
 ```
+![Sidewalk](Sidewalk.jpg)  
 
 其中还包括剩下的4个没有介绍
 map_id.proto
@@ -479,8 +490,7 @@ message PNCJunction {
 
 ## opendriver地图解析
 
-上面只是简单的介绍了下地图的数据格式，具体的应用场景，还需要结合planning模块进一步学习。
-
+上面只是简单的介绍了下地图的数据格式，具体的应用场景，还需要结合planning模块进一步学习。  
 我们再回过头来看adapter模块，其中xml_parser就是针对道路的不同元素部分做的解析。
 ```
 ├── adapter
@@ -512,10 +522,7 @@ message PNCJunction {
 <a name="api" />
 
 ## 高精度地图API
-最后在看下hdmap_impl.cc，主要实现了一系列的api来查找道路中的元素。由于实现的接口太多，后面有时间了看是否能够整理下api文档。
-
-
-##遗留
+最后在看下hdmap_impl.cc，主要实现了一系列的api来查找道路中的元素。由于实现的接口太多，后面有时间了看是否能够整理下api文档。  
 关于pnc_map和relative_map还没有介绍，关于一些道路元素的使用场景没有介绍。  
 
 
