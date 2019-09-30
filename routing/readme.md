@@ -68,14 +68,14 @@ Routing类似于现在开车时用到的导航模块，通常考虑的是起点�
 接着看下openstreetmap的基本元素：
 **Node**![node](img/30px-Osm_element_node.svg.png)  
 节点表示由其纬度和经度定义的地球表面上的特定点。每个节点至少包括id号和一对坐标。节点也可用于定义独立点功能。例如，节点可以代表公园长椅或水井。节点也可以定义道路(Way)的形状，节点是一切形状的基础。  
-```
+```json
 <node id="25496583" lat="51.5173639" lon="-0.140043" version="1" changeset="203496" user="80n" uid="1238" visible="true" timestamp="2007-01-28T11:40:26Z">
     <tag k="highway" v="traffic_signals"/>
 </node>
 ```
 **Way**![way](img/30px-Osm_element_way.svg.png)![way](img/30px-Osm_element_closedway.svg.png)![way](img/30px-Osm_element_area.svg.png)  
 道路是包含2到2,000个有序节点的折线组成，用于表示线性特征，例如河流和道路。道路也可以表示区域（实心多边形）的边界，例如建筑物或森林。在这种情况下，道路的第一个和最后一个节点将是相同的。这被称为“封闭的方式”。  
-```
+```json
   <way id="5090250" visible="true" timestamp="2009-01-19T19:07:25Z" version="8" changeset="816806" user="Blumpsy" uid="64226">
     <nd ref="822403"/>
     <nd ref="21533912"/>
@@ -160,7 +160,7 @@ apollo建图的实现在"routing/topo_creator"中，首先apollo的拓扑图中�
 * **NODE** - 包括车道唯一id，长度，左边出口，右边出口（这里的出口对应车道虚线的部分，或者自己定义的一段允许变道的路段），路段代价（限速或者拐弯的路段会增加成本，代价系数在routing_config.pb.txt中定义)，中心线（虚拟的，用于生成参考线），是否可见，车道所属的道路id。  
 * **EDGE** - 则包括起始车道id，到达车道id，切换代价，方向（向前，向左，向右）。  
 我们以上图中的例子来说明：  
-```
+```c++
 // 以lane2举例子
 id                              = 2
 predecessor_id                  = null // 上一车道id，不考虑变道的情况
@@ -200,7 +200,7 @@ speed_limit                     = 30       // 限速30km/h
 └── topo_creator.cc           // main函数
 ```
 编译生成可执行文件"topo_creator"，地图需要事先通过"topo_creator"把base_map转换为routing_map。其中建图的主流程在"graph_creator.cc"，并且创建节点和边。建图的主流程在函数"GraphCreator::Create()"中，下面我们具体分析这个函数。  
-```
+```c++
 bool GraphCreator::Create() {
   // 这里注意，有2种格式，一种是openstreet格式，通过OpendriveAdapter来读取
   // 另外一种是apollo自己定义的格式。
@@ -323,7 +323,7 @@ bool GraphCreator::Create() {
 
 #### 创建节点
 接下来看下创建节点的过程，在函数"GetPbNode()"中:  
-```
+```c++
 void GetPbNode(const hdmap::Lane& lane, const std::string& road_id,
                const RoutingConfig& routingconfig, Node* const node) {
   // 1. 初始化节点信息
@@ -334,7 +334,7 @@ void GetPbNode(const hdmap::Lane& lane, const std::string& road_id,
 
 ```
 1. 初始化哪些节点信息呢？  
-```
+```c++
 void InitNodeInfo(const Lane& lane, const std::string& road_id,
                   Node* const node) {
   double lane_length = GetLaneLength(lane);
@@ -354,7 +354,7 @@ void InitNodeInfo(const Lane& lane, const std::string& road_id,
 }
 ```
 2. 如何计算节点的代价呢？  
-```
+```c++
 void InitNodeCost(const Lane& lane, const RoutingConfig& routing_config,
                   Node* const node) {
   double lane_length = GetLaneLength(lane);
@@ -386,7 +386,7 @@ void InitNodeCost(const Lane& lane, const RoutingConfig& routing_config,
 
 #### 创建边
 接下来分析如何创建边，创建边的流程在函数"GetPbEdge()"中  
-```
+```c++
 void GetPbEdge(const Node& node_from, const Node& node_to,
                const Edge::DirectionType& type,
                const RoutingConfig& routing_config, Edge* edge) {
@@ -437,7 +437,7 @@ Routing模块的流程相对比较简单，主流程见下图：
 下面在结合具体的流程进行分析，这里主要要弄清楚2点：1.为什么要生成子图？ 2.如何通过astar算法查找最优路径？  
 
 首先我们从"routing_component.h"和"routing_component.cc"开始，apollo的功能被划分为各个模块，启动时候由cyber框架根据模块间的依赖顺序加载(每个模块的dag文件定义了依赖顺序)，**每次开始查看一个模块时，都是从component文件开始**。  
-```
+```c++
 class RoutingComponent final
     : public ::apollo::cyber::Component<RoutingRequest> {
  public:
@@ -470,7 +470,7 @@ CYBER_REGISTER_COMPONENT(RoutingComponent)
 ```
 routing模块都按照cyber的模块申明和注册，cyber框架负责调用Init进行初始化，并且收到消息时候触发Proc执行。  
 我们先看下"Init"函数:  
-```
+```c++
 bool RoutingComponent::Init() {
   // 设置消息qos，控制流量，创建消息发布response_writer_
   apollo::cyber::proto::RoleAttributes attr;
@@ -513,7 +513,7 @@ bool RoutingComponent::Init() {
 ```
 
 接下来当routing模块收到routing_request时，会触发"Proc()"，返回routing_response:  
-```
+```c++
 bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
   auto response = std::make_shared<RoutingResponse>();
   // 响应routing_请求
@@ -540,7 +540,7 @@ bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
 
 #### Routing类
 "Routing"类的实现在"routing.h"和"routing.cc"中，首先看下"Routing"类引用的头文件：  
-```
+```c++
 #include "modules/common/monitor_log/monitor_log_buffer.h"
 #include "modules/common/status/status.h"
 #include "modules/map/hdmap/hdmap_util.h"
@@ -548,7 +548,7 @@ bool RoutingComponent::Proc(const std::shared_ptr<RoutingRequest>& request) {
 #include "modules/routing/proto/routing_config.pb.h"
 ```
 看代码之前先看下头文件是个很好的习惯。通过头文件，我们可以知道当前模块的依赖项，从而搞清楚各个模块之间的依赖关系。可以看到"Routing"模块是一个相对比较独立的模块，只依赖于地图。我们先看下Routing的初始化函数。  
-```
+```c++
 apollo::common::Status Routing::Init() {
   // 读取routing_map，也就是点和边
   const auto routing_map_file = apollo::hdmap::RoutingMapFile();
@@ -562,7 +562,7 @@ apollo::common::Status Routing::Init() {
 ```
 
 之后会执行"Process"主流程，执行的过程如下：  
-```
+```c++
 bool Routing::Process(const std::shared_ptr<RoutingRequest>& routing_request,
                       RoutingResponse* const routing_response) {
   // 找到routing_request节点最近的路
@@ -585,7 +585,7 @@ bool Routing::Process(const std::shared_ptr<RoutingRequest>& routing_request,
 
 #### 导航
 Navigator初始化
-```
+```c++
 bool Navigator::Init(const RoutingRequest& request, const TopoGraph* graph,
                      std::vector<const TopoNode*>* const way_nodes,
                      std::vector<double>* const way_s) {
@@ -601,7 +601,7 @@ bool Navigator::Init(const RoutingRequest& request, const TopoGraph* graph,
 ```
 在routing请求中可以指定黑名单路和车道，这样routing请求将不会计算这些车道。应用场景是需要避开拥堵路段，这需要能够根据情况实时请求，在routing_request中可以设置黑名单也刚好可以满足上面的需求，如果直接把黑名单路段固定，则是一个比较蠢的设计。  
 剩下的一些过程比较简单，我们直接看主函数"SearchRouteByStrategy":  
-```
+```c++
 bool Navigator::SearchRouteByStrategy(
     const TopoGraph* graph, const std::vector<const TopoNode*>& way_nodes,
     const std::vector<double>& way_s,
@@ -670,7 +670,7 @@ bool Navigator::SearchRouteByStrategy(
 1. **GenerateBlackMapFromRequest** - 通过request请求传入黑名单lane和road，每次直接屏蔽一整条road或者lane。
 2. **AddBlackMapFromTerminal** - 虽然range_manager支持传入range，但是这种场景只是针对routing_request传入的点对lane做切割，方便计算，每次切割的区间的起点和终点重合，是一个特殊场景，后续应该有用到比如在一条lane里，有某一段不能行驶的功能。  
 接下来看具体的实现：  
-```
+```c++
 void BlackListRangeGenerator::AddBlackMapFromTerminal(
     const TopoNode* src_node, const TopoNode* dest_node, double start_s,
     double end_s, TopoRangeManager* const range_manager) const {
@@ -695,7 +695,7 @@ void BlackListRangeGenerator::AddBlackMapFromTerminal(
 }
 ```
 接着就是根据上面的range生成valid_range，在"GetSortedValidRange"中实现：  
-```
+```c++
 void GetSortedValidRange(const TopoNode* topo_node,
                          const std::vector<NodeSRange>& origin_range,
                          std::vector<NodeSRange>* valid_range) {
@@ -726,7 +726,7 @@ void GetSortedValidRange(const TopoNode* topo_node,
 然后我们再回过头去看下如何生成子图，生成子图的流程如下：  
 ![black_map](img/black_map.jpg)  
 生成子图主要在构造函数中：  
-```
+```c++
 SubTopoGraph::SubTopoGraph(
     const std::unordered_map<const TopoNode*, std::vector<NodeSRange>>&
         black_map) {
@@ -751,7 +751,7 @@ SubTopoGraph::SubTopoGraph(
 上述过程比较简单，浏览代码即可以理解。我们主要看下如何使用subgraph。  
 
 由于Graph节点中已经有边的信息，因此原先的Graph中的边的信息实际上已经保存在节点中了，最后Astar实际上只用到了子图的信息，因为节点有自己边的信息。subgraph的核心是通过边找到子边，如果节点不存在子节点，那么返回原先的边，通过该函数可以同时找到边和子边，这样节点和子节点都可以找到了。我们下面重点分析下"GetSubInEdgesIntoSubGraph"，另外一个类似:  
-```
+```c++
 void SubTopoGraph::GetSubInEdgesIntoSubGraph(
     const TopoEdge* edge,
     std::unordered_set<const TopoEdge*>* const sub_edges) const {
@@ -782,7 +782,7 @@ void SubTopoGraph::GetSubInEdgesIntoSubGraph(
 
 #### Astar算法
 最后根据生成好的子图，通过Astar算法来查找最佳路径，实现在"routing/strategy"目录。可以看到strategy中实现了一个"Strategy"的基类，也就是说后面可以扩展其他的查找策略。  
-```
+```c++
 class Strategy {
  public:
   virtual ~Strategy() {}
@@ -810,7 +810,7 @@ TODO: 具体算法实现可以参考维基百科的伪代码，由于网上已�
 
 ## 调试工具
 在routing/tools目录实现了如下3个功能：
-```
+```c++
 routing_cast.cc // 定时发送routing response响应
 routing_dump.cc // 保存routing请求
 routing_tester.cc // 定时发送routing request请求

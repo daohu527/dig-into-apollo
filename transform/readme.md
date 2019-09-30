@@ -30,7 +30,7 @@
 ## Transform(静态变换)
 
 TransformComponent模块的入口在"static_transform_component.cc"和"static_transform_component.h"中。实现了"StaticTransformComponent"类，我们接下来看下它的实现。
-```
+```c++
 class StaticTransformComponent final : public apollo::cyber::Component<> {
  public:
   StaticTransformComponent() = default;  // 构造函数
@@ -51,7 +51,7 @@ class StaticTransformComponent final : public apollo::cyber::Component<> {
 ```
 
 下面我们来分析StaticTransformComponent类具体的实现，首先是Init函数，Init函数做了2件事情，一是读取conf配置，二是发布"/tf_static"消息。
-```
+```c++
 bool StaticTransformComponent::Init() {
   // 读取配置
   if (!GetProtoConfig(&conf_)) {
@@ -71,7 +71,7 @@ bool StaticTransformComponent::Init() {
 ```
 
 接着看SendTransforms()函数，主要就是遍历conf文件，判断extrinsic_file(实际上对应各种传感器的外参)是否使能，如果使能则根据提供的文件路径解析对应的转换关系"ParseFromYaml"，把转换关系添加到数组"tranform_stamped_vec"中，然后发送。
-```
+```c++
 void StaticTransformComponent::SendTransforms() {
   std::vector<TransformStamped> tranform_stamped_vec;
   // 遍历对应的文件，实际上对应各种传感器的外参
@@ -110,7 +110,7 @@ header:
   frame_id: localization
 ```
 我们在看下如何解析yaml文件：  
-```
+```c++
 bool StaticTransformComponent::ParseFromYaml(
     const std::string& file_path, TransformStamped* transform_stamped) {
   ...
@@ -141,7 +141,7 @@ bool StaticTransformComponent::ParseFromYaml(
 }
 ```
 最后我们再看下如何发送转换关系：
-```
+```c++
 void StaticTransformComponent::SendTransform(
     const std::vector<TransformStamped>& msgtf) {
   for (auto it_in = msgtf.begin(); it_in != msgtf.end(); ++it_in) {
@@ -178,7 +178,7 @@ void StaticTransformComponent::SendTransform(
 
 ## transform_broadcaster（广播）
 **各个模块通过广播的方式来发布动态变换，实际上就是各个模块通过调用transform_broadcaster的库函数来实现广播转换消息**，我们接下来看下transform_broadcaster是如何实现的，transform_broadcaster做为一个lib库，入口在"transform_broadcaster.h"和"transform_broadcaster.cc"中。
-```
+```c++
 class TransformBroadcaster {
  public:
   // 这里注意构造的时候需要传入node
@@ -197,7 +197,7 @@ class TransformBroadcaster {
 ```
 从上面的分析可以看出，构造TransformBroadcaster的时候需要传入node。为什么需要传入node呢，因为cyber的一个module不能同时创建2个node，所以这里谁调用，就用谁的node创建reader和writer。如果是自己创建node，那么其他模块自己的node和引用该模块创建的node就打破了cyber上述的限制，这里的node是否可以理解为一个进程？
 下面我们分析具体的实现，首先是TransformBroadcaster构造函数：  
-```
+```c++
 TransformBroadcaster::TransformBroadcaster(
     const std::shared_ptr<cyber::Node>& node)
     : node_(node) {
@@ -209,7 +209,7 @@ TransformBroadcaster::TransformBroadcaster(
 ```
 创建writer并且往"/tf"发消息。这里可以看到，这里存在多个节点往一个topic发消息的情况。  
 发送消息比较简单，直接写对应的消息：  
-```
+```c++
 void TransformBroadcaster::SendTransform(
     const std::vector<TransformStamped>& transforms) {
   auto message = std::make_shared<TransformStampeds>();
@@ -228,7 +228,7 @@ Buffer实际上提供了一个工具类给其它模块，它的主要作用是�
 
 #### 缓存接口
 BufferInterface类定义了缓存需要实现的接口：  
-```
+```c++
 class BufferInterface {
  public:
   // 根据frame_id获取2帧的转换关系
@@ -328,7 +328,7 @@ BufferInterface实现的功能主要是查找转换关系，以及查看转换�
 
 #### 缓存实现
 下面我们接着看buffer类的实现，可以看到buffer类继承了"BufferInterface"和"tf2::BufferCore"，其中"tf2::BufferCore"就是大名鼎鼎的ROS中的tf2库。  
-```
+```c++
 class Buffer : public BufferInterface, public tf2::BufferCore {
  public:
   using tf2::BufferCore::canTransform;
@@ -401,7 +401,7 @@ class Buffer : public BufferInterface, public tf2::BufferCore {
 这里注意buffer为单例模式，即接收转换消息，并且放到buffer中保存。其他模块需要用到转换的时候，则从buffer中查找是否存在转换关系，并且进行对应的转换。  
 
 下面我们看buffer类的具体实现，buffer类的初始化在Init函数中：  
-```
+```c++
 int Buffer::Init() {
   std::string node_name =
       "transform_listener_" + std::to_string(cyber::Time::Now().ToNanosecond());
@@ -436,7 +436,7 @@ int Buffer::Init() {
 可以看到在Init函数中主要实现的功能是创建节点，并且订阅"/tf"和"/tf_static"消息，由于Buffer为单例，在cyber初始化的时候创建的node，不是在模块内部创建的node（关于这块，后面有时间在详细论述下，cyber可以存在多个node，而启动的模块则不能，是不是因为cyber做为调度器，为了方便控制）。
 
 回调函数都是SubscriptionCallbackImpl，我们看下它是如何缓存消息的？
-```
+```c++
 void Buffer::SubscriptionCallbackImpl(
     const std::shared_ptr<const apollo::transform::TransformStampeds>& msg_evt,
     bool is_static) {
