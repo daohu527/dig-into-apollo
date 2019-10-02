@@ -8,7 +8,8 @@
 <a name="introduction" />
 
 ## Control模块简介
-Apollo控制模块的逻辑相对比较简单，控制模块的作用主要是**根据规划(planning)模块生成的轨迹，计算出汽车能够识别的油门，刹车和方向盘信号，控制汽车按照规定的轨迹行驶**。主要是根据汽车动力和运动学的知识，对汽车进行建模，实现对汽车的控制。目前apollo主要用到了2种控制方式：PID控制和模型控制。  
+Apollo控制模块的逻辑相对比较简单，控制模块的作用主要是**根据规划(planning)模块生成的轨迹，计算出汽车能够识别的油门，刹车和方向盘信号，控制汽车按照规定的轨迹行驶**。主要是根据汽车动力和运动学的知识，对汽车进行建模，实现对汽车的控制。目前apollo主要用到了2种控制方式：PID控制和模型控制。   
+ 
 首先我们需要搞清楚control模块的输入是什么，输出是什么？
 ![input.jpg](img/input.jpg)  
 可以看到control模块：
@@ -34,7 +35,7 @@ Control模块的目录结构如下：
 
 下面我们来分析下control模块的执行流程。
 
-## 控制器
+## Control主流程
 Control模块的入口在"control_component.cc"中，和其他的模块一样，Control模块注册为一个cyber的模块，其中control模块为定时模块，也就是每隔10ms执行一次命令。这里需要注意了planning模块的输出是100ms一次，也就是说100ms才给出一条曲线，而control模块会根据这条曲线，每10ms处理一次，控制汽车按照指定的速度到达指定的位置。  
 Control模块执行的主函数是"ControlComponent::Proc()"即每10ms调用一次该函数，处理的流程在该函数中：  
 ```c++
@@ -70,9 +71,9 @@ bool ControlComponent::Proc() {
 }
 ```
 上述的流程大概分为3个部分：
-1. 读取输入数据
-2. 生成控制命令
-3. 发送控制命令  
+1. **读取输入数据**
+2. **生成控制命令**
+3. **发送控制命令**  
 
 生成控制命令的核心函数在"ProduceControlCommand"中，其实这个函数中包含了参数检查和_estop(紧急情况)的处理，真正生成命令的函数只有一行:  
 ```c++
@@ -80,17 +81,77 @@ bool ControlComponent::Proc() {
         &local_view_.localization, &local_view_.chassis,
         &local_view_.trajectory, control_command);
 ```
+
+#### 控制器注册
 最后通过"controller_agent_"产生控制命令，而"controller_agent_"是一个代理控制器，由于有多个控制器，其他的控制器通过注册到代理控制器，来实现多个控制器的调用：  
 ![agent.jpg](img/agent.jpg)  
 其中控制器包括：
 * 纵向控制
 * 横向控制
 * 模型预测控制
-* Stanley横向控制 [参考](https://www.ri.cmu.edu/pub_files/2009/2/Automatic_Steering_Methods_for_Autonomous_Automobile_Path_Tracking.pdf)  
-  
+* Stanley横向控制
+> Stanley横向控制可以[参考](https://www.ri.cmu.edu/pub_files/2009/2/Automatic_Steering_Methods_for_Autonomous_Automobile_Path_Tracking.pdf)  
+
+那么这些控制器是如何注册到"controller_agent_"的呢？  
+```c++
+// 1. 在ControlComponent::Init()中调用初始化
+bool ControlComponent::Init() {
+  // 注册控制器
+  if (!controller_agent_.Init(&control_conf_).ok()) {
+    monitor_logger_buffer_.ERROR("Control init controller failed! Stopping...");
+    return false;
+  }
+}
+
+// 2. 在ControllerAgent类中注册和初始化
+Status ControllerAgent::Init(const ControlConf *control_conf) {
+  // 注册控制器
+  RegisterControllers(control_conf);
+  // 实例化控制器
+  CHECK(InitializeConf(control_conf).ok()) << "Fail to initialize config.";
+  // 控制器初始化
+  for (auto &controller : controller_list_) {
+    if (controller == NULL || !controller->Init(control_conf_).ok()) {
+      if (controller != NULL) {
+        AERROR << "Controller <" << controller->Name() << "> init failed!";
+        return Status(ErrorCode::CONTROL_INIT_ERROR,
+                      "Failed to init Controller:" + controller->Name());
+      } else {
+        return Status(ErrorCode::CONTROL_INIT_ERROR,
+                      "Failed to init Controller");
+      }
+    }
+    AINFO << "Controller <" << controller->Name() << "> init done!";
+  }
+  return Status::OK();
+}
+```
+上面就是control模块的主流程，我们接着介绍下control模块中的"pad message"和"estop_"，然后再介绍各个控制器的具体实现。  
+
+#### Pad消息
+Pad消息通过发送状态来控制control模块的模式，其中"DrivingAction"一共有3种状态，在"pad_msg.proto"中:
+```
+enum DrivingAction {
+  STOP = 0;
+  START = 1;
+  RESET = 2;
+};
+```
+在control模块中只能使用pad "RESET"来清空"estop_"的状态。实际上control模块会判断"driving_mode"来决定是否启动自动驾驶，而"driving_mode"是通过pad信息发送状态给"canbus"模块来控制的，这会在canbus模块分析中详细介绍。  
+总之pad信息的2个作用是:  
+1. **发送消息给canbus模块，来控制driving_mode，control模块判断当前driving_mode的状态来决定是否启动自动驾驶**
+2. **通过reset来清空estop_的状态**
+
+那么"estop_"有什么作用呢？  
+#### estop_标志位
+estop_标志位的作用是判断control模块是否处于紧急状态，而触发紧急停车。那么在哪些状态下，"estop_"为真，汽车进入紧急停车状态呢？  
+1. ****
+2. ****
+3. ****
+下面是"estop_"的状态变迁图和设置流程:  
+![estop](img/estop.jpg)  
 
 
-#### 
 
 
 其中校正表的生成主要是通过实际测试过程中运行软件，并且得到速度-加速度/油门刹车之间的关系，这里说明下为什么需要速度加速度和油门刹车的关系，根据高中物理知识，当知道一个物体的速度和加速度信息，就可以知道当前物体一段时间后的位置。这个参照表也就是通过速度，加速度和油门之间的关系，得到一些表格，相当于是建立了速度，加速度和油门刹车之间的模型。最后通过查表的方式来实现控制汽车到指定的位置。  
@@ -155,7 +216,7 @@ MPCController
 [how_to_tune_control_parameters](https://github.com/ApolloAuto/apollo/blob/master/docs/howto/how_to_tune_control_parameters.md)  
 [throttle-affect-the-rpm-of-an-engine](https://www.physicsforums.com/threads/how-does-the-throttle-affect-the-rpm-of-an-engine.832029/)  
 [PID_controller](https://en.wikipedia.org/wiki/PID_controller)  
-[Automatic Steering Methods for Autonomous Automobile Path Tracking](https://www.ri.cmu.edu/pub_files/2009/2/Automatic_Steering_Methods_for_Autonomous_Automobile_Path_Tracking.pdf)   
+[Stanley横向控制](https://www.ri.cmu.edu/pub_files/2009/2/Automatic_Steering_Methods_for_Autonomous_Automobile_Path_Tracking.pdf)   
 
 
 https://www.mathworks.com/help/mpc/ug/adaptive-cruise-control-using-model-predictive-controller.html  
