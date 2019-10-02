@@ -18,12 +18,8 @@
 那么canbus模块的输入是什么？输出又是什么？  
 ![input](img/input.jpg)  
 可以看到canbus模块：
-* **输入:**
-1. ControlCommand
-
-* **输出:**
-1. Chassis
-2. ChassisDetail
+* **输入** - ControlCommand
+* **输出** - 1. Chassis, 2. ChassisDetail  
 即canbus模块的输入是控制模块发送的控制命令，输出车身当前的信息，这里apollo的上层模块被当做一个can_client来处理，实现收发canbus上的消息。
 
 Canbus模块的目录结构如下：  
@@ -32,13 +28,13 @@ Canbus模块的目录结构如下：
 ├── canbus_component.cc      // canbus主入口
 ├── canbus_component.h       
 ├── canbus_test.cc           // canbus测试
-├── common                   //
+├── common                   // gflag配置
 ├── conf                     // 配置文件
 ├── dag                      // dag依赖
 ├── launch                   // launch加载
 ├── proto                    // protobuf文件
 ├── testdata                 // 测试数据
-├── tools                    // 工具
+├── tools                    // 遥控汽车和测试canbus总线工具
 └── vehicle                  //   
 ```
 下面我们来分析下Canbus模块的执行流程。
@@ -61,7 +57,11 @@ bool CanbusComponent::Proc() {
 ![main](img/main.jpg)  
 
 
-## VehicleController
+#### VehicleController
+
+
+## LincolnController
+下面以林肯来介绍如何接收和发送canbus信息，其他的车型可以以此类推:  
 
 
 
