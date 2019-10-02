@@ -145,9 +145,9 @@ enum DrivingAction {
 那么"estop_"有什么作用呢？  
 #### estop_标志位
 estop_标志位的作用是判断control模块是否处于紧急状态，而触发紧急停车。那么在哪些状态下，"estop_"为真，汽车进入紧急停车状态呢？  
-1. **输入错误(CheckInput返回false)**
-2. **计算控制命令失败(ComputeControlCommand失败)**
-3. **planning模块直接给出是否紧急停车** 
+1. 输入错误(CheckInput返回false)
+2. 计算控制命令失败(ComputeControlCommand失败)
+3. planning模块直接给出是否紧急停车   
 下面是"estop_"的状态变迁图和紧急停车流程:  
 ![estop](img/estop.jpg)  
 
