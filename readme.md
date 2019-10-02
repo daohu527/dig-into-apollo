@@ -110,6 +110,8 @@
     - [StanleyLatController控制器](control#stanleylat_controller)
     - [Reference](control#reference) 
 - [Canbus](canbus)
+    - [Canbus模块介绍](canbus#introduction)
+    - [Canbus模块主流程](canbus#main)
 - [Simulation](simulation)
     - [为什么需要仿真](simulation#why_simulation)
     - [如何仿真](simulation#how_simulation)
