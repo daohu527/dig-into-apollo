@@ -7,10 +7,113 @@
 
 <a name="introduction" />
 
-自动驾驶的控制模块逻辑相对比较简单，目前apollo采用的控制方法主要有2种：PID控制和MPC控制。
+## Control模块简介
+Apollo控制模块的逻辑相对比较简单，控制模块的作用主要是**根据规划(planning)模块生成的轨迹，计算出汽车能够识别的油门，刹车和方向盘信号，控制汽车按照规定的轨迹行驶**。主要是根据汽车动力和运动学的知识，对汽车进行建模，实现对汽车的控制。目前apollo主要用到了2种控制方式：PID控制和模型控制。  
+首先我们需要搞清楚control模块的输入是什么，输出是什么？
+![input.jpg](img/input.jpg)  
+可以看到control模块：
+* **输入** - Chassis(车辆状态信息), LocalizationEstimate(位置信息), ADCTrajectory(planning模块规划的轨迹)
+* **输出** - ControlCommand(油门，刹车，方向盘)
+
+Control模块的目录结构如下：  
+```
+├── BUILD      // bazel编译文件
+├── common     // PID和控制器的具体实现     --- 算法具体实现
+├── conf       // 配置文件                 --- 配置文件
+├── control_component.cc  // 模块入口
+├── control_component.h   
+├── control_component_test.cc
+├── controller           // 控制器         --- 具体的控制器实现
+├── dag                  // dag依赖
+├── integration_tests    // 测试
+├── launch               // launch加载
+├── proto                // protobuf文件，主要各个控制器的配置数据结构
+├── testdata             // 测试数据
+└── tools                // 根据类
+```
+
+下面我们来分析下control模块的执行流程。
+
+## 控制器
+Control模块的入口在"control_component.cc"中，和其他的模块一样，Control模块注册为一个cyber的模块，其中control模块为定时模块，也就是每隔10ms执行一次命令。这里需要注意了planning模块的输出是100ms一次，也就是说100ms才给出一条曲线，而control模块会根据这条曲线，每10ms处理一次，控制汽车按照指定的速度到达指定的位置。  
+Control模块执行的主函数是"ControlComponent::Proc()"即每10ms调用一次该函数，处理的流程在该函数中：  
+```c++
+bool ControlComponent::Proc() {
+  // 1. 读取输入数据，通过拷贝读取输入信息
+  chassis_reader_->Observe();
+  const auto &chassis_msg = chassis_reader_->GetLatestObserved();
+  if (chassis_msg == nullptr) {
+    AERROR << "Chassis msg is not ready!";
+    return false;
+  }
+
+  OnChassis(chassis_msg);
+
+  ...
+  const auto &trajectory_msg = trajectory_reader_->GetLatestObserved();
+
+  ...
+  const auto &localization_msg = localization_reader_->GetLatestObserved();
+
+
+  ControlCommand control_command;
+  // 2. 生成控制命令
+  Status status = ProduceControlCommand(&control_command);
+
+  ...
+
+  common::util::FillHeader(node_->Name(), &control_command);
+  // 3. 发送控制命令
+  control_cmd_writer_->Write(std::make_shared<ControlCommand>(control_command));
+
+  return true;
+}
+```
+上述的流程大概分为3个部分：
+1. 读取输入数据
+2. 生成控制命令
+3. 发送控制命令  
+
+生成控制命令的核心函数在"ProduceControlCommand"中，其实这个函数中包含了参数检查和_estop(紧急情况)的处理，真正生成命令的函数只有一行:  
+```c++
+    Status status_compute = controller_agent_.ComputeControlCommand(
+        &local_view_.localization, &local_view_.chassis,
+        &local_view_.trajectory, control_command);
+```
+最后通过"controller_agent_"产生控制命令，而"controller_agent_"是一个代理控制器，由于有多个控制器，其他的控制器通过注册到代理控制器，来实现多个控制器的调用：  
+![agent.jpg](img/agent.jpg)  
+其中控制器包括：
+* 纵向控制
+* 横向控制
+* 模型预测控制
+* Stanley横向控制 [参考](https://www.ri.cmu.edu/pub_files/2009/2/Automatic_Steering_Methods_for_Autonomous_Automobile_Path_Tracking.pdf)  
+  
+
+
+#### 
+
+
 其中校正表的生成主要是通过实际测试过程中运行软件，并且得到速度-加速度/油门刹车之间的关系，这里说明下为什么需要速度加速度和油门刹车的关系，根据高中物理知识，当知道一个物体的速度和加速度信息，就可以知道当前物体一段时间后的位置。这个参照表也就是通过速度，加速度和油门之间的关系，得到一些表格，相当于是建立了速度，加速度和油门刹车之间的模型。最后通过查表的方式来实现控制汽车到指定的位置。  
 
 首先这个表的生成需要测试每种油门以及每种速度下的表现，但是表不可能列出无限种数据，因此最后还是需要通过插值的方式来得到最后的结果。
+
+control模块的输入是 车身信息，位置信息，以及规划的轨迹，输出是控制命令(方向盘，油门，刹车)。
+
+
+ControllerAgent 作为控制器的代理(是否为设计模式的代理模式)，注册了3种控制器：LonController, LatController, MPCController （StanleyLatController这个是什么作用？？？）这3个控制器都继承来自Controller的基础类。
+
+proto主要是一些配置文件的定义。
+
+
+下面分别介绍几个控制器：
+LonController
+LatController
+MPCController
+
+
+另外一个比较关注的地方在于"estop_"，即在紧急情况下，control模块应该有自己处理汽车当前状况的能力。而什么是紧急状况，紧急状况的定义是什么呢？首先的一点就是规划命令有3秒没有下发（是否一定要触发停车？），或者一些紧急情况，需要立刻停车的场景。
+
+另外关于PID控制的时候，正常情况下是没有问题，如果是遇到路面不平的情况，相当于人为的给小车一个推力，这样就对PID的反馈引入了一个震荡，震荡的引入之后系统是否能够保持收敛或者稳态呢，这就是PID控制需要研究的范围？？？
 
 ## 模型
 汽车前后方向的受力可以通过如下2幅图来表示：
@@ -52,6 +155,7 @@
 [how_to_tune_control_parameters](https://github.com/ApolloAuto/apollo/blob/master/docs/howto/how_to_tune_control_parameters.md)  
 [throttle-affect-the-rpm-of-an-engine](https://www.physicsforums.com/threads/how-does-the-throttle-affect-the-rpm-of-an-engine.832029/)  
 [PID_controller](https://en.wikipedia.org/wiki/PID_controller)  
+[Automatic Steering Methods for Autonomous Automobile Path Tracking](https://www.ri.cmu.edu/pub_files/2009/2/Automatic_Steering_Methods_for_Autonomous_Automobile_Path_Tracking.pdf)   
 
 
 https://www.mathworks.com/help/mpc/ug/adaptive-cruise-control-using-model-predictive-controller.html  
