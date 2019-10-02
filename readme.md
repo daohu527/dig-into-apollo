@@ -5,6 +5,7 @@
 > 子曰： 知之者不如好之者，好之者不如乐之者。  
 
 :clap::clap::clap:在这里特此感谢@[百度Apollo项目](https://github.com/ApolloAuto/apollo) @[3Blue1Brown](https://space.bilibili.com/88461692/) @[台大李宏毅](https://www.bilibili.com/video/av23593949/) @[iMorpheusAI](https://i.youku.com/i/UNTMxNDU3NjEwMA==?spm=a2hzp.8244740.0.0) @[阿Paul哥](https://paul.pub/about/)  
+欢迎对项目的贡献，如果觉得项目对你有帮助:kissing_heart::kissing_heart::kissing_heart:，欢迎star:heart:！ 
 
 
 ## :ledger: 目录
@@ -176,9 +177,6 @@
 
 
 > 各个模块的介绍都在对应的子目录中，主流程放在readme.md中，一些细节的函数和疑问放在todo.md中，需要了解主流程直接看readme.md，如果要深挖整个代码可以参考todo.md。
-
-## :coffee: 鸣谢
-* 欢迎对项目的贡献，如果觉得项目对你有帮助:kissing_heart::kissing_heart::kissing_heart:，欢迎star:heart:！ 
 
 ##  :unlock: 计划
 * 2019/11/11之前的计划  
