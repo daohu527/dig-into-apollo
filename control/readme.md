@@ -209,11 +209,12 @@ enum DrivingAction {
 
 ## LatController控制器
 纵向控制主要是控制速度，而横向控制主要是控制方向。方向盘的角度不一样，车的行驶路径不一样，因此汽车的横向控制主要是通过控制方向盘的转角来控制汽车行驶的方向。  
-纵向控制采用的是**LQR控制器**，为什么不继续采用PID控制器呢？因为每种控制器都有它的适合情况和不适合情况（有一篇文章专门介绍了不同的控制器的优劣，PID主要的缺点是不适合泊车和曲率比较大的情况）。关于LQR控制器主要是一些公式的推导，后面在详细介绍下推导过程
+纵向控制采用的是**LQR控制器**，为什么不继续采用PID控制器呢？因为每种控制器都有它的适合情况和不适合情况（有一篇文章专门介绍了不同的控制器的优劣，PID主要的缺点是不适合泊车和曲率比较大的情况）。关于LQR控制器主要是一些公式的推导，后面在详细介绍下推导过程。
 
 <a name="mpc_controller" />
 
 ## MPCController控制器
+模型预测控制(MPC)是一类特殊的控制。它的当前控制动作是在每一个采样瞬间通过求解一个有限时域开环最优控制问题而获得。过程的当前状态作为最优控制问题的初始状态，解得的最优控制序列只实施第一个控制作用。这是它与那些使用预先计算控制律的算法的最大不同。本质上模型预测控制求解一个开环最优控制问题。它的思想与具体的模型无关，但是实现则与模型有关。  
 
 <a name="stanleylat_controller" />
 
@@ -240,4 +241,5 @@ enum DrivingAction {
 [PID_controller](https://en.wikipedia.org/wiki/PID_controller)  
 [Stanley横向控制](https://www.ri.cmu.edu/pub_files/2009/2/Automatic_Steering_Methods_for_Autonomous_Automobile_Path_Tracking.pdf)   
 [Linear–quadratic regulator](https://en.wikipedia.org/wiki/Linear%E2%80%93quadratic_regulator)  
+[模型预测控制](https://baike.baidu.com/item/%E6%A8%A1%E5%9E%8B%E9%A2%84%E6%B5%8B%E6%8E%A7%E5%88%B6)  
 
