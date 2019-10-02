@@ -19,8 +19,9 @@
 那么canbus模块的输入是什么？输出又是什么？  
 ![input](img/input.jpg)  
 可以看到canbus模块：
-* **输入** - ControlCommand
+* **输入** - 1. ControlCommand
 * **输出** - 1. Chassis, 2. ChassisDetail  
+
 即canbus模块的输入是控制模块发送的控制命令，输出车身当前的信息，这里apollo的上层模块被当做一个can_client来处理，实现收发canbus上的消息。
 
 Canbus模块的目录结构如下：  
