@@ -13,7 +13,8 @@
 
 ## Canbus模块介绍
 我们先看下什么是Canbus: 控制器局域网 (Controller Area Network，简称CAN或者CAN bus) 是一种车用总线标准。被设计用于在不需要主机（Host）的情况下，允许网络上的节点相互通信。采用广播机制，并利用标识符来定义内容和消息的优先顺序，使得canbus的扩展性良好，同时不基于特殊类型（Host）的节点，增加了升级网络的便利性。  
-这里的Canbus模块其实可以称为**Chassis模块**，主要的作用是反馈车当前的状态（航向，角度，速度等信息），并且发送控制命令到车，**可以说Canbus模块是车和自动软件之间的桥梁**。  
+这里的Canbus模块其实可以称为**Chassis模块**，主要的作用是反馈车当前的状态（航向，角度，速度等信息），并且发送控制命令到车，**可以说Canbus模块是车和自动软件之间的桥梁**。由于这个模块和"drivers/canbus"的联系紧密，因此也一起在这里介绍。  
+总之canbus模块是车和自动软件之间的桥梁，通过canbus驱动(drivers/canbus)来实现车身信息上报给apollo上层软件，同时接收控制命令，发送给汽车线控卡进行对汽车的控制。  
 
 那么canbus模块的输入是什么？输出又是什么？  
 ![input](img/input.jpg)  
@@ -58,6 +59,7 @@ bool CanbusComponent::Proc() {
 
 
 #### VehicleController
+
 
 
 ## LincolnController
