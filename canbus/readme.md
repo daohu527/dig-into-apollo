@@ -94,7 +94,8 @@ VehicleFactory类通过创建不同的类型AbstractVehicleFactory，每个车�
 <a name="message_manager" />
 
 #### 消息管理器(MessageManager)
-MessageManager是如何获取消息的呢？  
+MessageManager是如何获取消息的呢？ 
+ 
 **MessageManager主要作用是解析和保存canbus数据，而具体的接收和发送则是在"CanReceiver"和"CanSender"中**，拿接收消息举例子，也就是说CanReceiver收到消息后，会调用MessageManager中的parse去解析消息，消息的解析协议在"modules/canbus/vehicle/lincoln/protocol"中，每个消息把自己对应的信息塞到"chassis_detail"中完成了消息的接收。  
 ![canbus](img/canbus.jpg)  
 
