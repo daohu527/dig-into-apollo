@@ -190,7 +190,24 @@ PowerSendThreadFunc再通过"can_client"发送消息：
 #### canbus客户端(CanClient)
 CanClient是canbus客户端，同时也是canbus的驱动程序，针对不同的canbus卡，对发送和接收进行封装，并且提供给消息发送和接收控制器使用。  
 ![canclient](img/canclient.jpg)  
+拿"EsdCanClient"来举例子，发送在"Send"函数中，调用的是第三方的硬件驱动，目录在"third_party/can_card_library/esd_can"，实现can消息的发送：  
+```c++
+ErrorCode EsdCanClient::Send(const std::vector<CanFrame> &frames,
+                             int32_t *const frame_num) {
+  ...
 
+  // canWrite为第三方库的硬件驱动，third_party/can_card_library/esd_can
+  // Synchronous transmission of CAN messages
+  int32_t ret = canWrite(dev_handler_, send_frames_, frame_num, nullptr);
+  if (ret != NTCAN_SUCCESS) {
+    AERROR << "send message failed, error code: " << ret << ", "
+           << GetErrorString(ret);
+    return ErrorCode::CAN_CLIENT_ERROR_BASE;
+  }
+  return ErrorCode::OK;
+}
+```
+其他的can卡可以参考上述的流程，至此整个canbus驱动就分析完成了。  
 
 <a name="reference" />
 
