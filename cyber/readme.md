@@ -295,7 +295,11 @@ bool Init(const char* binary_name) {
 
 ## classloader(类动态加载)
 首先我们需要搞清楚classloader的作用，classloader动态的加载".so"文件，从而实现动态的加载和卸载模块。说的直白一点就是cyber通过classloader动态的加载定位，感知，规划，控制等模块。这样的好处是当一个模块奔溃时候，只需要动态的从新加载这个模块就可以了，而不需要从新加载其他模块。  
-下面我们来看一下"ClassLoader"类：
+我先看下整体的结构，ClassLoaderManager管理着ClassLoader，而ClassLoader调用utility来实现具体的功能，实际上utility是通过c++的PocoFoundation库来实现加载动态库的。  
+![classloader](img/classloader.jpg)  
+
+#### ClassLoader
+首先我们来看一下"ClassLoader"类：
 ```c++
   // 动态库是否已经加载
   bool IsLibraryLoaded();
@@ -426,6 +430,8 @@ int ClassLoader::UnloadLibrary() {
 从上述过程可以看到"ClassLoader"类主要实现了类的加载，卸载，创建对象，而具体的实现主要通过"utility"来实现。  
 
 
+#### utility
+utility通过调用c++的PocoFoundation库来实现加载动态库，下面我们来具体看下：  
 
 
 
