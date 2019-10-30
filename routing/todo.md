@@ -28,24 +28,6 @@ class Component<M0, NullType, NullType, NullType> : public ComponentBase {
 // todo 模板方法中为虚函数，而继承类中为公有方法？为什么？
 
 
-## GetWayNodes
-```
-bool GetWayNodes(const RoutingRequest& request, const TopoGraph* graph,
-                 std::vector<const TopoNode*>* const way_nodes,
-                 std::vector<double>* const way_s) {
-  for (const auto& point : request.waypoint()) {
-    const auto* cur_node = graph->GetNode(point.id());
-    if (cur_node == nullptr) {
-      AERROR << "Cannot find way point in graph! Id: " << point.id();
-      return false;
-    }
-    way_nodes->push_back(cur_node);
-    way_s->push_back(point.s());
-  }
-  return true;
-}
-```
-
 ## SearchRoute
 
 ```
@@ -80,6 +62,7 @@ bool Navigator::SearchRoute(const RoutingRequest& request,
 ```
 
 ## FillLaneInfoIfMissing
+如果routing请求中没有包含lane信息，则会自动补全这一部分信息。  
 ```
 RoutingRequest Routing::FillLaneInfoIfMissing(
     const RoutingRequest& routing_request) {
@@ -113,6 +96,7 @@ RoutingRequest Routing::FillLaneInfoIfMissing(
   return fixed_request;
 }
 ```
+
 BlackListRangeGenerator生成黑名单路段
 通过RoutingRequest中的black_lane和black_road来生成黑名单路段，这里会设置一整段路都为黑名单。
 ```
@@ -124,6 +108,7 @@ void BlackListRangeGenerator::GenerateBlackMapFromRequest(
   range_manager->SortAndMerge();
 }
 ```
+
 通过Terminal来设置黑名单，应用场景是设置routing的起点和终点。这里的起点和终点都是一个点，功能是把lane切分为2个subNode
 ```
 void BlackListRangeGenerator::AddBlackMapFromTerminal(
@@ -187,6 +172,21 @@ bool TopoNode::IsOutRangeEnough(const std::vector<NodeSRange>& range_vec,
   return false;
 }
 ```
+
+## GeneratePassageRegion
+生成passageRegion，这里需要注意每个Passage中的直行都是合并了的，也就是说passage中只有每次换向的时候才会从新启用新的passage。  
+
+
+## SubTopoGraph
+构建subtopograph的作用就是为了方便routing切割lane，然后把lane分割成几个子节点，子节点的网络是如何建立的？如何根据这些节点来进行查找和计算代价？？？
+
+## Navigator::MergeRoute
+没有看出来从哪里mergeRoute
+
+## AStarStrategy::Search
+具体的查找过程，每次还是会从子网络查找
+
+## 
 
 
 ## Reference

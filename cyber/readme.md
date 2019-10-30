@@ -52,7 +52,7 @@
 
 
 参考上述实现，我们可以把需求细化为以下几个方面：  
-![requirements](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/requirements.jpg)  
+![requirements](img/requirements.jpg)  
 
 > 实际上Apollo主要用到了ROS消息通信的功能，同时也用到了录制bag包等一些工具类。所以目前Cyber的首要设计就是替换ROS消息通信的功能。
 
@@ -65,13 +65,13 @@
 #### 随意的假设
 
 按照上述需求，我们可以随便假想，或者根据自己的理解先画出系统的草图，这里我们要实现一个分布式的系统：  
-![node](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/node.jpg)  
+![node](img/node.jpg)  
 1. 上述的系统是一个分布式系统，每个节点作为一个Node。
 2. 上述系统每个节点之间都可以相互通信，一个节点下线，不会导致到整个系统瘫痪。
 3. 上述系统可以灵活的增加删除节点。
 
 那么我们再看下其他的设计方式：  
-![master_node](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/master_node.jpg)  
+![master_node](img/master_node.jpg)  
 上述系统采用了集中式的消息管理，每个节点之间通讯必须经过主节点来转发对应的消息，如果主节点下线，那么所有的节点都会通信失败，导致系统瘫痪。
 1. 上述系统是一个分布式系统，每个节点作为一个Node。
 2. 上述系统每个节点通过主节点通信，主节点下线会导致系统奔溃。
@@ -84,10 +84,10 @@
 * 当一个节点有10s没有发送消息，那么集中式的消息可以监控并且知道这个节点是否出故障了；
 * 集中式的消息可以知道哪些节点在线去找到这些节点，这在多机网络通信的时候很管用，节点只需要注册自己的IP地址，然后由管理节点告诉你去哪里拿到消息。
 
-![center](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/center.jpg)  
+![center](img/center.jpg)  
 
 上述只是一个初步的想法，那么基于上面的启发，我们针对上述的每项需求，完成我们的系统设计。  
-![design](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/design.jpg)  
+![design](img/design.jpg)  
 
 我们接下来详细的分析每个需求：  
 <a name="multinode" />
@@ -114,7 +114,7 @@
 
 #### linux进程调度
 操作系统最基本的功能就是管理线程，linux的线程调度采用的是CFS(Completely Fair Scheduler)算法，我们先看下没有调度和有调度的情况下的差异。  
-![schedule_timeline](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/schedule_timeline.jpg)  
+![schedule_timeline](img/schedule_timeline.jpg)  
 上述是单个CPU核心的情况下，左边是没有CPU调度的情况，任务1在进行完计算之后，会读取内存或者IO的数据，这时候CPU会进入等待状态，CPU在等待的时候没有做任何事情。而右边采用了调度策略，在CPU等待的过程中，任务1主动让出CPU，这样下一个任务就可以在当前任务等待IO的过程中执行，可以看到对任务的调度合理的利用了CPU，使得CPU的利用率更高，从而使任务执行的更快。  
 
 linux内核又分为可以抢占的和非抢占的，非抢占的内核禁止抢占，即在一个任务执行完成之前，除非他主动让出CPU或者执行完成，CPU会一直被这个任务占据，不能够被更高优先级的任务抢占。而抢占式的内核则支持在一个任务执行的过程中，如果有更高优先级的任务请求，那么内核会暂停现在运行的任务，转而运行优先级更高的任务，显然抢占式的内核的实时性更好。  
@@ -142,7 +142,7 @@ CPU把任务根据优先级划分，并且划分不同的时间片，通过时�
 * 硬件错误。极小概率的情况下，CPU的寄存器会出错，嵌入式(powerpc)的CPU都会有冗余校正，而家用或者服务器(intel)没有这种设计，这种情况下只能重启进程，或者硬件。
 
 我们根据上述的思路，可以得到如下图所示：  
-![schedule_main](https://github.com/daohu527/Dig-into-Apollo/blob/master/cyber/schedule_main.jpg)  
+![schedule_main](img/schedule_main.jpg)  
 * 把控制的优先级设置到最高，规划其次，感知和定位的优先级设置相对较低，因为控制和规划必须马上处理，感知如果当前帧处理不过来，大不了就丢掉，接着处理下一帧。当然这些线程都需要设置为实时进程。而地图，日志，定位等的优先级设置较低，在其他高优先级的进程到来时候会被抢占。
 * Canbus等传感器数据，可以绑定到一个CPU核心上处理，这样中断不会影响到其他核心，导致频繁线程切换。
 * 对线程设置cgroups，可以控制资源使用，设置优先级等。
@@ -186,8 +186,8 @@ cyber的入口在"cyber/mainboard"目录，我们先看下目录结构：
 ├── module_controller.cc     // 模块控制
 └── module_controller.h
 ```
-根据文件名称也可以大概猜到cyber主目录的工作，cyber主函数通过模块的参数加载cyber中的所有模块，而cyber模块是有依赖顺序的，每个cyber模块都有一个DAG文件，这个文件声明了各个模块的依赖关系，而control模块大概率就是控制模块的加载顺序。接下来我们通过看代码验证我们的猜想是否正确。  
-我们从"mainboard.cc"开始，阅读代码之前的头文件相当关键，头文件可以告诉我们文件之间的依赖关系，引用了哪些模块。我们可以看到主模块引用了"mainboard/module_argument.h"和"mainboard/module_controller.h"，这2个文件相当于是"mainboard.cc"的子函数，所以我们先从"mainboard.cc"开始看，剩下的2个文件自然会在"mainboard.cc"中引用。还有一些其他的引用主要是一些状态和标志位，可以先略过。
+根据文件名称也可以大概猜到cyber主目录的工作，cyber主函数通过模块的参数加载cyber中的所有模块，而cyber模块是有依赖顺序的，每个cyber模块都有一个DAG文件，这个文件声明了各个模块的依赖关系，而module_controller大概率就是控制模块的加载顺序。接下来我们通过看代码验证我们的猜想是否正确。  
+我们从"mainboard.cc"开始，阅读代码之前的头文件相当关键，头文件可以告诉我们文件之间的依赖关系，引用了哪些模块。我们可以看到主模块引用了"mainboard/module_argument.h"和"mainboard/module_controller.h"，所以我们先从"mainboard.cc"开始看，剩下的2个文件自然会在"mainboard.cc"中引用。还有一些其它的引用是状态和标志位，可以先略过。
 ```c++
 #include "cyber/common/global_data.h"
 #include "cyber/common/log.h"
@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
   return 0;
 }
 ```
-接下来我们更加详细的分析每个过程。  
+接下来我们详细的分析每个过程。  
 * **解析模块参数** 解析模块参数在"module_argument.h"和"module_argument.cc"中的"ModuleArgument"类中，具体的实现如下
 ```c++
 void ModuleArgument::ParseArgument(const int argc, char* const argv[]) {
@@ -292,6 +292,143 @@ bool Init(const char* binary_name) {
 // 2. ModuleController控制器初始化
 
 ```
+
+## classloader(类动态加载)
+首先我们需要搞清楚classloader的作用，classloader动态的加载".so"文件，从而实现动态的加载和卸载模块。说的直白一点就是cyber通过classloader动态的加载定位，感知，规划，控制等模块。这样的好处是当一个模块奔溃时候，只需要动态的从新加载这个模块就可以了，而不需要从新加载其他模块。  
+下面我们来看一下"ClassLoader"类：
+```c++
+  // 动态库是否已经加载
+  bool IsLibraryLoaded();
+  // 加载动态库
+  bool LoadLibrary();
+  // 卸载动态库
+  int UnloadLibrary();
+  // 获取动态库路径
+  const std::string GetLibraryPath() const;
+  // 获取有效的类名称 
+  std::vector<std::string> GetValidClassNames();
+  // 创建对象
+  std::shared_ptr<Base> CreateClassObj(const std::string& class_name);
+  // 类是否有效
+  bool IsClassValid(const std::string& class_name);
+```
+也就是说classloader提供了一系列的方法来实现类的加载和卸载。下面我们来逐个分析classloader的工作原理：
+
+todo: 获取classloader中加载的类的集合？？？
+```c++
+template <typename Base>
+std::vector<std::string> ClassLoader::GetValidClassNames() {
+  return (utility::GetValidClassNames<Base>(this));
+}
+```
+
+todo: 查找类是否加载？
+```
+template <typename Base>
+bool ClassLoader::IsClassValid(const std::string& class_name) {
+  std::vector<std::string> valid_classes = GetValidClassNames<Base>();
+  return (std::find(valid_classes.begin(), valid_classes.end(), class_name) !=
+          valid_classes.end());
+}
+```
+
+todo: 根据类名称创建对象，并且返回对象指针，注意创建对象的过程中classobj_ref_count_加1，释放对象之后减1，通过计数器表明类加载器是否还存在引用关系，而不会释放掉。关于只能指针指定删除器可以[参考](https://zh.cppreference.com/w/cpp/memory/shared_ptr/shared_ptr)  
+```
+template <typename Base>
+std::shared_ptr<Base> ClassLoader::CreateClassObj(
+    const std::string& class_name) {
+  if (!IsLibraryLoaded()) {
+    // 加载动态库    
+    LoadLibrary();
+  }
+
+  // 创建对象
+  Base* class_object = utility::CreateClassObj<Base>(class_name, this);
+  if (class_object == nullptr) {
+    AWARN << "CreateClassObj failed, ensure class has been registered. "
+          << "classname: " << class_name << ",lib: " << GetLibraryPath();
+    return std::shared_ptr<Base>();
+  }
+
+  std::lock_guard<std::mutex> lck(classobj_ref_count_mutex_);
+  classobj_ref_count_ = classobj_ref_count_ + 1;
+
+  // 构造智能指针，并且指定删除器 
+  std::shared_ptr<Base> classObjSharePtr(
+      class_object, std::bind(&ClassLoader::OnClassObjDeleter<Base>, this,
+                              std::placeholders::_1));
+  return classObjSharePtr;
+}
+
+template <typename Base>
+void ClassLoader::OnClassObjDeleter(Base* obj) {
+  if (nullptr == obj) {
+    return;
+  }
+
+  std::lock_guard<std::mutex> lck(classobj_ref_count_mutex_);
+  delete obj;
+  --classobj_ref_count_;
+}
+```
+
+接着看下"class_loader.cc"中的构造函数，可以看到一个ClassLoader需要指定动态库路径，初始化引用次数，然后加载对应的动态库。  
+```c++
+ClassLoader::ClassLoader(const std::string& library_path)
+    : library_path_(library_path),
+      loadlib_ref_count_(0),
+      classobj_ref_count_(0) {
+  LoadLibrary();
+}
+```
+
+动态库是否已经加载
+```
+bool ClassLoader::IsLibraryLoaded() {
+  return utility::IsLibraryLoaded(library_path_, this);
+}
+```
+
+加载动态库，每次加载动态库的引用计数加1
+```
+bool ClassLoader::LoadLibrary() {
+  std::lock_guard<std::mutex> lck(loadlib_ref_count_mutex_);
+  ++loadlib_ref_count_;
+  AINFO << "Begin LoadLibrary: " << library_path_;
+  return utility::LoadLibrary(library_path_, this);
+}
+```
+
+卸载动态库，在"classobj_ref_count_ > 0"的时候证明类还有引用，这时候不能卸载，而"loadlib_ref_count_==0"的时候才会卸载动态库，返回的loadlib_ref_count_表示当前的加载动态库的计数，加锁是为了多线程访问。  
+```c++
+int ClassLoader::UnloadLibrary() {
+  std::lock_guard<std::mutex> lckLib(loadlib_ref_count_mutex_);
+  std::lock_guard<std::mutex> lckObj(classobj_ref_count_mutex_);
+
+  if (classobj_ref_count_ > 0) {
+    AINFO << "There are still classobjs have not been deleted, "
+             "classobj_ref_count_: "
+          << classobj_ref_count_;
+  } else {
+    --loadlib_ref_count_;
+    // 卸载动态库
+    if (loadlib_ref_count_ == 0) {
+      utility::UnloadLibrary(library_path_, this);
+    } else {
+      if (loadlib_ref_count_ < 0) {
+        loadlib_ref_count_ = 0;
+      }
+    }
+  }
+  return loadlib_ref_count_;
+}
+```
+从上述过程可以看到"ClassLoader"类主要实现了类的加载，卸载，创建对象，而具体的实现主要通过"utility"来实现。  
+
+
+
+
+
 
 
 ## Cyber通信方式
@@ -499,6 +636,71 @@ RoleAttributes
 
 ## cyber创建进程
 cyber通过类std::thread表示单个执行线程。
+
+
+## scheduler
+[c++内存模型](http://senlinzhan.github.io/2017/12/04/cpp-memory-order/)  
+我们来看下如何切换堆栈，下面这段是汇编代码，实现的功能是保存cpu寄存器的值，并且压入堆栈，然后回复croutine的寄存器和堆栈：  
+```
+.globl ctx_swap
+.type  ctx_swap, @function
+ctx_swap:
+      pushq %rdi         // rdi寄存器压入堆栈
+      pushq %r12         // r12压入堆栈
+      pushq %r13
+      pushq %r14
+      pushq %r15
+      pushq %rbx         // rbx寄存器
+      pushq %rbp         // 堆栈底部
+      movq %rsp, (%rdi)  // rsp的值赋值给rdi
+
+      movq (%rsi), %rsp  // 出栈
+      popq %rbp
+      popq %rbx
+      popq %r15
+      popq %r14
+      popq %r13
+      popq %r12
+      popq %rdi
+      ret
+```
+加入有几千个croutine，当主线程要切换到对应的croutine的时候如何知道对应的堆栈地址，如何跳转？？？原来swap的参数是传入的？？？也就是说地址是通过函数传入的。
+```
+inline void SwapContext(char** src_sp, char** dest_sp) {
+  ctx_swap(reinterpret_cast<void**>(src_sp), reinterpret_cast<void**>(dest_sp));
+}
+```
+
+
+## sche
+sche中的task又是什么概念？？？ 如何去唤醒现在的croutine？？？
+
+SetUpdateFlag
+
+NotifyProcessor
+
+
+在update中实现croutine状态的转换：  
+```
+inline RoutineState CRoutine::UpdateState() {
+  // Synchronous Event Mechanism
+  if (state_ == RoutineState::SLEEP &&
+      std::chrono::steady_clock::now() > wake_time_) {
+    state_ = RoutineState::READY;
+    return state_;
+  }
+
+  // Asynchronous Event Mechanism
+  if (!updated_.test_and_set(std::memory_order_release)) {
+    if (state_ == RoutineState::DATA_WAIT || state_ == RoutineState::IO_WAIT) {
+      state_ = RoutineState::READY;
+    }
+  }
+  return state_;
+}
+```
+其中只需要释放该锁就可以实现"state_"状态由"DATA_WAIT/IO_WAIT"变为"READY"，因此通过设置"SetUpdateFlag"来实现在事件触发时候调用croutine。  
+
 
 
 <a name="reference" />
