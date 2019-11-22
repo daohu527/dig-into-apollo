@@ -288,8 +288,68 @@ bool ClassLoaderManager::LoadLibrary(const std::string& library_path) {
 ```
 也就是说"ClassLoaderManager"对ClassLoader进行保存和管理。  
 
-最后我们分析下utility具体的实现
-#### 
+最后我们分析下utility具体的实现，utility分为2部分，一部分为ClassFactory，一部分为工具函数（class_loader_utility.cc）  
+#### ClassFactory  
+可以看到有如下继承关系"ClassFactory -> AbstractClassFactory -> AbstractClassFactoryBase"，其中"ClassFactory"和"AbstractClassFactory"为模板类，主要的实现在"AbstractClassFactoryBase"中，我们逐个分析：  
+首先是类初始化，指定了"relative_library_path_", "base_class_name_", "class_name_"
+```
+AbstractClassFactoryBase::AbstractClassFactoryBase(
+    const std::string& class_name, const std::string& base_class_name)
+    : relative_library_path_(""),
+      base_class_name_(base_class_name),
+      class_name_(class_name) {}
+```
+
+设置OwnedClassLoader，而"RemoveOwnedClassLoader"同理。  
+```
+void AbstractClassFactoryBase::AddOwnedClassLoader(ClassLoader* loader) {
+  if (std::find(relative_class_loaders_.begin(), relative_class_loaders_.end(),
+                loader) == relative_class_loaders_.end()) {
+    relative_class_loaders_.emplace_back(loader);
+  }
+}
+```
+
+classloader是否属于该classFactory  
+```
+bool AbstractClassFactoryBase::IsOwnedBy(const ClassLoader* loader) {
+  std::vector<ClassLoader*>::iterator itr = std::find(
+      relative_class_loaders_.begin(), relative_class_loaders_.end(), loader);
+  return itr != relative_class_loaders_.end();
+}
+```
+
+也是说ClassFactory能够生产一个路径下的所有类，一个ClassFactory可能有好几个ClassLoader，分为base_class_name和class_name。  
+
+#### 工具函数
+接下来我们看"class_loader_utility.cc"的实现，文件中实现了很多函数，这个分析如下：  
+
+创建对象(CreateClassObj)的具体实现如下，
+```
+template <typename Base>
+Base* CreateClassObj(const std::string& class_name, ClassLoader* loader) {
+  GetClassFactoryMapMapMutex().lock();
+  ClassClassFactoryMap& factoryMap =
+      GetClassFactoryMapByBaseClass(typeid(Base).name());
+  AbstractClassFactory<Base>* factory = nullptr;
+  if (factoryMap.find(class_name) != factoryMap.end()) {
+    factory = dynamic_cast<utility::AbstractClassFactory<Base>*>(
+        factoryMap[class_name]);
+  }
+  GetClassFactoryMapMapMutex().unlock();
+
+  Base* classobj = nullptr;
+  if (factory && factory->IsOwnedBy(loader)) {
+    classobj = factory->CreateObj();
+  }
+
+  return classobj;
+}
+```
+
+
+
+
 
 
 
