@@ -324,7 +324,7 @@ bool AbstractClassFactoryBase::IsOwnedBy(const ClassLoader* loader) {
 #### 工具函数
 接下来我们看"class_loader_utility.cc"的实现，文件中实现了很多函数，这个分析如下：  
 
-创建对象(CreateClassObj)的具体实现如下，
+创建对象(CreateClassObj)的具体实现如下，先找到类对应的factory，然后通过factory创建对象。  
 ```
 template <typename Base>
 Base* CreateClassObj(const std::string& class_name, ClassLoader* loader) {
@@ -347,6 +347,108 @@ Base* CreateClassObj(const std::string& class_name, ClassLoader* loader) {
 }
 ```
 
+注册类到factory  
+```
+template <typename Derived, typename Base>
+void RegisterClass(const std::string& class_name,
+                   const std::string& base_class_name) {
+  AINFO << "registerclass:" << class_name << "," << base_class_name << ","
+        << GetCurLoadingLibraryName();
+
+  utility::AbstractClassFactory<Base>* new_class_factrory_obj =
+      new utility::ClassFactory<Derived, Base>(class_name, base_class_name);
+  new_class_factrory_obj->AddOwnedClassLoader(GetCurActiveClassLoader());
+  new_class_factrory_obj->SetRelativeLibraryPath(GetCurLoadingLibraryName());
+
+  GetClassFactoryMapMapMutex().lock();
+  ClassClassFactoryMap& factory_map =
+      GetClassFactoryMapByBaseClass(typeid(Base).name());
+  factory_map[class_name] = new_class_factrory_obj;
+  GetClassFactoryMapMapMutex().unlock();
+}
+```
+
+查找classloader中所有类的名称  
+```
+template <typename Base>
+std::vector<std::string> GetValidClassNames(ClassLoader* loader) {
+  std::lock_guard<std::recursive_mutex> lck(GetClassFactoryMapMapMutex());
+
+  ClassClassFactoryMap& factoryMap =
+      GetClassFactoryMapByBaseClass(typeid(Base).name());
+  std::vector<std::string> classes;
+  for (auto& class_factory : factoryMap) {
+    AbstractClassFactoryBase* factory = class_factory.second;
+    if (factory && factory->IsOwnedBy(loader)) {
+      classes.emplace_back(class_factory.first);
+    }
+  }
+
+  return classes;
+}
+```
+
+加载类，通过指定的classloader加载指定路径下的库。  
+```c++
+bool LoadLibrary(const std::string& library_path, ClassLoader* loader) {
+  // 类是否已经被加载，如果被加载则对应的class_factory加上依赖的class_loader  
+  if (IsLibraryLoadedByAnybody(library_path)) {
+    ClassFactoryVector lib_class_factory_objs =
+        GetAllClassFactoryObjectsOfLibrary(library_path);
+    for (auto& class_factory_obj : lib_class_factory_objs) {
+      class_factory_obj->AddOwnedClassLoader(loader);
+    }
+    return true;
+  }
+
+  PocoLibraryPtr poco_library = nullptr;
+  static std::recursive_mutex loader_mutex;
+  {
+    std::lock_guard<std::recursive_mutex> lck(loader_mutex);
+
+    try {
+      // 设置当前激活的classloader, 当前加载库路径
+      SetCurActiveClassLoader(loader);
+      SetCurLoadingLibraryName(library_path);
+      // 创建poco_library
+      poco_library = PocoLibraryPtr(new Poco::SharedLibrary(library_path));
+    } catch (const Poco::LibraryLoadException& e) {
+      SetCurLoadingLibraryName("");
+      SetCurActiveClassLoader(nullptr);
+      AERROR << "poco LibraryLoadException: " << e.message();
+    } catch (const Poco::LibraryAlreadyLoadedException& e) {
+      SetCurLoadingLibraryName("");
+      SetCurActiveClassLoader(nullptr);
+      AERROR << "poco LibraryAlreadyLoadedException: " << e.message();
+    } catch (const Poco::NotFoundException& e) {
+      SetCurLoadingLibraryName("");
+      SetCurActiveClassLoader(nullptr);
+      AERROR << "poco NotFoundException: " << e.message();
+    }
+
+    SetCurLoadingLibraryName("");
+    SetCurActiveClassLoader(nullptr);
+  }
+
+  if (poco_library == nullptr) {
+    AERROR << "poco shared library failed: " << library_path;
+    return false;
+  }
+
+  auto num_lib_objs = GetAllClassFactoryObjectsOfLibrary(library_path).size();
+  if (num_lib_objs == 0) {
+    AWARN << "Class factory objs counts is 0, maybe registerclass failed.";
+  }
+
+  std::lock_guard<std::recursive_mutex> lck(GetLibPathPocoShareLibMutex());
+  LibpathPocolibVector& opened_libraries = GetLibPathPocoShareLibVector();
+  // 保存加载路径和对应的poco_library
+  opened_libraries.emplace_back(
+      std::pair<std::string, PocoLibraryPtr>(library_path, poco_library));
+  return true;
+}
+```
+通过Poco::SharedLibrary(path)动态加载类，但是加载的类保存在对应的opened_libraries中，又是如何利用这个opened_libraries的呢？？？
 
 
 
