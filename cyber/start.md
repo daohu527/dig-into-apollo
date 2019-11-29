@@ -450,7 +450,7 @@ bool LoadLibrary(const std::string& library_path, ClassLoader* loader) {
 ```
 通过Poco::SharedLibrary(path)动态加载类，但是加载的类保存在对应的opened_libraries中，又是如何利用这个opened_libraries的呢？？？
 
-
+先通过"poco_library = PocoLibraryPtr(new Poco::SharedLibrary(library_path))"加载类，但是最后直接通过new创建出类"Base* CreateObj() const { return new ClassObject; }"是通过如何实现的呢？？？  
 
 
 
