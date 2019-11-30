@@ -448,9 +448,226 @@ bool LoadLibrary(const std::string& library_path, ClassLoader* loader) {
   return true;
 }
 ```
-通过Poco::SharedLibrary(path)动态加载类，但是加载的类保存在对应的opened_libraries中，又是如何利用这个opened_libraries的呢？？？
+// TODO(zero)： 下面这2个问题目前还没有想到答案  
+1. 通过Poco::SharedLibrary(path)动态加载类，但是加载的类保存在对应的opened_libraries中，又是如何利用这个opened_libraries的呢？？？
+2. 先通过"poco_library = PocoLibraryPtr(new Poco::SharedLibrary(library_path))"加载类，但是最后直接通过new创建出类"Base* CreateObj() const { return new ClassObject; }"是通过如何实现的呢？？？  
 
-先通过"poco_library = PocoLibraryPtr(new Poco::SharedLibrary(library_path))"加载类，但是最后直接通过new创建出类"Base* CreateObj() const { return new ClassObject; }"是通过如何实现的呢？？？  
+上面我们分析了classloader动态的加载并且创建类，而在mainboard中通过动态的加载module，并且调用模块的Initialize方法，实现模块的初始化。下面我们看下模块的初始化过程。  
+## component(cyber组件)
+
+我们先看下component的目录结构。   
+#### 目录结构  
+可以看到cyber组件分为2类： 普通组件和定时组件，而二者都继承至基础组件。   
+```
+.
+├── BUILD
+├── component_base.h             // 基础组件
+├── component.h                  // 组件
+├── component_test.cc
+├── timer_component.cc           // 定时组件  
+├── timer_component.h
+└── timer_component_test.cc
+```
+#### 基础组件  
+我们先看下基础组件中实现了什么，也就是"component_base.h"中实现了什么？"component_base.h"实现了"ComponentBase"类，下面我们逐步分析"ComponentBase"类的public方法。  
+
+**Initialize方法**  
+Initialize方法在派生类中重写了，这里有2个Initialize方法，分别对应上述所说的2种类型的组件。  
+```
+  virtual bool Initialize(const ComponentConfig& config) { return false; }
+  virtual bool Initialize(const TimerComponentConfig& config) { return false; }
+```
+
+**Shutdown方法**
+用于关闭cyber模块。  
+```
+  virtual void Shutdown() {
+    if (is_shutdown_.exchange(true)) {
+      return;
+    }
+
+    Clear();
+    for (auto& reader : readers_) {
+      reader->Shutdown();
+    }
+    scheduler::Instance()->RemoveTask(node_->Name());
+  }
+```  
+
+**GetProtoConfig方法**  
+获取protobuf格式的配置  
+```
+  template <typename T>
+  bool GetProtoConfig(T* config) const {
+    return common::GetProtoFromFile(config_file_path_, config);
+  }
+```
+
+看完公有方法，下面我们看下私有方法。有些简单的方法这里就不详细说了，主要看下"LoadConfigFiles方法"，有2个"LoadConfigFiles"方法这里只介绍第一个：  
+**LoadConfigFiles方法**  
+```c++  
+  void LoadConfigFiles(const ComponentConfig& config) {
+    // 获取配置文件路径
+    if (!config.config_file_path().empty()) {
+      if (config.config_file_path()[0] != '/') {
+        config_file_path_ = common::GetAbsolutePath(common::WorkRoot(),
+                                                    config.config_file_path());
+      } else {
+        config_file_path_ = config.config_file_path();
+      }
+    }
+
+    // 设置flag文件路径
+    if (!config.flag_file_path().empty()) {
+      std::string flag_file_path = config.flag_file_path();
+      if (flag_file_path[0] != '/') {
+        flag_file_path =
+            common::GetAbsolutePath(common::WorkRoot(), flag_file_path);
+      }
+      google::SetCommandLineOption("flagfile", flag_file_path.c_str());
+    }
+  }
+```
+
+**私有成员变量**  
+最后我们在分析下私有成员变量，也就是说每个组件(component)会自动创建一个节点(node)，并且可以挂载多个reader。  
+```
+  std::atomic<bool> is_shutdown_ = {false};
+  std::shared_ptr<Node> node_ = nullptr;
+  std::string config_file_path_ = "";
+  std::vector<std::shared_ptr<ReaderBase>> readers_;
+```
+
+下面我们开始分析component组件，也就是Component类。  
+#### Component类
+Component类都需要实现"Initialize"和"Process"2个方法，所以planning,routing,perception等模块都需要实现这2个方法。  
+
+```c++
+template <typename M0>
+class Component<M0, NullType, NullType, NullType> : public ComponentBase {
+ public:
+  Component() {}
+  ~Component() override {}
+  bool Initialize(const ComponentConfig& config) override;
+  bool Process(const std::shared_ptr<M0>& msg);
+
+ private:
+  virtual bool Proc(const std::shared_ptr<M0>& msg) = 0;
+};
+```
+我们接着看下这2个方法是如何实现的，先看"Process"方法。  
+**Process方法**  
+可以看到Process方法比较简单，先判断模块是否关闭，然后执行"Proc"方法。    
+```
+template <typename M0, typename M1>
+bool Component<M0, M1, NullType, NullType>::Process(
+    const std::shared_ptr<M0>& msg0, const std::shared_ptr<M1>& msg1) {
+  if (is_shutdown_.load()) {
+    return true;
+  }
+  return Proc(msg0, msg1);
+}
+```
+
+**Initialize方法**  
+  
+```
+template <typename M0, typename M1>
+bool Component<M0, M1, NullType, NullType>::Initialize(
+    const ComponentConfig& config) {
+  // 创建node节点
+  node_.reset(new Node(config.name()));
+  // 加载配置
+  LoadConfigFiles(config);
+  
+  // 订阅消息数和reader个数要匹配
+  if (config.readers_size() < 2) {
+    AERROR << "Invalid config file: too few readers.";
+    return false;
+  }
+
+  // 初始化，在基类(ComponentBase)中实现
+  if (!Init()) {
+    AERROR << "Component Init() failed.";
+    return false;
+  }
+
+  bool is_reality_mode = GlobalData::Instance()->IsRealityMode();
+  // 创建reader1
+  ReaderConfig reader_cfg;
+  reader_cfg.channel_name = config.readers(1).channel();
+  reader_cfg.qos_profile.CopyFrom(config.readers(1).qos_profile());
+  reader_cfg.pending_queue_size = config.readers(1).pending_queue_size();
+
+  auto reader1 = node_->template CreateReader<M1>(reader_cfg);
+  
+  // 创建reader0
+  reader_cfg.channel_name = config.readers(0).channel();
+  reader_cfg.qos_profile.CopyFrom(config.readers(0).qos_profile());
+  reader_cfg.pending_queue_size = config.readers(0).pending_queue_size();
+
+  std::shared_ptr<Reader<M0>> reader0 = nullptr;
+  // is_reality_mode模式则直接创建
+  if (cyber_likely(is_reality_mode)) {
+    reader0 = node_->template CreateReader<M0>(reader_cfg);
+  } else {
+  // 如果不是则创建回调函数
+    std::weak_ptr<Component<M0, M1>> self =
+        std::dynamic_pointer_cast<Component<M0, M1>>(shared_from_this());
+
+    auto blocker1 = blocker::BlockerManager::Instance()->GetBlocker<M1>(
+        config.readers(1).channel());
+
+    auto func = [self, blocker1](const std::shared_ptr<M0>& msg0) {
+      auto ptr = self.lock();
+      if (ptr) {
+        if (!blocker1->IsPublishedEmpty()) {
+          auto msg1 = blocker1->GetLatestPublishedPtr();
+          ptr->Process(msg0, msg1);
+        }
+      } else {
+        AERROR << "Component object has been destroyed.";
+      }
+    };
+
+    reader0 = node_->template CreateReader<M0>(reader_cfg, func);
+  }
+  if (reader0 == nullptr || reader1 == nullptr) {
+    AERROR << "Component create reader failed.";
+    return false;
+  }
+  // 保存readers
+  readers_.push_back(std::move(reader0));
+  readers_.push_back(std::move(reader1));
+
+  if (cyber_unlikely(!is_reality_mode)) {
+    return true;
+  }
+
+  auto sched = scheduler::Instance();
+  std::weak_ptr<Component<M0, M1>> self =
+      std::dynamic_pointer_cast<Component<M0, M1>>(shared_from_this());
+  auto func = [self](const std::shared_ptr<M0>& msg0,
+                     const std::shared_ptr<M1>& msg1) {
+    auto ptr = self.lock();
+    if (ptr) {
+      ptr->Process(msg0, msg1);
+    } else {
+      AERROR << "Component object has been destroyed.";
+    }
+  };
+
+  std::vector<data::VisitorConfig> config_list;
+  for (auto& reader : readers_) {
+    config_list.emplace_back(reader->ChannelId(), reader->PendingQueueSize());
+  }
+  auto dv = std::make_shared<data::DataVisitor<M0, M1>>(config_list);
+  // 创建协程类
+  croutine::RoutineFactory factory =
+      croutine::CreateRoutineFactory<M0, M1>(func, dv);
+  return sched->CreateTask(factory, node_->Name());
+}
+```
 
 
 
