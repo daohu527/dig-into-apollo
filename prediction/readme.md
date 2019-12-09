@@ -34,7 +34,7 @@
 ├── prediction_component.cc           // 预测模块主入口
 ├── prediction_component.h             
 ├── prediction_component_test.cc
-├── predictor                   // 4. 预测因子
+├── predictor                   // 4. 预测器
 ├── proto                       // protobuf消息格式
 ├── README_cn.md               // 文档（中文介绍，建议直接看英文）
 ├── README.md                  // 文档（英文介绍）
@@ -48,9 +48,18 @@
 * **离线流程** - pipeline (util)提取bag包中的数据给离线测试用？
 
 
-下面主要分析下预测模块的主流程。
-## container  
+下面主要分析下预测模块的主流程，各个模块的输入是什么，输出是什么？  
+## 容器(container)  
 实际上消息处理在"MessageProcess"类中，该类在"common/message_process.cc"中，而其中会调用"ContainerManager"类，把消息放入对应的Container中。  
 
+## 场景(scenario)
+根据本车的位置，和高精度地图，解析当前车辆所在的场景。  
+
+## 评估者(evaluator)
+"Evaluator"类为基类，其它类继承至该类，而"EvaluatorManager"类做为管理类，负责管理三种评估者，分别为：自行车，行人，汽车。  
+
+
+## 预测器(predictor)
+"Predictor"类为基类，其它类继承至该类，而"PredictorManager"类作为管理类。最后通过预测器预测障碍物的轨迹。  
 
 
