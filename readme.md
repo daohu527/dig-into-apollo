@@ -190,16 +190,14 @@
 
 
 ##  :unlock: 计划
-* 2019/11/11之前的计划  
-    - [ ] perception模块的流程分析  
-    - [ ] cyber的系统调度流程，和消息收发流程  
-    - [x] control模块的流程分析
-    - [x] canbus模块的流程分析 
-
-* 2019/12/30之前的计划  
-    - [ ] planning模块各个控制器的具体实现
+* 2020/1/10之前完成   
     - [ ] prediction模块的流程分析
-    - [ ] routing模块可视化工具介绍    
+* 2020/3/10之前完成
+    - [ ] cyber的系统调度流程，和消息收发流程
+    - [ ] perception模块的流程分析
+* 次要任务
+    - [ ] routing模块可视化工具介绍  
+    - [ ] planning模块各个控制器的具体实现  
 
 ## :pushpin: 参考
 [apollo](https://github.com/ApolloAuto/apollo)  
