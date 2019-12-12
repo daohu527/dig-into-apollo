@@ -2,14 +2,16 @@
 ![logo](img/logo.jpg)  
 
 创建这个项目的初衷是为了在自动驾驶的学习过程中留下一些笔记，参考了不少网络上的资料和个人博客，有的时候真想拍案惊呼:smiley::heart_eyes::heart_eyes:，为什么仅仅依靠网络和自学就能够做到如此优秀:rocket::rocket::rocket:！也因此敦促自己不断学习和贡献优秀的笔记。  
-> 子曰： 知之者不如好之者，好之者不如乐之者。  
+
 
 :clap::clap::clap:在这里特此感谢@[百度Apollo项目](https://github.com/ApolloAuto/apollo) @[3Blue1Brown](https://space.bilibili.com/88461692/) @[台大李宏毅](https://www.bilibili.com/video/av23593949/) @[iMorpheusAI](https://i.youku.com/i/UNTMxNDU3NjEwMA==?spm=a2hzp.8244740.0.0) @[阿Paul哥](https://paul.pub/about/)，欢迎对项目的贡献，如果觉得项目对你有帮助，欢迎star:heart:！ 
 
-#### :performing_arts: 公告
-由于国内目前访问github太慢，网上有通过设置host来加快访问github的攻略，为了方便大家下载代码，现在把代码同步托管到码云上。主线代码可能随时都在更新，因此我会定期同步代码，如果需要稳定版本最好下载tag版本"v5.0.0"  
 
-**码云地址**: [apollo](https://gitee.com/daohu527/apollo)  
+#### :performing_arts: 公告
+由于国内目前访问github太慢，网上有通过设置host来加快访问github的攻略，为了方便大家下载代码，现在把代码同步托管到码云上。主线代码可能随时都在更新，因此我会定期同步代码，如果需要稳定版本最好下载tag版本"v5.0.0"。 
+
+**码云地址: [apollo](https://gitee.com/daohu527/apollo)**  
+
 
 ## :ledger: 目录
 - [apollo简介](introduction)
