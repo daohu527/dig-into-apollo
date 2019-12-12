@@ -60,6 +60,10 @@
 
 
 ## 预测器(predictor)
-"Predictor"类为基类，其它类继承至该类，而"PredictorManager"类作为管理类。最后通过预测器预测障碍物的轨迹。  
+"Predictor"类为基类，其它类继承至该类，而"PredictorManager"类作为管理类。最后通过预测器预测障碍物的轨迹。 
 
+
+## Reference
+[Apollo 5.0 障碍物行为预测技术](https://www.cnblogs.com/liuzubing/p/11388485.html)   
+[Apollo自动驾驶入门课程第⑥讲—预测](https://cloud.tencent.com/developer/news/310036)  
 

@@ -6,6 +6,9 @@
 
 :clap::clap::clap:在这里特此感谢@[百度Apollo项目](https://github.com/ApolloAuto/apollo) @[3Blue1Brown](https://space.bilibili.com/88461692/) @[台大李宏毅](https://www.bilibili.com/video/av23593949/) @[iMorpheusAI](https://i.youku.com/i/UNTMxNDU3NjEwMA==?spm=a2hzp.8244740.0.0) @[阿Paul哥](https://paul.pub/about/)，欢迎对项目的贡献，如果觉得项目对你有帮助，欢迎star:heart:！ 
 
+#### :performing_arts: 公告
+由于目前国内访问github太慢，网上有通过设置host来加快访问github的攻略，为了方便大家下载代码，现在把代码同步托管到码云上，由于主线代码随时都在更新，我会定期同步代码，如果需要稳定版本最好下载tag版本"v5.0.0"。  
+码云地址: [apollo](https://gitee.com/daohu527/apollo)  
 
 ## :ledger: 目录
 - [apollo简介](introduction)
