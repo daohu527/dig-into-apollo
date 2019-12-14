@@ -6,7 +6,19 @@
 ## Table of Contents
 - [介绍](#introduction)
 - [目录结构](#directory)
-
+- [预测模块(PredictionComponent类)](#preciction_component)
+  - [初始化(Init())](#preciction_init)
+  - [回调执行(Proc)](#preciction_proc)
+  - [ContainerSubmoduleProcess](#preciction_submodule)
+  - [PredictionEndToEndProc](#preciction_endtoend)
+- [消息处理(MessageProcess)](#message_process)
+  - [初始化(Init)](#message_init)
+  - [消息处理](#onperception)
+- [容器(container)](#container)
+- [场景(scenario)](#scenario)
+- [评估者(evaluator)](#evaluator)
+- [预测器(predictor)](#predictor)
+- [Reference](#reference)  
 
 <a name="introduction" />
 
@@ -47,6 +59,8 @@
 * **在线预测流程** - container -> scenario -> evaluator -> predictor
 * **离线流程** - pipeline (util)提取bag包中的数据给离线测试用？
 
+<a name="preciction_component" />
+
 ## 预测模块(PredictionComponent类)
 预测模块和其它模块一样，都是在cyber中注册，具体的实现在"prediction_component.h"和"prediction_component.cc"中，我们知道cyber模块有2种消息触发模式，一种是定时器触发，一种是消息触发，而预测为消息触发模式。  
 预测模块的**输入消息**为：
@@ -58,6 +72,8 @@
 1. **prediction::PredictionObstacles** - 预测模块输出的障碍物信息  
 
 预测模块和所有其它模块一样，都实现了"cyber::Component"基类中的"Init()"和"Proc()"方法，分别进行初始化和消息触发调用，调用由框架自动执行，关于cyber如何调用和执行每个模块，可以参考cyber模块的介绍，下面我们主要介绍这2个方法。  
+
+<a name="preciction_init" />
 
 #### 初始化(Init())
 预测模块的初始化在"PredictionComponent::Init()"中进行，主要是注册消息读取和发送控制器，用来读取和发送消息，**需要注意的是初始化过程中也对"MessageProcess"类进行了初始化，而"MessageProcess"实现了预测模块的整个消息处理流程**。  
@@ -99,6 +115,9 @@ bool PredictionComponent::Init() {
 ```
 
 下面我们接着看消息回调执行函数  
+
+<a name="preciction_proc" />
+
 #### 回调执行(Proc)  
 回调执行函数会执行以下过程:
 ```
@@ -114,6 +133,9 @@ bool PredictionComponent::Proc(
 ```
 
 下面我们分别看下这2个过程有什么差异？我们先看  
+
+<a name="preciction_submodule" />
+
 #### ContainerSubmoduleProcess
 子过程的函数如下：  
 ```c++
@@ -174,6 +196,7 @@ bool PredictionComponent::ContainerSubmoduleProcess(
 ```
 看起来上述函数只是计算中间过程，并且发布消息到订阅节点。具体的用途需要结合业务来分析（具体的业务场景是什么？？？）。  
  
+<a name="preciction_endtoend" />
 
 #### PredictionEndToEndProc
 端到端的过程函数如下：  
@@ -233,8 +256,12 @@ bool PredictionComponent::PredictionEndToEndProc(
 }
 ```
 
+<a name="message_process" />
+
 ## 消息处理(MessageProcess)  
 可以看到上述过程都是在MessageProcess中处理完成的，那么我们先看下MessageProcess的执行过程。  
+
+<a name="message_init" />
 
 #### 初始化(Init)  
 消息处理的初始化首先在"PredictionComponent::Init()"中调用，下面我们看下实现了哪些功能：  
@@ -257,6 +284,8 @@ bool MessageProcess::Init() {
 }
 ```
 上述子过程的初始化就是从配置文件读取配置，并且初始化对应的类，结构相对比较简单，这里就不一一介绍了。  
+
+<a name="onperception" />
 
 #### 消息处理
 定位，规划和故事的消息处理相对比较简单，主要是向对应的容器中插入数据（每个容器都实现了Insert()方法），下面着重介绍感知模块消息的处理过程，该过程也输出了最后的结果。  
@@ -328,21 +357,29 @@ void MessageProcess::OnPerception(
 
 
 下面主要分析各个模块的输入是什么，输出是什么？ 以及它们的作用？   
+
+<a name="container" />
+
 ## 容器(container)  
 实际上消息处理在"MessageProcess"类中，该类在"common/message_process.cc"中，而其中会调用"ContainerManager"类，把消息放入对应的Container中。  
 
-#### 
+
+<a name="scenario" />
 
 ## 场景(scenario)
 根据本车的位置，和高精度地图，解析当前车辆所在的场景。  
 
+<a name="evaluator" />
+
 ## 评估者(evaluator)
 "Evaluator"类为基类，其它类继承至该类，而"EvaluatorManager"类做为管理类，负责管理三种评估者，分别为：自行车，行人，汽车。  
 
+<a name="predictor" />
 
 ## 预测器(predictor)
 "Predictor"类为基类，其它类继承至该类，而"PredictorManager"类作为管理类。最后通过预测器预测障碍物的轨迹。 
 
+<a name="reference" />
 
 ## Reference
 [Apollo 5.0 障碍物行为预测技术](https://www.cnblogs.com/liuzubing/p/11388485.html)   
