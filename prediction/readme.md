@@ -23,7 +23,8 @@
 <a name="introduction" />
 
 ## 介绍
-首先建议先阅读官方文档(readme.md)，里面说明了数据流向，也就是说预测模块是直接接收的感知模块给出的障碍物信息，这和CV领域的传统预测任务有区别，CV领域的预测任务不需要先识别物体，只需要根据物体的特征，对比前后2帧，然后得出物体的位置，也就说甚至不需要物体识别，业界之所以不这么做的原因是因为检测物体太耗时了。当然也有先检测物体再做跟踪的，也就是说目前apollo中的物体检测实际上是采用的第二种方法，这也可以理解，反正感知模块一定会工作，而且一定要检测物体，所以何不把这个信息直接拿过来用呢？这和人类似，逐帧跟踪指定特征的对象，就是物体的轨迹，然后再根据现有的轨迹预测物体讲来的轨迹。  
+首先建议先阅读官方文档(readme.md)，里面说明了数据流向，也就是说预测模块是直接接收的感知模块给出的障碍物信息，这和CV领域的传统预测任务有区别，CV领域的预测任务不需要先识别物体，只需要根据物体的特征，对比前后2帧，然后得出物体的位置，也就说甚至不需要物体识别，业界之所以不这么做的原因是因为检测物体太耗时了。  
+当然也有先检测物体再做跟踪的，也就是说目前apollo中的物体检测实际上是采用的第二种方法，这也可以理解，反正感知模块一定会工作，而且一定要检测物体，所以何不把这个信息直接拿过来用呢？这和人类似，逐帧跟踪指定特征的对象，就是物体的轨迹，然后再根据现有的轨迹预测物体讲来的轨迹。  
 
 
 <a name="directory" />
@@ -55,7 +56,7 @@
 ├── testdata               // 测试数据
 └── util                   // 工具类
 ```
-可以看到预测模块主要是分为2大块功能，一是实时的预测执行过程，一是工具类（离线验证？）：
+可以看到预测模块主要是分为2大块功能，一是实时的预测执行过程，一是工具类(离线验证？)：  
 * **在线预测流程** - container -> scenario -> evaluator -> predictor
 * **离线流程** - pipeline (util)提取bag包中的数据给离线测试用？
 
@@ -1267,17 +1268,15 @@ bool PedestrianInteractionEvaluator::Evaluate(
 }
 ```
 
-#### 车辆评估者
-这一块涉及的评估者模型比较多，下面我们逐个介绍。  
-
-###### CostEvaluator
-###### CruiseMLPEvaluator
-###### JunctionMapEvaluator
-###### JunctionMLPEvaluator
-###### LaneAggregatingEvaluator
-###### LaneScanningEvaluator
-###### MLPEvaluator
-###### SemanticLSTMEvaluator
+车辆评估者涉及的评估者模型比较多，下面我们逐个介绍。  
+#### CostEvaluator
+#### CruiseMLPEvaluator
+#### JunctionMapEvaluator
+#### JunctionMLPEvaluator
+#### LaneAggregatingEvaluator
+#### LaneScanningEvaluator
+#### MLPEvaluator
+#### SemanticLSTMEvaluator
 
 <a name="predictor" />
 
