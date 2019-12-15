@@ -1281,7 +1281,25 @@ bool PedestrianInteractionEvaluator::Evaluate(
 <a name="predictor" />
 
 ## 预测器(predictor)
-"Predictor"类为基类，其它类继承至该类，而"PredictorManager"类作为管理类。最后通过预测器预测障碍物的轨迹。 
+"Predictor"类为基类，其它类继承至该类，而"PredictorManager"类作为管理类。最后通过预测器预测障碍物的轨迹。  
+
+#### 预测器基类(Predictor)  
+预测者基类主要申明了"Predict"方法，在子预测器中重构。  
+
+#### 预测管理器(PredictorManager)  
+预测管理器主要是对预测器进行创建，管理和注册。  
+
+下面我们分别介绍几种预测器。  
+#### EmptyPredictor
+#### ExtrapolationPredictor
+#### FreeMovePredictor
+#### InteractionPredictor
+#### JunctionPredictor
+#### LaneSequencePredictor
+#### MoveSequencePredictor
+#### SequencePredictor
+#### SingleLanePredictor
+
 
 <a name="reference" />
 
