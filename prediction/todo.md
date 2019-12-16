@@ -21,5 +21,6 @@ Obstacle::BuildLaneGraph()
 2. common目录的"RoadGraph"生成的图和上述的图有什么关系？？？
 
 
-
+## protobuf中mutable_的作用
+可以看出，对于每个字段会生成一个has函数(has_number)、clear清除函数(clear_number)、set函数(set_number)、get函数(number和mutable_number)。这儿解释下get函数中的两个函数的区别，对于原型为const std::string &number() const的get函数而言，返回的是常量字段，不能对其值进行修改。但是在有一些情况下，对字段进行修改是必要的，所以提供了一个mutable版的get函数，通过获取字段变量的指针，从而达到改变其值的目的。  
 

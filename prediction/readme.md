@@ -25,7 +25,7 @@
 ## 介绍
 首先建议先阅读官方文档(readme.md)，里面说明了数据流向，也就是说预测模块是直接接收的感知模块给出的障碍物信息，这和CV领域的传统预测任务有区别，CV领域的预测任务不需要先识别物体，只需要根据物体的特征，对比前后2帧，然后得出物体的位置，也就说甚至不需要物体识别，业界之所以不这么做的原因是因为检测物体太耗时了。  
 当然也有先检测物体再做跟踪的，也就是说目前apollo中的物体检测实际上是采用的第二种方法，这也可以理解，反正感知模块一定会工作，而且一定要检测物体，所以何不把这个信息直接拿过来用呢？这和人类似，逐帧跟踪指定特征的对象，就是物体的轨迹，然后再根据现有的轨迹预测物体讲来的轨迹。  
-
+预测的轨迹和障碍物信息发送给规划(planning)模块使用。  
 
 <a name="directory" />
 
@@ -651,7 +651,7 @@ class ObstaclesContainer : public Container {
 ![obs_process](img/obs_process.jpg)  
 可以看到上述过程中的主要功能实现都在"Obstacle"类中，下面我们主要分析下"Obstacle"类中的几个函数。
 
-我们首先看"Insert"函数：  
+我们接着看"Obstacle"类的消息插入函数：  
 ```c++
 bool Obstacle::Insert(const PerceptionObstacle& perception_obstacle,
                       const double timestamp,
@@ -698,9 +698,11 @@ bool Obstacle::Insert(const PerceptionObstacle& perception_obstacle,
   DiscardOutdatedHistory();
   return true;
 }
-```  
+```
+其中还用到了卡尔曼(KalmanFilter)滤波？？？  
 
-我们接着看下BuildLaneGraph函数：  
+
+我们接着看BuildLaneGraph函数：  
 ```c++
 void Obstacle::BuildLaneGraph() {
 
@@ -1020,13 +1022,14 @@ class EvaluatorManager {
 
 下面我们分别查看3种不同的评估者： 自行车评估者，行人评估者和车辆评估者。  
 #### 自行车评估者(CyclistKeepLaneEvaluator)
-自行车评估者主要是评估自行车出现在车道的概率。  
+自行车评估者主要是评估自行车保持当前车道的概率。评估主要是函数"Evaluate"中进行的，**函数的参数"obstacles_container"没有使用，使用的只是"obstacle_ptr"障碍物指针**。评估的过程主要是根据生成的"LaneGraph"计算自行车在lane中出现的概率。  
 ```c++
 bool CyclistKeepLaneEvaluator::Evaluate(
     Obstacle* obstacle_ptr, ObstaclesContainer* obstacles_container) {
   // 设置评估者类型
   obstacle_ptr->SetEvaluatorType(evaluator_type_);
-  // 障碍物的特征是否初始化
+  // 特征是否初始化，该方法为protobuf自带方法，确认required字段是否都已经赋值，看起来这里没必要判断？？？
+  // https://github.com/protocolbuffers/protobuf/issues/2900  
   int id = obstacle_ptr->id();
   if (!obstacle_ptr->latest_feature().IsInitialized()) {
     return false;
@@ -1057,7 +1060,7 @@ bool CyclistKeepLaneEvaluator::Evaluate(
   return true;
 }
 ```
-下面我们看下概率计算是如何进行的？  
+下面我们看下概率计算是如何进行的？计算的过程也很简单，就是判断lane序列的第一条lane是否和当前lane相同，相同则返回1，不相同则返回0。  
 ```
 double CyclistKeepLaneEvaluator::ComputeProbability(
     const std::string& curr_lane_id, const LaneSequence& lane_sequence) {
@@ -1075,16 +1078,18 @@ double CyclistKeepLaneEvaluator::ComputeProbability(
 ```
 
 #### 行人互动评估者(PedestrianInteractionEvaluator)
-行人互动评估主要是估计行人的概率，采用了深度学习的LSTM模型。  
+行人互动评估主要是估计行人的概率，采用了深度学习的LSTM模型，关于行人预测可以参考论文"Social LSTM:Human Trajectory Prediction in Crowded Spaces"，这里我们对代码进行分析。  
 1. 首先初始化加载深度学习模型。  
 ```c++
 void PedestrianInteractionEvaluator::LoadModel() {
+  // 设置线程数为1
   torch::set_num_threads(1);
   if (FLAGS_use_cuda && torch::cuda::is_available()) {
     ADEBUG << "CUDA is available";
+    // 设置CUDA设备
     device_ = torch::Device(torch::kCUDA);
   }
-
+  // 加载训练好的LTSM模型文件
   torch_position_embedding_ = torch::jit::load(
       FLAGS_torch_pedestrian_interaction_position_embedding_file, device_);
   torch_social_embedding_ = torch::jit::load(
@@ -1095,7 +1100,7 @@ void PedestrianInteractionEvaluator::LoadModel() {
       FLAGS_torch_pedestrian_interaction_prediction_layer_file, device_);
 }
 ```
-2. 评估行人行为，函数比较长，输入为障碍物，输出为行人轨迹"latest_feature_ptr->add_predicted_trajectory"。  
+2. 评估行人行为，函数比较长，输入为障碍物，输出为行人轨迹"latest_feature_ptr->add_predicted_trajectory"，关于Feature的描述在"feature.proto"中。其中函数参数"obstacles_container"没有使用（原因为继承至基类的方法，重写的时候保存了参数），下面我们开始分析具体的代码：  
 ```c++
 bool PedestrianInteractionEvaluator::Evaluate(
     Obstacle* obstacle_ptr, ObstaclesContainer* obstacles_container) {
@@ -1116,6 +1121,8 @@ bool PedestrianInteractionEvaluator::Evaluate(
   //  - if in offline mode, save it locally for training.
   //  - if in online mode, pass it through trained model to evaluate.
   std::vector<double> feature_values;
+  // 这里只是把最新的行人时间戳和位置提取出来了，并且线性存储在数组中(把数据展开)，
+  // 也就是说数组的第一个元素是时间戳，第二为ID，第三和第四为位置。  
   ExtractFeatures(obstacle_ptr, &feature_values);
   if (FLAGS_prediction_offline_mode ==
       PredictionConstants::kDumpDataForLearning) {
@@ -1270,13 +1277,25 @@ bool PedestrianInteractionEvaluator::Evaluate(
 
 车辆评估者涉及的评估者模型比较多，下面我们逐个介绍。  
 #### CostEvaluator
+评估车辆的横向偏移概率，通过计算当前车的宽度和车道的横向差值，然后通过"Sigmoid"函数映射到0-1的概率空间。  
 #### CruiseMLPEvaluator
+MLP为"多层神经网络"，相比上述过程，新增加了lane相关的特征。  
 #### JunctionMapEvaluator
+加入了语义地图，模型未知？？？  
 #### JunctionMLPEvaluator
+路口多层神经网络，没有利用地图  
 #### LaneAggregatingEvaluator
+道路合并评估器  
 #### LaneScanningEvaluator
+道路扫描？？？  
 #### MLPEvaluator
+多层神经网络评估器？？？  
 #### SemanticLSTMEvaluator
+语义LSTM评估器  
+
+评估器主要是用深度学习的方法进行预测对应的概率，而且依赖事先建好的图，所以弄清楚上述2个过程很关键。  
+
+
 
 <a name="predictor" />
 
@@ -1284,21 +1303,31 @@ bool PedestrianInteractionEvaluator::Evaluate(
 "Predictor"类为基类，其它类继承至该类，而"PredictorManager"类作为管理类。最后通过预测器预测障碍物的轨迹。  
 
 #### 预测器基类(Predictor)  
-预测者基类主要申明了"Predict"方法，在子预测器中重构。  
+预测者基类主要申明了"Predict"方法，在子预测器中重构。输入是评估器给出的概率(trajectory)，输出则是预测的轨迹。  
 
 #### 预测管理器(PredictorManager)  
-预测管理器主要是对预测器进行创建，管理和注册。  
+预测管理器主要是对预测器进行创建，管理和注册。主要的实现在"PredictObstacle"中：  
+
 
 下面我们分别介绍几种预测器。  
 #### EmptyPredictor
+对静止的物体进行预测，没有任何轨迹输出。  
 #### ExtrapolationPredictor
+外推法预测器，
 #### FreeMovePredictor
+自由移动？？？
 #### InteractionPredictor
+
 #### JunctionPredictor
+
 #### LaneSequencePredictor
+生成曲线在"DrawLaneSequenceTrajectoryPoints"中实现。  
+
 #### MoveSequencePredictor
 #### SequencePredictor
 #### SingleLanePredictor
+
+上述所有评估器的过程都类似，都是找到lane之后对lane做一个平滑的曲线？？？最后都调用了"PredictionMap::SmoothPointFromLane"。  
 
 
 <a name="reference" />
