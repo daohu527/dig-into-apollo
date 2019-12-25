@@ -1,8 +1,13 @@
 # Dig into Apollo ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
 ![logo](img/logo.jpg)  
 
-创建这个项目的初衷是为了在自动驾驶的学习过程中留下一些笔记，参考了不少网络上的资料和个人博客，有的时候真想拍案惊呼:smiley::heart_eyes::heart_eyes:，为什么仅仅依靠网络和自学就能够做到如此优秀:rocket::rocket::rocket:！也因此敦促自己不断学习和贡献优秀的笔记。  
 
+The original intention of creating this project was to leave some notes in the learning process of autonomous driving.I found a lot of great resources and personal blogs :smiley::heart_eyes::heart_eyes:, and sometimes I really want to compliment that only online self-study can be so good :rocket::rocket::rocket:! Therefore, I urge myself to make better notes.  
+
+:clap::clap::clap: Hereby I would like to thank @[Baidu Apollo](https://github.com/ApolloAuto/apollo) @[3Blue1Brown](https://space.bilibili.com/88461692/) @[Hongyi Li](https://www.bilibili.com/video/av23593949/) @[iMorpheusAI](https://i.youku.com/i/UNTMxNDU3NjEwMA==?spm=a2hzp.8244740.0.0) @[Mr Paul](https://paul.pub/about/). Welcome to contribute to the project, if you find the project helpful, welcome star:heart:!
+
+
+创建这个项目的初衷是为了在自动驾驶的学习过程中留下一些笔记，参考了不少网络上的资料和个人博客，有的时候真想拍案惊呼:smiley::heart_eyes::heart_eyes:，为什么仅仅依靠自学就能够做到如此优秀:rocket::rocket::rocket:！也因此敦促自己贡献更加优秀的笔记。  
 
 :clap::clap::clap:在这里特此感谢@[百度Apollo项目](https://github.com/ApolloAuto/apollo) @[3Blue1Brown](https://space.bilibili.com/88461692/) @[台大李宏毅](https://www.bilibili.com/video/av23593949/) @[iMorpheusAI](https://i.youku.com/i/UNTMxNDU3NjEwMA==?spm=a2hzp.8244740.0.0) @[阿Paul哥](https://paul.pub/about/)，欢迎对项目的贡献，如果觉得项目对你有帮助，欢迎star:heart:！ 
 
