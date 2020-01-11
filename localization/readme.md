@@ -89,7 +89,7 @@ class RTKLocalizationComponent final
   bool Proc(const std::shared_ptr<localization::Gps> &gps_msg) override;
 ```
 下面我们分别查看这2个函数。
-1. Init函数
+1. Init函数  
 Init函数实现比较简单，一是初始化配置信息，二是初始化IO。初始化配置信息主要是读取一些配置，例如一些topic信息等。下面主要看下初始化IO。
 ```c++
 bool RTKLocalizationComponent::InitIO() {
@@ -129,10 +129,9 @@ void RTKLocalization::GpsStatusCallback(
 }
 ```
 
-2. Proc
+2. Proc  
 在每次接收到"localization::Gps"消息后，触发执行"Proc"函数。这里注意如果需要接收多个消息，这里是3个消息，则选择最慢的消息作为触发，否则，如果选择比较快的消息作为触发，这样会导致作为触发的消息刷新了，而其它的消息还没有刷新。所以这里采用的是GPS消息作为触发消息，IMU的消息刷新快。下面我们看具体的实现。
-
-```
+```c++
 bool RTKLocalizationComponent::Proc(
     const std::shared_ptr<localization::Gps>& gps_msg) {
   // 1. 通过RTKLocalization处理GPS消息回调
@@ -166,7 +165,7 @@ bool RTKLocalizationComponent::Proc(
 
 #### 获取定位信息
 PrepareLocalizationMsg函数的具体实现如下。
-```
+```c++
 void RTKLocalization::PrepareLocalizationMsg(
     const localization::Gps &gps_msg, LocalizationEstimate *localization,
     LocalizationStatus *localization_status) {
@@ -258,8 +257,8 @@ bool RTKLocalization::FindMatchingIMU(const double gps_timestamp_sec,
   return true;
 }
 ```
-接下来我们看线性插值
-1. InterpolateIMU
+接下来我们看线性插值  
+1. InterpolateIMU  
 根据上述函数得到2个IMU消息分别对角速度、线性加速度、欧拉角进行插值。原则是根据比例，反比例进行插值。
 ```c++
 bool RTKLocalization::InterpolateIMU(const CorrectedImu &imu1,
@@ -303,9 +302,9 @@ bool RTKLocalization::InterpolateIMU(const CorrectedImu &imu1,
   return true;
 }
 ```
-2. InterpolateXYZ
+2. InterpolateXYZ  
 根据距离插值，反比例，即frac1越小，则越靠近p1，frac1越大，则越靠近p2
-```
+```c++
 template <class T>
 T RTKLocalization::InterpolateXYZ(const T &p1, const T &p2,
                                   const double frac1) {
@@ -411,7 +410,7 @@ void RTKLocalization::ComposeLocalizationMsg(
 
 #### FindNearestGpsStatus
 获取最近的Gps状态信息，这里实现的算法是遍历查找离"gps_time_stamp"最近的状态，GPS状态信息不是按照时间顺序排列的？？？
-```
+```c++
 bool RTKLocalization::FindNearestGpsStatus(const double gps_timestamp_sec,
                                            drivers::gnss::InsStat *status) {
   ...
@@ -438,7 +437,7 @@ bool RTKLocalization::FindNearestGpsStatus(const double gps_timestamp_sec,
 2. PublishPoseBroadcastTF     // 发布位置转换transform信息
 3. PublishLocalizationStatus  // 发布位置状态信息
 
-以上就是整个RTK的定位流程，主要的思路是通过接收GPS和IMU信息结合输出无人车的位置信息，这里还有一个疑问是，为什么最后输出的定位信息的位置是直接采用的GPS的位置信息，没有通过IMU信息对位置信息做解算，还是说在其它模块中实现的？？？
+以上就是整个RTK的定位流程，主要的思路是通过接收GPS和IMU信息结合输出无人车的位置信息，这里还有一个疑问是为什么最后输出的定位信息的位置是直接采用的GPS的位置信息，没有通过IMU信息对位置信息做解算，还是说在其它模块中实现的？？？
 
 
 <a name="reference" />
