@@ -14,9 +14,10 @@ Hereby I would like to thank @[Baidu Apollo](https://github.com/ApolloAuto/apoll
 
 
 #### :performing_arts: 公告
-由于国内目前访问github太慢，网上有通过设置host来加快访问github的攻略，为了方便大家下载代码，现在把代码同步托管到码云上。主线代码可能随时都在更新，因此我会定期同步代码，如果需要稳定版本最好下载tag版本"v5.0.0"。 
+由于目前国内访问github太慢，网上有通过设置host来加快访问github的攻略，为了方便大家下载代码，现在把代码同步托管到码云上。主线代码可能随时都在更新，因此我会定期同步代码，如果需要稳定版本最好下载tag版本"v5.5.0"。  
 
-**码云地址: [apollo](https://gitee.com/daohu527/apollo)**  
+**Apollo镜像: [apollo](https://gitee.com/daohu527/apollo)**  
+**Dig-into-Apollo镜像: [Dig-into-Apollo](https://gitee.com/daohu527/Dig-into-Apollo)**
 
 
 ## :ledger: 目录
