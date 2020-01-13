@@ -563,3 +563,17 @@ void RTKLocalizationComponent::PublishLocalizationStatus(
   localization_status_talker_->Write(localization_status);
 }
 ```
+
+
+# NDT
+1. NDT的原理？
+
+NDT mapping 
+NDT match
+
+我们主要应用NDT（Normal Distributions Transform，正态分布变换）或者其他SLAM算法来完成稠密点云地图的构建。
+http://xchu.net/2019/09/27/HDMAP%E5%BB%BA%E5%9B%BE%E6%B5%81%E7%A8%8B/  
+http://xchu.net/2019/10/11/autoware%E6%BF%80%E5%85%89%E9%9B%B7%E8%BE%BE%E5%BB%BA%E5%9B%BE%E5%92%8C%E5%AE%9A%E4%BD%8D/  
+
+
+## 
