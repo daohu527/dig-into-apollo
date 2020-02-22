@@ -20,7 +20,7 @@ Hereby I would like to thank @[Baidu Apollo](https://github.com/ApolloAuto/apoll
 **Dig-into-Apollo镜像: [Dig-into-Apollo](https://gitee.com/daohu527/Dig-into-Apollo)**
 
 为了方便更好的交流和学习自动驾驶相关技术，新建立了微信公众号和交流群，欢迎大家交流分享！  
-**微信公众号: 分子运动，或者搜索"fzyd006"**  
+**微信公众号** : 分子运动，或者搜索"fzyd006"  
 
 
 ## :ledger: 目录
