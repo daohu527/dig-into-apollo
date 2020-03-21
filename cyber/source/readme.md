@@ -3,7 +3,7 @@
 
 ## 数据处理流程
 我们先看下cyber中整个的数据处理流程，通过对数据收到流程的各个模块如何工作，搞清楚每个模块的具体作用，之后我们再来分析具体的模块。  
-![cyber数据流程](img/data_progress.jpg)  
+![cyber数据流程](img/source/data_progress.jpg)  
 
 如上图所示，cyber的数据流程可以分为6个过程。  
 1. Node节点中的Writer往通道里面写数据。
