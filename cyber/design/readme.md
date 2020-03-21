@@ -52,7 +52,7 @@
 
 
 参考上述实现，我们可以把需求细化为以下几个方面：  
-![requirements](img/design/requirements.jpg)  
+![requirements](../img/requirements.jpg)  
 
 > 实际上Apollo主要用到了ROS消息通信的功能，同时也用到了录制bag包等一些工具类。所以目前Cyber的首要设计就是替换ROS消息通信的功能。
 
@@ -65,13 +65,13 @@
 #### 随意的假设
 
 按照上述需求，我们可以随便假想，或者根据自己的理解先画出系统的草图，这里我们要实现一个分布式的系统：  
-![node](img/design/node.jpg)  
+![node](../img/node.jpg)  
 1. 上述的系统是一个分布式系统，每个节点作为一个Node。
 2. 上述系统每个节点之间都可以相互通信，一个节点下线，不会导致到整个系统瘫痪。
 3. 上述系统可以灵活的增加删除节点。
 
 那么我们再看下其他的设计方式：  
-![master_node](img/design/master_node.jpg)  
+![master_node](../img/master_node.jpg)  
 上述系统采用了集中式的消息管理，每个节点之间通讯必须经过主节点来转发对应的消息，如果主节点下线，那么所有的节点都会通信失败，导致系统瘫痪。
 1. 上述系统是一个分布式系统，每个节点作为一个Node。
 2. 上述系统每个节点通过主节点通信，主节点下线会导致系统奔溃。
@@ -84,10 +84,10 @@
 * 当一个节点有10s没有发送消息，那么集中式的消息可以监控并且知道这个节点是否出故障了；
 * 集中式的消息可以知道哪些节点在线去找到这些节点，这在多机网络通信的时候很管用，节点只需要注册自己的IP地址，然后由管理节点告诉你去哪里拿到消息。
 
-![center](img/design/center.jpg)  
+![center](../img/center.jpg)  
 
 上述只是一个初步的想法，那么基于上面的启发，我们针对上述的每项需求，完成我们的系统设计。  
-![design](img/design/design.jpg)  
+![design](../img/design.jpg)  
 
 我们接下来详细的分析每个需求：  
 <a name="multinode" />
@@ -114,7 +114,7 @@
 
 #### linux进程调度
 操作系统最基本的功能就是管理线程，linux的线程调度采用的是CFS(Completely Fair Scheduler)算法，我们先看下没有调度和有调度的情况下的差异。  
-![schedule_timeline](img/design/schedule_timeline.jpg)  
+![schedule_timeline](../img/schedule_timeline.jpg)  
 上述是单个CPU核心的情况下，左边是没有CPU调度的情况，任务1在进行完计算之后，会读取内存或者IO的数据，这时候CPU会进入等待状态，CPU在等待的时候没有做任何事情。而右边采用了调度策略，在CPU等待的过程中，任务1主动让出CPU，这样下一个任务就可以在当前任务等待IO的过程中执行，可以看到对任务的调度合理的利用了CPU，使得CPU的利用率更高，从而使任务执行的更快。  
 
 linux内核又分为可以抢占的和非抢占的，非抢占的内核禁止抢占，即在一个任务执行完成之前，除非他主动让出CPU或者执行完成，CPU会一直被这个任务占据，不能够被更高优先级的任务抢占。而抢占式的内核则支持在一个任务执行的过程中，如果有更高优先级的任务请求，那么内核会暂停现在运行的任务，转而运行优先级更高的任务，显然抢占式的内核的实时性更好。  
@@ -142,7 +142,7 @@ CPU把任务根据优先级划分，并且划分不同的时间片，通过时�
 * 硬件错误。极小概率的情况下，CPU的寄存器会出错，嵌入式(powerpc)的CPU都会有冗余校正，而家用或者服务器(intel)没有这种设计，这种情况下只能重启进程，或者硬件。
 
 我们根据上述的思路，可以得到如下图所示：  
-![schedule_main](img/design/schedule_main.jpg)  
+![schedule_main](../img/schedule_main.jpg)  
 * 把控制的优先级设置到最高，规划其次，感知和定位的优先级设置相对较低，因为控制和规划必须马上处理，感知如果当前帧处理不过来，大不了就丢掉，接着处理下一帧。当然这些线程都需要设置为实时进程。而地图，日志，定位等的优先级设置较低，在其他高优先级的进程到来时候会被抢占。
 * Canbus等传感器数据，可以绑定到一个CPU核心上处理，这样中断不会影响到其他核心，导致频繁线程切换。
 * 对线程设置cgroups，可以控制资源使用，设置优先级等。
@@ -296,7 +296,7 @@ bool Init(const char* binary_name) {
 ## classloader(类动态加载)
 首先我们需要搞清楚classloader的作用，classloader动态的加载".so"文件，从而实现动态的加载和卸载模块。说的直白一点就是cyber通过classloader动态的加载定位，感知，规划，控制等模块。这样的好处是当一个模块奔溃时候，只需要动态的从新加载这个模块就可以了，而不需要从新加载其他模块。  
 我先看下整体的结构，ClassLoaderManager管理着ClassLoader，而ClassLoader调用utility来实现具体的功能，实际上utility是通过c++的PocoFoundation库来实现加载动态库的。  
-![classloader](img/design/classloader.jpg)  
+![classloader](../img/classloader.jpg)  
 
 #### ClassLoader
 首先我们来看一下"ClassLoader"类：
