@@ -549,7 +549,9 @@ void TimingWheel::TickFunc() {
 
 ## 总结
 经过上述分析，介绍了Cyber中定时器的实现原理，这里还有2个疑问。
-1. 一是定时器是否为单线程，任务都是在单线程中的多个协程中执行？？？
+1. 一是定时器是否为单线程，任务都是在单线程中的多个协程中执行？？？  
+答：定时器的计数单独在一个线程中执行，具体的定时任务在协程池中执行，也就是说多个定时任务可以并发执行。  
+
 2. 当"TimingWheel::AddTask"中"work_wheel_index >= WORK_WHEEL_SIZE"并且"assistant_ticks == 1"时，假设原始的current_work_wheel_index_mutex_ = 200，消息触发周期为600个tick，那么按照上述计算方法得到的work_wheel_index = 800，real_work_wheel_index = 288，assistant_ticks = 1，那么"work_wheel_[real_work_wheel_index].AddTask(task)"会往288增加任务，实际上这个任务在88个tick之后就触发了？？？
 
 
