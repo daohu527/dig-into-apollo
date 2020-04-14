@@ -32,22 +32,24 @@
 我们先看下perception的目录结构：  
 ```
 .
-├── base         // 基础类
-├── BUILD        // 编译testdata，用于测试
-├── camera       // 摄像头  --- 子模块流程
-├── common       // 公共目录
-├── data
-├── fusion       // 融合
-├── inference    // 深度学习推理相关
-├── lib          // lib库
-├── lidar        // 雷达    --- 子模块流程
-├── map          // 地图
-├── onboard      // 各个子模块的入口     --- 子模块入口
-├── production   // Cyber加载模块入口    --- Cyber加载入口
-├── proto        // 数据格式，protobuf
-├── radar        // 毫米波  --- 子模块流程
+├── BUILD                           // 编译testdata，用于测试
+├── Perception_README_3_5.md        
 ├── README.md
-└── testdata    // 上述几个模块的测试数据，包括训练好的模型
+├── base                           // 基础类
+├── camera                         // 相机相关  --- 子模块流程
+├── common                         // 公共目录
+├── data                           
+├── fusion                         // 融合
+├── inference                      // 深度学习推理相关
+├── lib                            // lib库
+├── lidar                          // 雷达相关  --- 子模块流程
+├── map                            // 地图
+├── onboard                        // 各个子模块的入口     --- 子模块入口
+├── production                     // Cyber加载模块入口    --- Cyber加载入口
+├── proto                          // 数据格式，protobuf
+├── radar                          // 毫米波  --- 子模块流程
+├── testdata                       // 上述几个模块的测试数据，包括训练好的模型
+└── tool                           // 离线测试工具
 ```
 下面介绍几个重要的目录结构: 
 * production/onboard目录 - **感知模块的入口在production目录，通过lanuch加载对应的dag，启动感知模块**。可以看到感知启动了多个子模块，来处理不同的传感器信息（Lidar,Radar,Camera）。各个子模块的入口在onboard目录中，各个子模块会订阅不同的传感器Topic，然后进行统一的流水线(Pipeline)作业。每个子模块的流水线作业分别在不同的文件夹中(camera, lidar, radar)。这就是感知模块总体的目录结构。
@@ -59,6 +61,8 @@
 
 
 ## production
+
+
 
 
 ## onboard
@@ -79,10 +83,18 @@
 radar模块被"RadarDetectionComponent"引用，perception的入口在onboard中。我们最后分析下"RadarDetectionComponent"模块。  
 
 
-## tools
-obstacle_detection 根据kitti的例子，对camera做完整流程的识别，如果需要入门，可以把这个例子先跑通，同时也可以拿这个例子进行性能调优。  
+## camera
+camera模块的结构和radar类似，目录如下：  
+```
+.
+├── app        \\ 主程序
+├── common     \\ 公共程序
+├── lib         \\ 库，用来做红绿灯、障碍物检测等功能
+├── test        \\ 测试用例
+└── tools       \\ 工具，用来做车道线和红绿灯识别结果展示
+```
 
-lane_detection 车道线识别的例子
+
 
 
 ## Reference
