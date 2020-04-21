@@ -61,8 +61,15 @@
 
 
 ## production
-
-
+production中主要是存放**配置和lanuch和dag启动文件**。
+```
+.
+├── conf
+├── dag
+├── data
+└── launch
+```
+该文件中有多个lanuch文件，同时一个lanuch文件中包含多个dag文件，也就是说一个lanuch文件会启动多个模块，每个模块
 
 
 ## onboard
