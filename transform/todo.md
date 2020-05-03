@@ -17,3 +17,16 @@ tf_static的问题：
   }
 ```
 6. Buffer是一个单例，"apollo::transform::Buffer"提供了查询接口，即每个模块共享这个单例，和tf的设计原则还是不相符合？ 注意线程安全？  
+
+## 坐标系
+
+#### UTM坐标系
+UTM坐标系的坐标原点位于本初子午线与赤道交点，以正东方向为x轴正方向（UTM Easting），正北方向为y轴正方向（UTM Northing）
+
+#### GPS坐标系
+以地心为原点，连接南北两极并同纬线垂直相交的线叫做经线，垂直于经线的绕地球一圈就是纬线。
+
+
+
+#### UTM坐标转GPS坐标
+[参考](https://www.ibm.com/developerworks/cn/java/j-coordconvert/index.html)  

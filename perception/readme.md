@@ -74,6 +74,21 @@ production中主要是存放**配置和lanuch和dag启动文件**。
 
 ## onboard
 
+#### component
+感知模块的各个功能模块在component中定义，根据传感器的不同划分，下面我们分别介绍  
+实际上在BUILD文件中，下面几个模块编译为一个模块，最后的可执行文件为"libperception_component_lidar"。也就是说下面几个模块的配置可以在dag中查找libperception_component_lidar的配置
+```
+    name = "perception_component_inner_lidar",
+    srcs = [
+        "fusion_component.cc",
+        "lidar_output_component.cc",
+        "radar_detection_component.cc",
+        "recognition_component.cc",
+        "segmentation_component.cc",
+        "detection_component.cc",
+    ],
+```
+
 
 ## radar
 我们先从一个简单的模块开始看起，首先看下radar目录：  
