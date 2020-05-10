@@ -11,3 +11,50 @@ inference主要实现了tensorflow, caffe, paddlepaddle3种框架的实现，并
 
 #### tensorrt
 
+
+#### 目录介绍
+```
+├── BUILD
+├── caffe // caffe框架
+├── inference.cc // 定义了推理接口
+├── inference_factory.cc // 推理工厂，用来创建推理器
+├── inference_factory.h
+├── inference_factory_test.cc
+├── inference.h
+├── inference_test.cc
+├── inference_test_data  // 推理测试数据
+├── layer.cc // 定义了layer接口
+├── layer.h
+├── layer_test.cc
+├── operators // 算子？？？
+├── paddlepaddle  // paddlepaddle框架
+├── tensorrt // tensorrt框架
+├── test
+├── tools // yolo,lane等的例子
+└── utils // cuda加速工具
+```
+
+
+#### CreateInferenceByName
+CreateInferenceByName可以创建3种形式的推理器caffe, paddlepaddle, tensorrt。这里的tensorrt就是英伟达的加速库吗？也就是说如果是其它模型则采用tensorrt部署，caffe和paddlepaddle则采用这2种高级别的api部署？  
+```c++
+Inference *CreateInferenceByName(const std::string &name,
+                                 const std::string &proto_file,
+                                 const std::string &weight_file,
+                                 const std::vector<std::string> &outputs,
+                                 const std::vector<std::string> &inputs,
+                                 const std::string &model_root) {
+  if (name == "CaffeNet") {
+    return new CaffeNet(proto_file, weight_file, outputs, inputs);
+  } else if (name == "RTNet") {
+    return new RTNet(proto_file, weight_file, outputs, inputs);
+  } else if (name == "RTNetInt8") {
+    return new RTNet(proto_file, weight_file, outputs, inputs, model_root);
+  } else if (name == "PaddleNet") {
+    return new PaddleNet(proto_file, weight_file, outputs, inputs);
+  }
+  return nullptr;
+}
+```
+
+
