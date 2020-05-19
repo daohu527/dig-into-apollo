@@ -57,4 +57,5 @@ Inference *CreateInferenceByName(const std::string &name,
 }
 ```
 
+3种推理模型分别在caffe, paddlepaddle, tensorrt目录中，其中有用到cuda进行加速，其中".cu"是cuda对C++的扩展。  
 

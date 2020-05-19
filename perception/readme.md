@@ -89,6 +89,10 @@ production中主要是存放**配置和lanuch和dag启动文件**。
     ],
 ```
 
+## 传感器
+目前apollo中的传感器分为radar,lidar,camera3种，每种传感器分别都执行了目标识别和追踪的任务，最后通过fusion对传感器的数据做融合，每个传感器的执行代码分别在"perception/radar","perception/lidar","perception/camera"目录中，整体的执行流程如下图。  
+![sensor](img/sensor.jpg)    
+
 
 ## radar
 我们先从一个简单的模块开始看起，首先看下radar目录：  
