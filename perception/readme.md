@@ -24,6 +24,7 @@
     - [安装cuDNN](caffe2#cudnn)
     - [安装Caffe2](caffe2#caffe2)
     - [参考](caffe2#reference)
+- [Perception模块简介](#introduction)
 
 <a name="introduction" />
 
@@ -113,24 +114,12 @@ onboard目录定义了多个子模块，每个子模块对应一个功能，包�
 从图中可以看到，每个传感器都实现了物体识别的功能，而摄像头还实现了车道线识别和红绿灯检测的功能，每个传感器执行的任务流水线也大概相似，先进行预处理，然后做识别，最后过滤并且追踪目标。其中物体识别用到了推理引擎inference。  
 
 接下来来我们分别查看各个传感器的具体实现。我们先从radar开始看起，主要是radar模块相对比较简单。  
+
+
+<a name="radar_module" />
+
 ## radar
-实际上radar,camera,lidar的目录结构都大体类似，在app中申明功能，在lib中实现。  
-```
-.
-├── app           // 功能定义
-├── common
-└── lib
-    ├── detector  // 物体检测
-    ├── dummy
-    ├── interface
-    ├── preprocessor  // 预处理
-    ├── roi_filter    // 感兴趣区域过滤
-    └── tracker       // 目标追踪
-        ├── common      
-        ├── conti_ars_tracker
-        ├── filter          // 卡尔曼滤波
-        └── matcher         // 匈牙利算法
-```
+[radar子模块介绍](radar#radar)
 
 
 
