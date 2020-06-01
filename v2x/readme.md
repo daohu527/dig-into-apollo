@@ -275,3 +275,19 @@ OsInterFace中实现了2个模板，分别接收和发布消息给apollo，下�
     msg->CopyFrom(*(reader->GetLatestObserved()));
   }
 ```
+
+
+## 感知模块
+最后感知模块"trafficlights_perception_component.cc"会订阅"/apollo/v2x/traffic_light"这个TOPIC，然后把V2X获取到的结果放入buffer中再进行处理。  
+```c++
+int TrafficLightsPerceptionComponent::InitV2XListener() {
+  typedef const std::shared_ptr<apollo::v2x::IntersectionTrafficLightData>
+      V2XTrafficLightsMsgType;
+  std::function<void(const V2XTrafficLightsMsgType&)> sub_v2x_tl_callback =
+      std::bind(&TrafficLightsPerceptionComponent::OnReceiveV2XMsg, this,
+                std::placeholders::_1);
+  auto sub_v2x_reader = node_->CreateReader(
+      v2x_trafficlights_input_channel_name_, sub_v2x_tl_callback);
+  return cyber::SUCC;
+}
+```
