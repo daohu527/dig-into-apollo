@@ -85,8 +85,8 @@ Hereby I would like to thank @[Baidu Apollo](https://github.com/ApolloAuto/apoll
         - [radar子模块](perception#radar#radar_module)
         - [camera子模块](perception#camera#camera_module)
         - [lidar子模块](perception#lidar#lidar_module)
-        - [fusion子模块](perception#fusion_module)
-        - [inference推理子模块](perception#inference_module)
+        - [fusion子模块](perception#fusion#fusion_module)
+        - [inference推理子模块](perception#inference#inference_module)
         - [Reference](perception#reference)    
 - [Prediction](prediction)
     - [介绍](prediction#introduction)
@@ -237,11 +237,10 @@ Hereby I would like to thank @[Baidu Apollo](https://github.com/ApolloAuto/apoll
 
 
 ##  :unlock: 计划
-* 2020/1/10之前完成   
-    - [ ] prediction模块的流程分析
-* 2020/3/10之前完成
-    - [ ] cyber的系统调度流程，和消息收发流程
+* 2020/7/30之前完成
     - [ ] perception模块的流程分析
+* 2020/8/30之前完成
+    - [ ] cyber的transport底层实现    
 * 次要任务
     - [ ] routing模块可视化工具介绍  
     - [ ] planning模块各个控制器的具体实现  

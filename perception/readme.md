@@ -131,13 +131,31 @@ onboard目录定义了多个子模块，每个子模块对应一个功能，包�
 <a name="radar_module" />
 
 ## radar子模块
-[radar子模块介绍](radar#radar)
+[radar子模块介绍](radar#radar_module)  
 
 
 <a name="camera_module" />
 
 ## camera子模块
-[radar子模块介绍](camera#radar)
+[camera子模块介绍](camera#camera_module)  
+
+
+<a name="lidar_module" />
+
+## lidar子模块
+[lidar子模块介绍](lidar#lidar_module)  
+
+
+<a name="fusion_module" />
+
+## fusion子模块
+[fusion子模块](fusion#fusion_module)  
+
+
+<a name="inference_module" />
+
+## inference推理子模块
+[inference推理子模块](inference#inference_module)  
 
 
 <a name="reference" />

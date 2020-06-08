@@ -1,15 +1,4 @@
-<a name="camera_module" />
-
 ## camera
-camera模块的结构和radar类似，目录如下：  
-```
-.
-├── app        \\ 主程序
-├── common     \\ 公共程序
-├── lib         \\ 库，用来做红绿灯、障碍物检测等功能
-├── test        \\ 测试用例
-└── tools       \\ 工具，用来做车道线和红绿灯识别结果展示
-```
 
 ## lib目录
 
@@ -1153,13 +1142,14 @@ detector // 检测
 postprocessor // 后处理
 
 
-#### 数据集
+**数据集**
 [CULane Dataset](https://xingangpan.github.io/projects/CULane.html)  
 [bdd](https://bdd-data.berkeley.edu/)  
 [tusimple](https://github.com/TuSimple/tusimple-benchmark)  
 
 
-#### 参考
+
+**参考**
 [awesome-lane-detection](https://github.com/amusi/awesome-lane-detection)  
 
 
@@ -1168,6 +1158,6 @@ postprocessor // 后处理
 
 
 
-#### feature_extractor
+#### feature_extractor ???
 
 
