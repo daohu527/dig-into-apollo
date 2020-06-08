@@ -27,11 +27,11 @@
 - [Perception模块简介](#introduction)
     - [production目录](#production)
     - [onboard目录](#onboard)
-    - [radar子模块](#radar_module)
-    - [camera子模块](#camera_module)
-    - [lidar子模块](#lidar_module)
-    - [fusion子模块](#fusion_module)
-    - [inference推理子模块](#inference_module)
+    - [radar子模块](#sub_module)
+    - [camera子模块](#sub_module)
+    - [lidar子模块](#sub_module)
+    - [fusion子模块](#sub_module)
+    - [inference推理子模块](#sub_module)
     - [Reference](#reference)
 
 <a name="introduction" />
@@ -128,33 +128,13 @@ onboard目录定义了多个子模块，每个子模块对应一个功能，包�
 接下来来我们分别查看各个传感器的具体实现。我们先从radar开始看起，主要是radar模块相对比较简单。  
 
 
-<a name="radar_module" />
+<a name="sub_module" />
 
-## radar子模块
+## 子模块介绍
 [radar子模块介绍](radar#radar_module)  
-
-
-<a name="camera_module" />
-
-## camera子模块
 [camera子模块介绍](camera#camera_module)  
-
-
-<a name="lidar_module" />
-
-## lidar子模块
 [lidar子模块介绍](lidar#lidar_module)  
-
-
-<a name="fusion_module" />
-
-## fusion子模块
 [fusion子模块](fusion#fusion_module)  
-
-
-<a name="inference_module" />
-
-## inference推理子模块
 [inference推理子模块](inference#inference_module)  
 
 
