@@ -1,4 +1,15 @@
+<a name="camera_module" />
+
 ## camera
+camera模块的结构和radar类似，目录如下：  
+```
+.
+├── app        \\ 主程序
+├── common     \\ 公共程序
+├── lib         \\ 库，用来做红绿灯、障碍物检测等功能
+├── test        \\ 测试用例
+└── tools       \\ 工具，用来做车道线和红绿灯识别结果展示
+```
 
 ## lib目录
 
@@ -485,6 +496,366 @@ bool TLPreprocessor::SyncInformation(const double image_timestamp,
 ```
 
 #### detector 检测
+红绿灯的检测分为2部分，一部分为检测，一部分为识别，分别在"detection"和"recognition"2个目录中。我们先看"detection"的实现。  
+
+在"cropbox.h"和"cropbox.cc"中获取裁剪框。首先是初始化裁切尺度"crop_scale"和最小裁切大小"min_crop_size"
+```c++
+void CropBox::Init(float crop_scale, int min_crop_size) {
+  crop_scale_ = crop_scale;
+  min_crop_size_ = min_crop_size;
+}
+CropBox::CropBox(float crop_scale, int min_crop_size) {
+  Init(crop_scale, min_crop_size);
+}
+```
+
+CropBoxWholeImage根据指定的长、宽裁切图片，如果红绿灯在指定的长、宽之内，则返回裁切框。    
+```c++
+void CropBoxWholeImage::getCropBox(const int width, const int height,
+                                   const base::TrafficLightPtr &light,
+                                   base::RectI *crop_box) {
+  // 1. 红绿灯在裁剪范围（给定长、宽）内
+  if (!OutOfValidRegion(light->region.projection_roi, width, height) &&
+      light->region.projection_roi.Area() > 0) {
+    crop_box->x = crop_box->y = 0;
+    crop_box->width = width;
+    crop_box->height = height;
+    return;
+  }
+  // 2. 否则返回全0
+  crop_box->x = 0;
+  crop_box->y = 0;
+  crop_box->width = 0;
+  crop_box->height = 0;
+}
+```
+
+裁切图片。  
+```c++
+void CropBox::getCropBox(const int width, const int height,
+                         const base::TrafficLightPtr &light,
+                         base::RectI *crop_box) {
+  int rows = height;
+  int cols = width;
+  // 1. 如果超出范围，则返回0
+  if (OutOfValidRegion(light->region.projection_roi, width, height) ||
+      light->region.projection_roi.Area() <= 0) {
+    crop_box->x = 0;
+    crop_box->y = 0;
+    crop_box->width = 0;
+    crop_box->height = 0;
+    return;
+  }
+  // 2. 获取灯的感兴趣区域
+  int xl = light->region.projection_roi.x;
+  int yt = light->region.projection_roi.y;
+  int xr = xl + light->region.projection_roi.width - 1;
+  int yb = yt + light->region.projection_roi.height - 1;
+
+  // scale
+  int center_x = (xr + xl) / 2;
+  int center_y = (yb + yt) / 2;
+  // 3. 感兴趣区域的2.5倍，crop_scale_为裁切比例
+  int resize =
+      static_cast<int>(crop_scale_ * static_cast<float>(std::max(
+                                         light->region.projection_roi.width,
+                                         light->region.projection_roi.height)));
+
+  // 4. 根据裁切比例和长、宽，取最小值
+  resize = std::max(resize, min_crop_size_);
+  resize = std::min(resize, width);
+  resize = std::min(resize, height);
+
+  // 5. 计算并且赋值
+  xl = center_x - resize / 2 + 1;
+  xl = (xl < 0) ? 0 : xl;
+  yt = center_y - resize / 2 + 1;
+  yt = (yt < 0) ? 0 : yt;
+  xr = xl + resize - 1;
+  yb = yt + resize - 1;
+  if (xr >= cols - 1) {
+    xl -= xr - cols + 1;
+    xr = cols - 1;
+  }
+
+  if (yb >= rows - 1) {
+    yt -= yb - rows + 1;
+    yb = rows - 1;
+  }
+  
+  crop_box->x = xl;
+  crop_box->y = yt;
+  crop_box->width = xr - xl + 1;
+  crop_box->height = yb - yt + 1;
+}
+```
+**疑问**  
+1. 第5步中的实现逻辑是什么样？？？  
+
+
+"select.h"和"select.cc"选择红绿灯。  
+首先看Select类的数据结构，其中用到了匈牙利优化器？  
+```c++
+common::HungarianOptimizer<float> munkres_;
+```
+
+初始化  
+```c++
+bool Select::Init(int rows, int cols) {
+  if (rows < 0 || cols < 0) {
+    return false;
+  }
+
+  munkres_.costs()->Reserve(rows, cols);
+
+  return true;
+}
+```
+**疑问**  
+1. 优化器的cost为什么需要行和列数据？  
+
+
+计算高斯分数？？  
+```c++
+double Select::Calc2dGaussianScore(base::Point2DI p1, base::Point2DI p2,
+                                   float sigma1, float sigma2) {
+  return std::exp(-0.5 * (static_cast<float>((p1.x - p2.x) * (p1.x - p2.x)) /
+                              (sigma1 * sigma1) +
+                          (static_cast<float>((p1.y - p2.y) * (p1.y - p2.y)) /
+                           (sigma2 * sigma2))));
+}
+```
+
+选择红绿灯。  
+```c++
+void Select::SelectTrafficLights(
+    const std::vector<base::TrafficLightPtr> &refined_bboxes,
+    std::vector<base::TrafficLightPtr> *hdmap_bboxes) {
+  std::vector<std::pair<size_t, size_t> > assignments;
+  munkres_.costs()->Resize(hdmap_bboxes->size(), refined_bboxes.size());
+
+  for (size_t row = 0; row < hdmap_bboxes->size(); ++row) {
+    auto center_hd = (*hdmap_bboxes)[row]->region.detection_roi.Center();
+    if ((*hdmap_bboxes)[row]->region.outside_image) {
+      AINFO << "projection_roi outside image, set score to 0.";
+      for (size_t col = 0; col < refined_bboxes.size(); ++col) {
+        (*munkres_.costs())(row, col) = 0.0;
+      }
+      continue;
+    }
+    for (size_t col = 0; col < refined_bboxes.size(); ++col) {
+      float gaussian_score = 100.0f;
+      auto center_refine = refined_bboxes[col]->region.detection_roi.Center();
+      // use gaussian score as metrics of distance and width
+      double distance_score = Calc2dGaussianScore(
+          center_hd, center_refine, gaussian_score, gaussian_score);
+
+      double max_score = 0.9;
+      auto detect_score = refined_bboxes[col]->region.detect_score;
+      double detection_score =
+          detect_score > max_score ? max_score : detect_score;
+
+      double distance_weight = 0.7;
+      double detection_weight = 1 - distance_weight;
+      (*munkres_.costs())(row, col) =
+          static_cast<float>(detection_weight * detection_score +
+                             distance_weight * distance_score);
+      const auto &crop_roi = (*hdmap_bboxes)[row]->region.crop_roi;
+      const auto &detection_roi = refined_bboxes[col]->region.detection_roi;
+      // 1. crop roi在detection roi之外
+      if ((detection_roi & crop_roi) != detection_roi) {
+        (*munkres_.costs())(row, col) = 0.0;
+      }
+      AINFO << "score " << (*munkres_.costs())(row, col);
+    }
+  }
+  
+  munkres_.Maximize(&assignments);
+
+  for (size_t i = 0; i < hdmap_bboxes->size(); ++i) {
+    (*hdmap_bboxes)[i]->region.is_selected = false;
+    (*hdmap_bboxes)[i]->region.is_detected = false;
+  }
+
+  // 2. 把结果放入hdmap_bbox_region
+  for (size_t i = 0; i < assignments.size(); ++i) {
+    if (static_cast<size_t>(assignments[i].first) >= hdmap_bboxes->size() ||
+        static_cast<size_t>(
+            assignments[i].second >= refined_bboxes.size() ||
+            (*hdmap_bboxes)[assignments[i].first]->region.is_selected ||
+            refined_bboxes[assignments[i].second]->region.is_selected)) {
+    } else {
+      auto &refined_bbox_region = refined_bboxes[assignments[i].second]->region;
+      auto &hdmap_bbox_region = (*hdmap_bboxes)[assignments[i].first]->region;
+      refined_bbox_region.is_selected = true;
+      hdmap_bbox_region.is_selected = true;
+
+      const auto &crop_roi = hdmap_bbox_region.crop_roi;
+      const auto &detection_roi = refined_bbox_region.detection_roi;
+      bool outside_crop_roi = ((crop_roi & detection_roi) != detection_roi);
+      if (hdmap_bbox_region.outside_image || outside_crop_roi) {
+        hdmap_bbox_region.is_detected = false;
+      } else {
+        hdmap_bbox_region.detection_roi = refined_bbox_region.detection_roi;
+        hdmap_bbox_region.detect_class_id = refined_bbox_region.detect_class_id;
+        hdmap_bbox_region.detect_score = refined_bbox_region.detect_score;
+        hdmap_bbox_region.is_detected = refined_bbox_region.is_detected;
+        hdmap_bbox_region.is_selected = refined_bbox_region.is_selected;
+      }
+    }
+  }
+}
+```
+**疑问**  
+功能如何实现的？有什么作用？  
+
+接下来我们看"detection.h"和"detection.cc"。首先看一下"TrafficLightDetection"类的参数。  
+```c++
+  traffic_light::detection::DetectionParam detection_param_;
+  DataProvider::ImageOptions data_provider_image_option_;
+  std::shared_ptr<inference::Inference> rt_net_ = nullptr;
+  std::shared_ptr<base::Image8U> image_ = nullptr;
+  std::shared_ptr<base::Blob<float>> param_blob_;
+  std::shared_ptr<base::Blob<float>> mean_buffer_;
+  std::shared_ptr<IGetBox> crop_;
+  std::vector<base::TrafficLightPtr> detected_bboxes_;
+  std::vector<base::TrafficLightPtr> selected_bboxes_;
+  std::vector<std::string> net_inputs_;
+  std::vector<std::string> net_outputs_;
+  Select select_;
+  int max_batch_size_ = 4;
+  int param_blob_length_ = 6;
+  float mean_[3];
+  std::vector<base::RectI> crop_box_list_;
+  std::vector<float> resize_scale_list_;
+  int gpu_id_ = 0;
+```
+
+Init初始化。  
+```c++
+bool TrafficLightDetection::Init(
+    const camera::TrafficLightDetectorInitOptions &options) {
+  std::string proto_path = GetAbsolutePath(options.root_dir, options.conf_file);
+  // 1. 获取检测参数
+  if (!cyber::common::GetProtoFromFile(proto_path, &detection_param_)) {
+    AINFO << "load proto param failed, root dir: " << options.root_dir;
+    return false;
+  }
+
+  std::string param_str;
+  google::protobuf::TextFormat::PrintToString(detection_param_, &param_str);
+  AINFO << "TL detection param: " << param_str;
+
+  std::string model_root =
+      GetAbsolutePath(options.root_dir, detection_param_.model_name());
+  AINFO << "model_root " << model_root;
+
+  std::string proto_file =
+      GetAbsolutePath(model_root, detection_param_.proto_file());
+  AINFO << "proto_file " << proto_file;
+
+  std::string weight_file =
+      GetAbsolutePath(model_root, detection_param_.weight_file());
+  AINFO << "weight_file " << weight_file;
+
+  if (detection_param_.is_bgr()) {
+    data_provider_image_option_.target_color = base::Color::BGR;
+    mean_[0] = detection_param_.mean_b();
+    mean_[1] = detection_param_.mean_g();
+    mean_[2] = detection_param_.mean_r();
+  } else {
+    data_provider_image_option_.target_color = base::Color::RGB;
+    mean_[0] = detection_param_.mean_r();
+    mean_[1] = detection_param_.mean_g();
+    mean_[2] = detection_param_.mean_b();
+  }
+
+  net_inputs_.push_back(detection_param_.input_blob_name());
+  net_inputs_.push_back(detection_param_.im_param_blob_name());
+  net_outputs_.push_back(detection_param_.output_blob_name());
+
+  AINFO << "net input blobs: "
+        << std::accumulate(net_inputs_.begin(), net_inputs_.end(),
+                           std::string(""),
+                           [](std::string &sum, const std::string &s) {
+                             return sum + "\n" + s;
+                           });
+  AINFO << "net output blobs: "
+        << std::accumulate(net_outputs_.begin(), net_outputs_.end(),
+                           std::string(""),
+                           [](std::string &sum, const std::string &s) {
+                             return sum + "\n" + s;
+                           });
+
+  const auto &model_type = detection_param_.model_type();
+  AINFO << "model_type: " << model_type;
+
+  rt_net_.reset(inference::CreateInferenceByName(model_type, proto_file,
+                                                 weight_file, net_outputs_,
+                                                 net_inputs_, model_root));
+
+  AINFO << "rt_net_ create succeed";
+  rt_net_->set_gpu_id(options.gpu_id);
+  AINFO << "set gpu id " << options.gpu_id;
+  gpu_id_ = options.gpu_id;
+
+  int resize_height = detection_param_.min_crop_size();
+  int resize_width = detection_param_.min_crop_size();
+  max_batch_size_ = detection_param_.max_batch_size();
+  param_blob_length_ = 6;
+
+  CHECK_GT(resize_height, 0);
+  CHECK_GT(resize_width, 0);
+  CHECK_GT(max_batch_size_, 0);
+
+  std::vector<int> shape_input = {max_batch_size_, resize_height, resize_width,
+                                  3};
+  std::vector<int> shape_param = {max_batch_size_, 1, param_blob_length_, 1};
+
+  std::map<std::string, std::vector<int>> input_reshape;
+  input_reshape.insert(
+      (std::pair<std::string, std::vector<int>>(net_inputs_[0], shape_input)));
+  input_reshape.insert(
+      (std::pair<std::string, std::vector<int>>(net_inputs_[1], shape_param)));
+
+  if (!rt_net_->Init(input_reshape)) {
+    AINFO << "net init fail.";
+    return false;
+  }
+  AINFO << "net init success.";
+
+  mean_buffer_.reset(new base::Blob<float>(1, resize_height, resize_height, 3));
+
+  param_blob_ = rt_net_->get_blob(net_inputs_[1]);
+  float *param_data = param_blob_->mutable_cpu_data();
+  for (int i = 0; i < max_batch_size_; ++i) {
+    auto offset = i * param_blob_length_;
+    param_data[offset + 0] = static_cast<float>(resize_width);
+    param_data[offset + 1] = static_cast<float>(resize_height);
+    param_data[offset + 2] = 1;
+    param_data[offset + 3] = 1;
+    param_data[offset + 4] = 0;
+    param_data[offset + 5] = 0;
+  }
+
+  switch (detection_param_.crop_method()) {
+    default:
+    case 0:
+      crop_.reset(new CropBox(detection_param_.crop_scale(),
+                              detection_param_.min_crop_size()));
+      break;
+    case 1:
+      crop_.reset(new CropBoxWholeImage());
+      break;
+  }
+
+  select_.Init(resize_width, resize_height);
+  image_.reset(
+      new base::Image8U(resize_height, resize_width, base::Color::BGR));
+  return true;
+}
+``` 
+
 
 
 #### tracker 追踪

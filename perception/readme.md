@@ -137,15 +137,7 @@ onboard目录定义了多个子模块，每个子模块对应一个功能，包�
 <a name="camera_module" />
 
 ## camera子模块
-camera模块的结构和radar类似，目录如下：  
-```
-.
-├── app        \\ 主程序
-├── common     \\ 公共程序
-├── lib         \\ 库，用来做红绿灯、障碍物检测等功能
-├── test        \\ 测试用例
-└── tools       \\ 工具，用来做车道线和红绿灯识别结果展示
-```
+[radar子模块介绍](camera#radar)
 
 
 <a name="reference" />
@@ -158,8 +150,6 @@ camera模块的结构和radar类似，目录如下：
 [全连接层的作用是什么？](https://www.zhihu.com/question/41037974)  
 [索伯算子](https://zh.wikipedia.org/wiki/%E7%B4%A2%E8%B2%9D%E7%88%BE%E7%AE%97%E5%AD%90)  
 [卷积](https://zh.wikipedia.org/wiki/%E5%8D%B7%E7%A7%AF)  
-
-> tensorRT
-[TensorRT(1)-介绍-使用-安装](https://arleyzhang.github.io/articles/7f4b25ce/)  
+[TensorRT(1)-介绍-使用-安装](https://arleyzhang.github.io/articles/7f4b25ce/)   
 [高性能深度学习支持引擎实战——TensorRT](https://zhuanlan.zhihu.com/p/35657027)  
 
