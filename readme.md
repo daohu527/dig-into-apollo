@@ -232,10 +232,6 @@ Hereby I would like to thank @[Baidu Apollo](https://github.com/ApolloAuto/apoll
 - [Toolbox](toolbox)
 
 
-
-> 各个模块的介绍都在对应的子目录中，主流程放在readme.md中，一些细节的函数和疑问放在todo.md中，需要了解主流程直接看readme.md，如果要深挖整个代码可以参考todo.md。
-
-
 ##  :unlock: 计划
 * 2020/7/30之前完成
     - [ ] perception模块的流程分析
@@ -244,6 +240,7 @@ Hereby I would like to thank @[Baidu Apollo](https://github.com/ApolloAuto/apoll
 * 次要任务
     - [ ] routing模块可视化工具介绍  
     - [ ] planning模块各个控制器的具体实现  
+
 
 ## :pushpin: 参考
 [apollo](https://github.com/ApolloAuto/apollo)  

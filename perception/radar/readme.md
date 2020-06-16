@@ -2,12 +2,15 @@
 
 ## radar
 
-毫米波雷达的处理流程相对比较简单，首先对毫米波雷达数据做预处理，实际上就是对毫米波雷达每一帧的时间做校正，由于毫米波雷达可以直接输出障碍物的信息，识别的工作实际上已经简化了，识别出障碍物之后再根据ROI区域对检测结果做过滤，最后再采用卡尔曼滤波和匈牙利匹配对障碍物做追踪。  
+毫米波雷达的处理流程相对比较简单，毫米波雷达的入口在"RadarDetectionComponent"中，在"RadarDetectionComponent"中首先对毫米波雷达数据做预处理(ContiArsPreprocessor)，实际上就是对毫米波雷达每一帧的时间做校正，之后在对毫米波雷达障碍物做识别"RadarObstaclePerception"，由于毫米波雷达可以直接输出障碍物的信息，识别的工作实际上已经简化了，识别出障碍物之后再根据ROI区域对检测结果做过滤，最后再采用卡尔曼滤波和匈牙利匹配对障碍物做追踪和匹配，上述这种追踪算法实际上是SORT算法，论文是2016年发表的"Simple Online and Realtime Tracking"。  
 
-**疑问**
+下图是毫米波雷达模块的整个调用流程，可以看到在"RadarDetectionComponent"模块中实现了预处理(ContiArsPreprocessor)和障碍物检测(RadarObstaclePerception)。而障碍物检测"RadarObstaclePerception"在radar目录中实现，主要分为检测、感兴趣区域过滤、追踪3个步骤。  
+![radar_process](../img/radar_process.jpg)  
+
+**疑问**  
 不知道毫米波雷达对静态障碍物的检测和识别效果怎么样？  
 
-实际上radar,camera,lidar的目录结构都大体类似，在app中申明功能，在lib中实现。  
+下面我们主要介绍radar目录的具体实现，实际上radar,camera,lidar的目录结构都大体类似，在app中申明功能，在lib中实现。  
 ```
 .
 ├── app           // 功能定义
@@ -285,7 +288,7 @@ bool HdmapRadarRoiFilter::RoiFilter(const RoiFilterOptions& options,
 
 
 ## tracker 追踪
-追踪的主要实现在"ContiArsTracker"中。
+追踪的主要实现在"ContiArsTracker"中，用的算法是SORT算法，先对目标做检测，然后用卡尔曼滤波对物体的运动做估计，然后用匈牙利算法对多个目标做匹配，得到多个目标的跟踪结果。  
 
 #### ContiArsTracker
 初始化
