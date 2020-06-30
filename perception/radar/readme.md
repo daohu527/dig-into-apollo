@@ -389,9 +389,83 @@ bool HMMatcher::Match(const std::vector<RadarTrackPtr> &radar_tracks,
 ```
 
 
-#### TrackObjectPropertyMatch
+#### HMMatcher
+雷达障碍物的匹配通过HMMatcher来实现，本质上采用的是匈牙利算法，这里的实现稍微有点变化，下面我们就着重分析下整个匹配算法。  
 
-匹配目标检测和追踪  
+HMMatcher初始化Init()，Init获取"hm_matcher.conf"配置文件路径"modules\perception\production\data\perception\radar\models\tracker\hm_matcher.conf"，并读取"max_match_distance"和"bound_match_distance"的值。这里默认值为  
+```
+max_match_distance : 2.5
+bound_match_distance : 10.0
+```
+
+那么接下来看HMMatcher如何来进行匹配的。  
+```c++
+bool HMMatcher::Match(const std::vector<RadarTrackPtr> &radar_tracks,
+                      const base::Frame &radar_frame,
+                      const TrackObjectMatcherOptions &options,
+                      std::vector<TrackObjectPair> *assignments,
+                      std::vector<size_t> *unassigned_tracks,
+                      std::vector<size_t> *unassigned_objects) {
+  IDMatch(radar_tracks, radar_frame, assignments, unassigned_tracks,
+          unassigned_objects);
+  TrackObjectPropertyMatch(radar_tracks, radar_frame, assignments,
+                           unassigned_tracks, unassigned_objects);
+  return true;
+}
+```
+先看下IDMatch中做了什么？  
+```c++
+void BaseMatcher::IDMatch(const std::vector<RadarTrackPtr> &radar_tracks,
+                          const base::Frame &radar_frame,
+                          std::vector<TrackObjectPair> *assignments,
+                          std::vector<size_t> *unassigned_tracks,
+                          std::vector<size_t> *unassigned_objects) {
+  size_t num_track = radar_tracks.size();
+  const auto &objects = radar_frame.objects;
+  double object_timestamp = radar_frame.timestamp;
+  size_t num_obj = objects.size();
+  if (num_track == 0 || num_obj == 0) {
+    unassigned_tracks->resize(num_track);
+    unassigned_objects->resize(num_obj);
+    std::iota(unassigned_tracks->begin(), unassigned_tracks->end(), 0);
+    std::iota(unassigned_objects->begin(), unassigned_objects->end(), 0);
+    return;
+  }
+  std::vector<bool> track_used(num_track, false);
+  std::vector<bool> object_used(num_obj, false);
+  for (size_t i = 0; i < num_track; ++i) {
+    const auto &track_object = radar_tracks[i]->GetObsRadar();
+    double track_timestamp = radar_tracks[i]->GetTimestamp();
+    if (track_object.get() == nullptr) {
+      AERROR << "track_object is not available";
+      continue;
+    }
+    int track_object_track_id = track_object->track_id;
+    for (size_t j = 0; j < num_obj; ++j) {
+      int object_track_id = objects[j]->track_id;
+      if (track_object_track_id == object_track_id &&
+          RefinedTrack(track_object, track_timestamp, objects[j],
+                       object_timestamp)) {
+        assignments->push_back(std::pair<size_t, size_t>(i, j));
+        track_used[i] = true;
+        object_used[j] = true;
+      }
+    }
+  }
+  for (size_t i = 0; i < track_used.size(); ++i) {
+    if (!track_used[i]) {
+      unassigned_tracks->push_back(i);
+    }
+  }
+  for (size_t i = 0; i < object_used.size(); ++i) {
+    if (!object_used[i]) {
+      unassigned_objects->push_back(i);
+    }
+  }
+}
+```
+
+接着看TrackObjectPropertyMatch如何进行匹配。  
 ```c++
 void HMMatcher::TrackObjectPropertyMatch(
     const std::vector<RadarTrackPtr> &radar_tracks,
@@ -451,8 +525,8 @@ void HMMatcher::TrackObjectPropertyMatch(
 }
 ```
 
-匈牙利匹配算法？？？  
-采用的是"Kuhn-Munkres Algorithm"来进行多目标追踪的。  
+
+这里的匹配，采用的是"Kuhn-Munkres Algorithm"来进行多目标追踪的。  
 ```c++
 template <typename T>
 void GatedHungarianMatcher<T>::Match(
