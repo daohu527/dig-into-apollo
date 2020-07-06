@@ -98,5 +98,3 @@ cyber_recorder play -f out.record -s 10 -c /apollo/canbus/chassis /apollo/locali
 
 3. HMI status
 HMI status一直保存在内存中？
-
-
