@@ -16,7 +16,7 @@ Hereby I would like to thank @[Baidu Apollo](https://github.com/ApolloAuto/apoll
 #### :performing_arts: 公告
 1. 由于目前国内访问github太慢，网上有通过设置host来加快访问github的攻略，为了方便大家下载代码，现在把代码同步托管到码云上。主线代码可能随时都在更新，因此我会定期同步代码，如果需要稳定版本最好下载tag版本"v5.5.0"。  
 
-    - **Apollo镜像: [apollo](https://gitee.com/daohu527/apollo)**  
+    - **Apollo镜像: [apollo](https://gitee.com/baidu/apolloauto)**  
     - **Dig-into-Apollo镜像: [Dig-into-Apollo](https://gitee.com/daohu527/Dig-into-Apollo)**
 
 2. 为了方便更好的交流和学习自动驾驶相关技术，新建立了微信公众号和交流群，欢迎大家交流分享！  
