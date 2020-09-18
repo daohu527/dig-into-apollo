@@ -59,7 +59,7 @@ If you are like me and don’t know how to start the Apollo project. Here are so
 3. Use code reading tools to help you to read the code. I highly recommend [vscode](https://code.visualstudio.com/). It supports both Windows and Linux, and has a wealth of plug-ins, which can help you track codes, search and find call relationships.  
 4. Of course, there are many professional knowledge and professional libraries. I can’t repeat the best tutorials one by one here, but I can try to recommend some. [Hongyi Li's deep learning](https://www.bilibili.com/video/BV1JE411g7XF?p=1), even a math tutorial [3Blue1Brown's math](https://space.bilibili.com/88461692/)  
 5. Do some experiments with the simulator, we say "make your hands dirty". You can't just watch, you need to try to modify some configurations and see if it takes effect, if possible, you can also try to answer some questions.  
-6. Remember that autonomous driving is still far from mature. Reading some papers, I read a lot of [papers](https://github.com/daohu527/awesome-self-driving-car#papers-blogs), it helpe me a lot.  
+6. Remember that autonomous driving is still far from mature. Reading some papers, I read a lot of [papers](https://github.com/daohu527/awesome-self-driving-car#papers-blogs), it help me a lot.  
 
 Hope you have fun!  
 
