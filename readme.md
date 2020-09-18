@@ -5,7 +5,7 @@ Dig into Apollo is mainly to help learn Apollo autopilot system. We first introd
 
 ## Friendly tips
 
-If your git clone on github is so slow, pls try apollo **[mirror](https://gitee.com/baidu/apolloauto)**. If you need more help and want to learning together, please add WeChat public account `fzyd006`.  
+If git clone on github is too slow, pls try apollo **[mirror](https://gitee.com/baidu/apolloauto)**. If you need more help and want to learning together, please add WeChat `fzyd006`.  
 
 
 ## Table of Contents
