@@ -38,7 +38,7 @@ If git clone on github is too slow, pls try apollo **[mirror](https://gitee.com/
 If you are like me and don’t know how to start the Apollo project. Here are some suggestions.  
 
 1. First understand the basic module functions. If you are not clear about the general function of the module, it is difficult for you to understand what's the code doing. Here is an entry level [tutorial](https://apollo.auto/devcenter/coursetable_cn.html?target=1)  
-2. Then you need to understand the specific methods according to the module, which will be documented in this tutorial. We will analyze the learning code in depth next. 
+2. Then you need to understand the specific methods according to the module, which will be documented in this tutorial. We will analyze the learning code in depth next. You can learn step by step according to our tutorial.  
 3. I know it will be a painful process, especially when you first learning Apollo. If you persist in asking questions and studying, it will become easier in 1-2 months. 
 4. Last but not least, the method in Apollo is almost perfect, but there will be some problems. Try to implement and improve it, find papers, try the latest methods, and hone your skills. I believe you will enjoy this process. 
 
