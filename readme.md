@@ -10,13 +10,13 @@ If git clone on github is too slow, pls try apollo **[mirror](https://gitee.com/
 
 ## Table of Contents
 
-- [What's apollo](introduction)
-- [How to build](build)
+- [What's apollo](what_is_apollo)
+- [How to build](how_to_build)
 - [Code learning](code_learning)
     - [cyber](cyber)
     - [docker](docker)
     - [modules](modules)
-        - [bridge](bridge)
+        - [bridge](modules\bridge)
         - [canbus](canbus)
         - [drivers](drivers)
         - [dreamview](dreamview)   
@@ -28,7 +28,7 @@ If git clone on github is too slow, pls try apollo **[mirror](https://gitee.com/
         - [planning](planning)
         - [control](control)
         - [transform](transform)
-        - [tools](toolbox)
+        - [tools](tools)
         - [v2x](v2x)
 - [performance](performance)
 - [simulation](simulation)
