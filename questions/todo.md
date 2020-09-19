@@ -1,4 +1,3 @@
-1. 
 https://joancharmant.com/blog/sub-frame-accurate-synchronization-of-two-usb-cameras/  
 https://forums.ni.com/t5/Machine-Vision/Synchronized-capture-for-multiple-USB-cameras/td-p/1879647?profile.language=en  
 https://raspberrypi.stackexchange.com/questions/73588/usb-camera-synchronization-with-external-trigger  

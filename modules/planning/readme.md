@@ -1,6 +1,6 @@
 # Dig into Apollo - Planning ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
 
-> 吾尝终日而思矣 不如须臾之所学也 - 《劝学》
+> 吾尝终日而思矣 不如须臾之所学也
 
 
 ## Table of Contents

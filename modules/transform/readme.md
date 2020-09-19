@@ -1,6 +1,6 @@
 # Dig into Apollo - Transform ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
 
-> 温故而知新，可以为师矣。
+> 三人行，必有我师。
 
 
 ## Table of Contents
