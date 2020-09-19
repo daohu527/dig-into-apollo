@@ -1,5 +1,7 @@
 # Dig into Apollo - Control ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
 
+> 岁不寒，无以知松柏；事不难，无以知君子。
+
 ## Table of Contents
 - [Control模块简介](#introduction)
 - [Control模块主流程](#main)

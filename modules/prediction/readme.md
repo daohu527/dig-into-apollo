@@ -1,6 +1,6 @@
 # Dig into Apollo - Prediction ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
 
-> 悟已往之不諫，知來者之可追
+> 悟已往之不谏,知来者之可追
 
 
 ## Table of Contents

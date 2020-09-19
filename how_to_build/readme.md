@@ -1,5 +1,7 @@
 # Dig into Apollo - Build ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)  
 
+> 高行微言，所以修身。
+
 ## Table of Contents
 - [编译](#build)
 - [常见问题](#question)

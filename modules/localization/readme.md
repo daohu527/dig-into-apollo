@@ -1,5 +1,7 @@
 # Dig into Apollo - Localization ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)  
 
+> 虽千万人，吾往矣。
+
 ## Table of Contents
 - [Localization模块简介](#introduction)
 - [代码目录](#content)

@@ -1,5 +1,7 @@
 # Dig into Apollo - Introduction ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
 
+> 衣带渐宽终不悔，为伊消得人憔悴。
+
 ## Table of Contents
 - [简介](#introduction)
 - [目录结构](#content)
