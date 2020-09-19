@@ -2,15 +2,6 @@
 
 > 我见青山多妩媚，料青山见我应如是。
 
-## Table of Contents
-
-- [localization](#localization)
-    - [Robust and Precise Vehicle Localization based on Multi-sensor Fusion in Diverse City Scenes]()
-- [perception](#perception)
-- [planning](#planning)
-    - [Baidu Apollo EM Motion Planner]()
-- [control](#control)
-    - [Baidu Apollo Auto-Calibration System - An Industry-Level Data-Driven and Learning based Vehicle Longitude Dynamic Calibrating Algorithm]()
 
 <a name="localization" />
 
