@@ -5,7 +5,7 @@ Dig into Apollo is mainly to help learning [Apollo](https://github.com/ApolloAut
 
 ## Friendly tips
 
-If git clone on github is too slow, pls try apollo **[mirror](https://gitee.com/baidu/apolloauto)**. If you need more help and want to learning together, please add WeChat official accounts `fzyd006`.  
+If "git clone" on github is too slow, pls try apollo **[mirror](https://gitee.com/baidu/apolloauto)**. If you need more help and want to learning together, please add WeChat official accounts `fzyd006`.  
 
 
 ## Table of Contents
@@ -38,7 +38,7 @@ If git clone on github is too slow, pls try apollo **[mirror](https://gitee.com/
 
 ## Getting Started
 
-If you are like me and don’t know how to start the Apollo project. Here are some suggestions.  
+If you are like me before and don’t know how to start the Apollo project. Here are some suggestions.  
 
 1. First understand the basic module functions. If you are not clear about the general function of the module, it's difficult for you to understand what's the code doing. Here is an beginner level [tutorial](https://apollo.auto/devcenter/coursetable_cn.html?target=1)  
 2. Then you need to understand the specific methods according to the module, which will be documented in this tutorial. We will analyze the code in depth next. You can learn step by step according to our tutorial.  
@@ -59,10 +59,10 @@ If you are like me and don’t know how to start the Apollo project. Here are so
 
 1. First of all, you must understand c++. If you are not very familiar with it, I recommend the book **"c++ primer"**. This book is very good, but a bit thick. If you just want to start quickly, then try to find some simple tutorial, here I recommend teacher [Hou Jie](https://search.bilibili.com/all?keyword=%E4%BE%AF%E6%8D%B7)  
 2. After understanding C++, it is best to have some basic understanding of the modules, which will help you to read the code. This has been explained many times.  
-3. Use code reading tools to help you to read the code. I highly recommend [vscode](https://code.visualstudio.com/). It supports both Windows and Linux, and has a wealth of plug-ins, which can help you track codes, search and find call relationships.  
+3. Use code reading tools to help you read the code. I highly recommend [vscode](https://code.visualstudio.com/). It supports both Windows and Linux, and has a wealth of plug-ins, which can help you track codes, search and find call relationships.  
 4. Of course, there are many professional knowledge and professional libraries. I can’t repeat the best tutorials one by one here, but I can try to recommend some. [Hongyi Li's deep learning](https://www.bilibili.com/video/BV1JE411g7XF?p=1), even a math tutorial [3Blue1Brown's math](https://space.bilibili.com/88461692/)  
-5. Do some experiments with the simulator, we say "make your hands dirty". You can't just watch, you need to try to modify some configurations and see if it takes effect, if possible, you can also try to answer some questions.  
-6. Remember that autonomous driving is still far from mature. Reading some papers, I read a lot of [papers](https://github.com/daohu527/awesome-self-driving-car#papers-blogs), it help me a lot.  
+5. Do some experiments with the simulator. We say "Make your hands dirty". You can't just watch, you need to try to modify some configurations and see if it takes effect, if possible, you can also try to answer some questions.  
+6. Remember that autonomous driving is still far from mature. Read some papers, I read a lot of [papers](https://github.com/daohu527/awesome-self-driving-car#papers-blogs), it help me a lot.  
 
 Hope you have fun!  
 
