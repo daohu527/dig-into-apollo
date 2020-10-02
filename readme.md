@@ -16,6 +16,7 @@ If "git clone" on github is too slow, pls try apollo **[mirror](https://gitee.co
     - [cyber](cyber)
     - [docker](docker)
     - [modules](modules)
+        - [audio](modules/audio)
         - [bridge](modules/bridge)
         - [canbus](modules/canbus)
         - [drivers](modules/drivers)
