@@ -18,16 +18,16 @@
 <a name="introduction" />
 
 ## Audio模块介绍
-audio模块是6.0新增加的模块，主要的用途是通过声音来识别紧急车辆（警车，救护车，消防车）。目前的功能还相对比较简单，只能识别单个紧急车辆，同时需要环境风速低于20mph。下面我们会详细分析这个模块的原理以及实现。
+audio模块是Apollo 6.0新增加的模块，主要的用途是通过声音来识别紧急车辆（警车，救护车，消防车）。目前的功能还相对比较简单，只能识别单个紧急车辆，同时需要环境风速低于20mph。下面我们会详细分析这个模块的原理以及实现。
 
 <a name="input_output" />
 
 #### 输入输出
 audio模块的输入是`/apollo/sensor/microphone`，输入的消息来源于"drivers/microphone"，用到的硬件模块是"RESPEAKER"，目前有双通道和四通道，Apollo用到的硬件是四通道，关于硬件的相关介绍，会在"drivers/microphone"中进行说明。
 
-audio模块的输出是`/apollo/audio_detection`，输出的消息包括，是否检测到紧急车辆，检测到紧急车辆的移动类型（接近还是远离），位置以及角度。
+audio模块的输出是`/apollo/audio_detection`，输出的消息包括：是否检测到紧急车辆，检测到紧急车辆的移动类型（接近还是远离），位置以及角度。
 
-也就是说audio模块单纯的通过声音来识别有没有紧急车辆，以及紧急车辆的位置，为无人驾驶车的感知添加了新的维度。语音交互在车机智能里是非常好的交互方式，目前面临的主要难点主要是面临汽车里的噪音等的影响，这在通过声音感知汽车的时候尤其重要。
+也就是说audio模块单纯的通过声音来识别有没有紧急车辆，以及紧急车辆的位置，为无人驾驶车的感知添加了新的维度。语音交互在车机智能里是非常好的交互方式，目前面临的主要难点是汽车里噪音的影响，这在通过声音进行感知的时候尤其重要。
 
 <a name="content" />
 
@@ -48,14 +48,14 @@ audio模块的目录结构如下，整体来说并不复杂，主要的逻辑在
 └── tools           // 工具
 ```
 
-Audio模块为事件驱动，当接受到驱动模块的声音输入的时候，就开始解析声音，并且输出结果，下面我们来详细分析处理过程。
+Audio模块为事件驱动，当接受到驱动模块的声音输入的时候，就开始解析声音，并且输出结果，下面我们来详细分析具体的处理过程。
 audio模块的整体调用流程如图：
 ![调用流程](img/main.jpg)  
 
 <a name="main_process" />
 
 #### 模块入口
-audio模块通过"Init()"进行初始化，主要是读取录音机的外参，并且创建"audio_writer_"用于发布消息。初始化好之后，接着通过"Proc"来处理消息。处理的过程主要通过"OnMicrophone"来完成。  
+audio模块通过"Init()"进行初始化，主要是读取录音机的外参，并且创建"audio_writer_"用于发布消息。初始化好之后，接着通过"Proc"来处理消息。处理的过程通过"OnMicrophone"来完成。  
 ```c++
 bool AudioComponent::Proc(const std::shared_ptr<AudioData>& audio_data) {
   // TODO(all) remove GetSignals() multiple calls
@@ -83,7 +83,7 @@ MessageProcess类实际上是推理模块的一个集合，具体的任务实际
 <a name="siren_detection" />
 
 ## 声音识别（SirenDetection）
-声音识别SirenDetection类中只有2个函数, LoadModel主要是进行模型的加载，模型在"audio/data"目录。
+声音识别SirenDetection类中只有2个函数, LoadModel进行模型的加载，模型文件在"audio/data"目录中。
 ```c++
 class SirenDetection {
  public:
@@ -93,7 +93,7 @@ class SirenDetection {
   void LoadModel();
 ```
 
-Evaluate函数对多个通道进行归一化，之后直接输入模型，并且得出正向和反向的结果，当正向的分数大于反向的时候，则表示检测到了特殊车辆。  
+Evaluate函数对多个通道声音进行处理，然后输入到模型，并且得出正向和反向的结果，当正向的分数大于反向的时候，则表示检测到了特殊车辆。  
 ```c++
 bool SirenDetection::Evaluate(const std::vector<std::vector<double>>& signals) {
   // 1. 读取4个通道的数据，装入audio_tensor中
@@ -134,7 +134,7 @@ bool SirenDetection::Evaluate(const std::vector<std::vector<double>>& signals) {
 <a name="moving_detection" />
 
 ## 移动检测(MovingDetection)
-移动检测在"MovingDetection"类中实现，通过检测通过3帧的声音强度和声音频率，来判断紧急车辆是接近还是远离。MovingDetection中主要有3个函数。
+移动检测在"MovingDetection"类中实现，通过检测最近3帧的声音强度和声音频率，来判断紧急车辆是接近还是远离。MovingDetection中主要有3个函数。
 ```c++
   // 1. 快速傅里叶变换
   std::vector<std::complex<double>> fft1d(const std::vector<double>& signals);
@@ -145,9 +145,9 @@ bool SirenDetection::Evaluate(const std::vector<std::vector<double>>& signals) {
       const std::size_t channel_index, const std::vector<double>& signal);
 ```
 
-快速傅里叶变换在fft1d中完成，主要是把时域的东西转换到频域，在这里主要是得到声音的频率。
+快速傅里叶变换在fft1d中完成，主要是把时域的东西转换到频域，在这里主要是为了得到声音的频率。
 
-接下来我们主要看"DetectSingleChannel"的实现。
+接下来我们看"DetectSingleChannel"的实现。
 ```c++
 MovingResult MovingDetection::DetectSingleChannel(
     const std::size_t channel_index, const std::vector<double>& signals) {
@@ -172,7 +172,7 @@ MovingResult MovingDetection::DetectSingleChannel(
   return top_frequency_result;
 }
 ```
-可以看到单个通道先通过"GetSignalStat"获取声音信息，并且有限采用声音强度信息，然后采用声音频率。  
+可以看到单个通道先通过"GetSignalStat"获取声音信息，并且优先采用声音强度信息，然后采用声音频率。  
 
 我们接着上一步骤看如何获取声音强度和声音频率。
 ```c++
@@ -184,7 +184,7 @@ MovingDetection::SignalStat MovingDetection::GetSignalStat(
   double max_power = -1.0;
   for (int i = start_frequency; i < static_cast<int>(fft_results.size()); ++i) {
     double power = std::abs(fft_results[i]);
-    // 1. 对一段时间的强度做累加
+    // 1. 对一段时间的声音强度做累加
     total_power += power;
     // 2. 找出一段时间内声音强度最大的作为当时的频率
     if (power > max_power) {
@@ -196,7 +196,7 @@ MovingDetection::SignalStat MovingDetection::GetSignalStat(
 }
 ```
 
-"AnalyzePower"和"AnalyzeTopFrequence"的逻辑相对简单，就是判断过去的三帧，声音强度是否一直减少、增大，和频率是否一直减少、增大。以此来判断汽车是远离还是靠近。
+"AnalyzePower"和"AnalyzeTopFrequence"的逻辑相对简单，就是判断过去的三帧，声音强度是否一直减少、增大，频率是否一直减少、增大。以此来判断汽车是远离还是靠近。
 
 最后"Detect"函数会综合4个通道的数据来进行投票表决，然后得到汽车是远离还是靠近，最后输出结果。
 
@@ -204,7 +204,7 @@ MovingDetection::SignalStat MovingDetection::GetSignalStat(
 <a name="direction_detection" />
 
 ## 方向检测(DirectionDetection)
-在"DirectionDetection"类中主要是对紧急车辆的方向进行估计，通过多个通道的差异和声音的速度，就可以得到车辆的大概位置。  
+在"DirectionDetection"类中对紧急车辆的方向进行估计，通过2个通道的差异和声音的速度，就可以得到车辆的大概位置。  
 DirectionDetection类的主要实现在"EstimateSoundSource"函数中，下面我们来分析下具体的实现。  
 ```c++
 std::pair<Point3D, double> DirectionDetection::EstimateSoundSource(
@@ -269,7 +269,7 @@ double DirectionDetection::EstimateDirection(
 }
 ```
 
-计算2个通道得到角度信息的实现如下。  
+计算2个通道，从而得到角度信息的实现如下。  
 ```c++
 double DirectionDetection::GccPhat(const torch::Tensor& sig,
                                    const torch::Tensor& refsig, int fs,
@@ -314,6 +314,6 @@ tools目录提供了一些录制和调试工具。
 * **audio_offline_processing.cc** - 离线测试工具，提供audio模块的离线功能。
 
 
-至此，我们就得到了是否有紧急车辆，以及车辆的移动方式，以及方向。实际上audio模块的代码中还遗留有位置信息，感知的结果，估计后面会增加一些融合的功能。
+至此，我们就得到了是否有紧急车辆，以及车辆的移动方式和方向。实际上audio模块的代码中还遗留有位置信息、感知的结果，估计后面会增加一些新的融合功能。
 
-整体上这个模块还是挺有意思的，目前声音的识别，以及在嘈杂环境如何获取到比较关注的声音，都是业界研究的热点方向，但主要还是集中在室内对人的声音的追踪，室外以及对车或者后续增加到人的场景，还有待发掘。  
+整体上audio模块还是挺有意思的，当然声音的识别，以及在嘈杂环境如何获取到比较关注的声音，都是业界研究的热点方向，但主要还是集中在室内对人的声音的追踪，室外以及对车或者后续增加到人的场景，还有待发掘。  
