@@ -53,46 +53,137 @@ v2x模块的入口函数在"app/main.cc"中，在主函数中读取参数并且�
 1. 初始化  
 首先我们看"V2xProxy"的初始化过程。
 ```c++
-V2xProxy::V2xProxy()
-    : node_(cyber::CreateNode("v2x_proxy")), init_flag_(false) {
-  // 1. 红绿灯到车的定时器
-  x2v_trafficlight_timer_.reset(
-      new cyber::Timer(static_cast<uint32_t>(x2v_trafficlight_timer_period),
-                       [this]() { this->OnX2vTrafficLightTimer(); }, false));
-  // 2. 车的状态上报定时器
-  v2x_carstatus_timer_.reset(
-      new cyber::Timer(static_cast<uint32_t>(v2x_carstatus_timer_period),
-                       [this]() { this->OnV2xCarStatusTimer(); }, false));
-
+V2xProxy::V2xProxy(std::shared_ptr<::apollo::hdmap::HDMap> hdmap)
+    : node_(::apollo::cyber::CreateNode("v2x_proxy")), exit_(false) {
+  internal_ = std::make_shared<InternalData>();
+  // 1. 读取高精度地图
+  hdmap_ = std::make_shared<::apollo::hdmap::HDMap>();
+  const auto hdmap_file = apollo::hdmap::BaseMapFile();
+  // 2. 
+  ::apollo::cyber::TimerOption v2x_car_status_timer_option;
+  v2x_car_status_timer_option.period =
+      static_cast<uint32_t>((1000 + FLAGS_v2x_car_status_timer_frequency - 1) /
+                            FLAGS_v2x_car_status_timer_frequency);
+  v2x_car_status_timer_option.callback = [this]() {
+    this->OnV2xCarStatusTimer();
+  };
+  v2x_car_status_timer_option.oneshot = false;
+  v2x_car_status_timer_.reset(
+      new ::apollo::cyber::Timer(v2x_car_status_timer_option));
   os_interface_.reset(new OsInterFace());
   obu_interface_.reset(new ObuInterFaceGrpcImpl());
+  recv_thread_.reset(new std::thread([this]() {
+    while (!exit_.load()) {
+      this->RecvTrafficlight();
+    }
+  }));
 
-  x2v_trafficlight_ = std::make_shared<IntersectionTrafficLightData>();
-  v2x_carstatus_ = std::make_shared<CarStatus>();
-   
-  // 3. 加载高精度地图
-  hdmap_.reset(new apollo::hdmap::HDMap());
-
-  // 4. 初始化os接口和obu接口
-  if (!os_interface_->InitFlag() || !obu_interface_->InitFlag()) {
-    AFATAL << "Failed to init os interface or obu interface";
-    return;
-  }
-  
-  // 5. 收到同步信号后，启动红绿灯定时器  
-  first_flag_reader_ = node_->CreateReader<StatusResponse>(
-      "/apollo/v2x/inner/sync_flag",
-      [this](const std::shared_ptr<const StatusResponse>& msg) {
-        x2v_trafficlight_timer_->Start();
-      });
-
-  // 6. 启动车辆上报定时器  
-  v2x_carstatus_timer_->Start();
-
+  planning_thread_.reset(new std::thread([this]() {
+    while (!exit_.load()) {
+      this->RecvOsPlanning();
+    }
+  }));
+  obs_thread_.reset(new std::thread([this]() {
+    while (!exit_.load()) {
+      std::shared_ptr<::apollo::v2x::V2XObstacles> obs = nullptr;
+      this->obu_interface_->GetV2xObstaclesFromObu(&obs);  // Blocked
+      this->os_interface_->SendV2xObstacles2Sys(obs);
+    }
+  }));
+  v2x_car_status_timer_->Start();
+  // 从文件获取获取RSU列表
+  GetRsuListFromFile(FLAGS_rsu_whitelist_name, &rsu_list_);
   init_flag_ = true;
 }
 ```
 可以看到"V2xProxy"初始化了2个定时器，一个是RSU发送给车的红绿灯信息，一个是主动上报的车辆状态信息，另外还初始化了os接口和obu接口。  
+
+
+Apollo 6.0中又增加了几种消息,并且通过定时器发布,下面我们来看V2xProxy中包含几种定时器.
+1. v2x_car_status_timer_ - OnV2xCarStatusTimer
+2. obu_status_timer_ - 
+3. rsu_whitelist_timer_ - 
+
+几个线程
+1. recv_thread_    RecvTrafficlight
+2. planning_thread_   RecvOsPlanning
+3. rsi_thread_        目前没有使用
+4. obs_thread_        GetV2xObstaclesFromObu  ->  SendV2xObstacles2Sys
+
+
+## OnV2xCarStatusTimer
+发送车的信息到OBU->RSU
+GetRsuInfo -> SendCarStatusToObu
+
+
+## RecvTrafficlight
+接收OBU的红绿灯消息,并且进行处理
+```c++
+void V2xProxy::RecvTrafficlight() {
+  // get traffic light from obu
+  std::shared_ptr<ObuLight> x2v_traffic_light = nullptr;
+  // 1. 从OBU获取红绿灯状态,并且发送给Apollo
+  obu_interface_->GetV2xTrafficLightFromObu(&x2v_traffic_light);
+  os_interface_->SendV2xObuTrafficLightToOs(x2v_traffic_light);
+  auto os_light = std::make_shared<OSLight>();
+  std::string junction_id = "";
+  {
+    std::lock_guard<std::mutex> lg(lock_hdmap_junction_id_);
+    junction_id = hdmap_junction_id_;
+  }
+  bool res_success_ProcTrafficlight = internal_->ProcTrafficlight(
+      hdmap_, x2v_traffic_light.get(), junction_id, u_turn_,
+      FLAGS_traffic_light_distance, FLAGS_check_time, &os_light);
+  if (!res_success_ProcTrafficlight) {
+    return;
+  }
+  utils::UniqueOslight(os_light.get());
+  // 3. 发送红绿灯消息到HMI???
+  os_interface_->SendV2xTrafficLightToOs(os_light);
+  // save for hmi
+  std::lock_guard<std::mutex> lock(lock_last_os_light_);
+  ts_last_os_light_ = ::apollo::cyber::Time::MonoTime().ToMicrosecond();
+  last_os_light_ = os_light;
+}
+```
+
+## RecvOsPlanning
+获取planning路线,并且根据红绿灯的剩余时间来调整线路?
+```c++
+void V2xProxy::RecvOsPlanning() {
+  auto adc_trajectory = std::make_shared<::apollo::planning::ADCTrajectory>();
+  auto res_light =
+      std::make_shared<::apollo::perception::TrafficLightDetection>();
+  os_interface_->GetPlanningAdcFromOs(adc_trajectory);
+  // OK get planning message
+  std::shared_ptr<OSLight> last_os_light = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(lock_last_os_light_);
+
+    auto now_us = ::apollo::cyber::Time::MonoTime().ToMicrosecond();
+    if (last_os_light_ == nullptr ||
+        2000LL * 1000 * 1000 < now_us - ts_last_os_light_) {
+      AWARN << "V2X Traffic Light is too old!";
+      last_os_light_ = nullptr;
+    } else {
+      ADEBUG << "V2X Traffic Light is on time.";
+      last_os_light = std::make_shared<OSLight>();
+      last_os_light->CopyFrom(*last_os_light_);
+    }
+  }
+  // proc planning message
+  bool res_proc_planning_msg = internal_->ProcPlanningMessage(
+      adc_trajectory.get(), last_os_light.get(), &res_light);
+  if (!res_proc_planning_msg) {
+    return;
+  }
+  os_interface_->SendV2xTrafficLight4Hmi2Sys(res_light);
+}
+```
+
+## obs_thread_
+获取OBU发布的障碍物信息,然后发送到OS
+
 
 
 <a name="trafficlight_timer" />
@@ -291,3 +382,214 @@ int TrafficLightsPerceptionComponent::InitV2XListener() {
   return cyber::SUCC;
 }
 ```
+
+
+## fusion模块
+Apollo6.0在v2x中新增加了fusion模块，fusion模块的输入是"/perception/vehicle/obstacles"，输出也是"/apollo/perception/obstacles".接收的是感知模块输出的感知信息,输出融合之后的障碍物信息.  
+这个模块的启动也在感知模块的"dag_streaming_perception.dag"中,也就是说V2X模块的感知融合可能会合入感知模块中.
+
+输入:
+/perception/vehicle/obstacles
+/apollo/v2x/obstacles
+/apollo/localization/pose
+
+输出:
+/apollo/perception/obstacles
+
+V2XFusionComponent模块的处理过程主要在"V2XMessageFusionProcess"中.
+```c++
+bool V2XFusionComponent::V2XMessageFusionProcess(
+    const std::shared_ptr<PerceptionObstacles>& perception_obstacles) {
+  // 1. 读取最新的位置
+  localization_reader_->Observe();
+  auto localization_msg = localization_reader_->GetLatestObserved();
+  base::Object hv_obj;
+  CarstatusPb2Object(*localization_msg, &hv_obj, "VEHICLE");
+  
+  v2x_obstacles_reader_->Observe();
+  auto v2x_obstacles_msg = v2x_obstacles_reader_->GetLatestObserved();
+  // 2. 读取v2x的感知信息,如果没有,则直接输出感知模块的结果
+  if (v2x_obstacles_msg == nullptr) {
+    AERROR << "V2X: cannot receive any v2x obstacles message.";
+    perception_fusion_obstacles_writer_->Write(*perception_obstacles);
+  } else {
+    header_.CopyFrom(perception_obstacles->header());
+    std::vector<Object> fused_objects;
+    std::vector<Object> v2x_fused_objects;
+    std::vector<std::vector<Object>> fusion_result;
+    std::vector<Object> v2x_objects;
+    // 3. 转换v2x感知消息为对象,转换感知模块消息为对象
+    V2xPbs2Objects(*v2x_obstacles_msg, &v2x_objects, "V2X");
+    std::vector<Object> perception_objects;
+    Pbs2Objects(*perception_obstacles, &perception_objects, "VEHICLE");
+    perception_objects.push_back(hv_obj);
+    
+    // 4. 合并新资源
+    fusion_.CombineNewResource(perception_objects, &fused_objects,
+                               &fusion_result);
+    fusion_.CombineNewResource(v2x_objects, &fused_objects, &fusion_result);
+    // 5. 获取v2x融合对象
+    fusion_.GetV2xFusionObjects(fusion_result, &v2x_fused_objects);
+    // 6. 发送消息
+    auto output_msg = std::make_shared<PerceptionObstacles>();
+    SerializeMsg(v2x_fused_objects, output_msg);
+    perception_fusion_obstacles_writer_->Write(*output_msg);
+  }
+  return true;
+}
+```
+
+## Fusion类
+Fusion类的构造函数.
+```c++
+Fusion::Fusion() {
+  ft_config_manager_ptr_ = FTConfigManager::Instance();
+  // 读取score params, 参数在"fusion_params.pt"中
+  score_params_ = ft_config_manager_ptr_->fusion_params_.params.score_params();
+  switch (score_params_.confidence_level()) {
+    case fusion::ConfidenceLevel::C90P:
+      m_matched_dis_limit_ = std::sqrt(4.605);
+      break;
+    case fusion::ConfidenceLevel::C95P:
+      m_matched_dis_limit_ = std::sqrt(5.991);
+      break;
+    case fusion::ConfidenceLevel::C975P:
+      m_matched_dis_limit_ = std::sqrt(7.378);
+      break;
+    case fusion::ConfidenceLevel::C99P:
+      m_matched_dis_limit_ = std::sqrt(9.210);
+      break;
+    default:
+      break;
+  }
+}
+```
+fusion_params.pt中的参数是,可以看到"confidence_level"为C99P则m_matched_dis_limit_为"std::sqrt(9.210)".
+```
+score_params {
+  prob_scale: 0.125
+  max_match_distance: 10
+  min_score: 0
+  use_mahalanobis_distance: true
+  check_type: false
+  confidence_level: C99P
+}
+```
+
+那么我们看下CombineNewResource的实现.
+```c++
+bool Fusion::CombineNewResource(
+    const std::vector<base::Object> &new_objects,
+    std::vector<base::Object> *fused_objects,
+    std::vector<std::vector<base::Object>> *fusion_result) {
+  // 1. 如果fused_objects为空,则直接添加
+  if (fused_objects->size() < 1) {
+    fused_objects->assign(new_objects.begin(), new_objects.end());
+    for (unsigned int j = 0; j < new_objects.size(); ++j) {
+      std::vector<base::Object> matched_objects;
+      matched_objects.push_back(new_objects[j]);
+      fusion_result->push_back(matched_objects);
+    }
+    return true;
+  }
+  int u_num = fused_objects->size();
+  int v_num = new_objects.size();
+  Eigen::MatrixXf association_mat(u_num, v_num);
+  // 2. 计算关联矩阵
+  ComputeAssociateMatrix(*fused_objects, new_objects, &association_mat);
+  std::vector<std::pair<int, int>> match_cps;
+  // 3. 采用km_matcher_进行匹配
+  if (u_num > v_num) {
+    km_matcher_.GetKMResult(association_mat.transpose(), &match_cps, true);
+  } else {
+    km_matcher_.GetKMResult(association_mat, &match_cps, false);
+  }
+  // 4. 融合结果
+  for (auto it = match_cps.begin(); it != match_cps.end(); it++) {
+    if (it->second != -1) {
+      if (it->first == -1) {
+        fused_objects->push_back(new_objects[it->second]);
+        std::vector<base::Object> matched_objects;
+        matched_objects.push_back(fused_objects->back());
+        fusion_result->push_back(matched_objects);
+      } else {
+        (*fusion_result)[it->first].push_back(new_objects[it->second]);
+      }
+    }
+  }
+  return true;
+}
+```
+
+计算关联矩阵,先计算距离分数,再计算类型分数
+```c++
+bool Fusion::ComputeAssociateMatrix(
+    const std::vector<base::Object> &in1_objects,  // fused
+    const std::vector<base::Object> &in2_objects,  // new
+    Eigen::MatrixXf *association_mat) {
+  for (unsigned int i = 0; i < in1_objects.size(); ++i) {
+    for (unsigned int j = 0; j < in2_objects.size(); ++j) {
+      const base::Object &obj1_ptr = in1_objects[i];
+      const base::Object &obj2_ptr = in2_objects[j];
+      double score = 0;
+      // 1. 计算距离分数
+      if (!CheckDisScore(obj1_ptr, obj2_ptr, &score)) {
+        AERROR << "V2X Fusion: check dis score failed";
+      }
+      // 2. 计算类型分数, 采用距离分数乘以类型系数
+      if (score_params_.check_type() &&
+          !CheckTypeScore(obj1_ptr, obj2_ptr, &score)) {
+        AERROR << "V2X Fusion: check type failed";
+      }
+      (*association_mat)(i, j) =
+          (score >= score_params_.min_score()) ? score : 0;
+    }
+  }
+  return true;
+}
+```
+
+## KMkernal
+KM匹配算法.
+
+
+## trans_tools
+"trans_tools.cc"和"trans_tools.h"中主要是一些工具类,用来转换对象到proto和从proto到对象.
+ 
+```c++
+void Objects2Pbs(const std::vector<base::Object> &objects,
+                 std::shared_ptr<PerceptionObstacles> obstacles) {
+  obstacles->mutable_perception_obstacle()->Clear();
+  if (objects.size() < 1) {
+    return;
+  }
+  // obstacles->mutable_header()->set_frame_id(objects[0].frame_id);
+  for (const auto &object : objects) {
+    if (object.v2x_type == base::V2xType::HOST_VEHICLE) {
+      continue;
+    }
+    PerceptionObstacle obstacle;
+    Object2Pb(object, &obstacle);
+    obstacles->add_perception_obstacle()->CopyFrom(obstacle);
+  }
+}
+```
+
+
+## V2x消息
+2017年9月中旬，中国智能网联汽车产业创新联盟正式发布《合作式智能交通系统 车用通信系统应用层及应用数据交互标准》.该标准是一个应用层的标准,下载[链接](http://www.sae-china.org/download/1745/%E5%90%88%E4%BD%9C%E5%BC%8F%E6%99%BA%E8%83%BD%E8%BF%90%E8%BE%93%E7%B3%BB%E7%BB%9F+%E8%BD%A6%E7%94%A8%E9%80%9A%E4%BF%A1%E7%B3%BB%E7%BB%9F%E5%BA%94%E7%94%A8%E5%B1%82%E5%8F%8A%E5%BA%94%E7%94%A8%E6%95%B0%E6%8D%AE%E4%BA%A4%E4%BA%92%E6%A0%87%E5%87%86.pdf).
+
+标准中规定了5大类消息:
+* BSM - basic safety message
+* MAP - map data
+* RSM - road side safety message
+* SPAT - signal phase and timing message
+* RSI - road side information
+
+目前Apollo中实现了RSI,SPAT,MAP 3种消息格式, RSM和BSM消息没有定义.Apollo中的BSM可能可以对应到CarStatus消息.每种消息的格式以及意义消息中都进行了明确的定义,并且对一些应用应该发什么消息,消息的频率和交互流程也做了定义.因此可以参考完成一些应用.
+由于网联车辆还是一个比较新的领域,里面的一些流程可能不一定能够完全照搬,所以应该参考消息的用意,而具体的流程可以适当做一些修改.  
+
+
+
+
+
