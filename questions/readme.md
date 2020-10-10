@@ -4,20 +4,33 @@
 
 ## 目录
 
-- [编译](#build)
-- [地图](#map)
-- [仿真](#simulation)
+- [build](#build)
+- [map](#map)
+- [simulation](#simulation)
+- [planning](#planning)
 
 
 <a name="build" />
 
-## 编译
+## build
 
 <a name="map" />
 
-## 地图
+## map
 
 
 <a name="simulation" />
 
-## 仿真
+## simulation
+
+
+<a name="planning" />
+
+## Planning
+
+1. How to add decider or optimizer to a planning scenario ?
+
+* Add your own decider in "modules/planning/tasks/deciders"
+* Add config in "modules/planning/conf/scenario/lane_follow_config.pb.txt"
+* Add TaskType in "modules/planning/proto/planning_config.proto"
+* Register your task in "TaskFactory::Init"
