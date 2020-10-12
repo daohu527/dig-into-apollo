@@ -33,6 +33,7 @@ If "git clone" on github is too slow, pls try apollo **[mirror](https://gitee.co
         - [v2x](modules/v2x)
 - [performance](performance)
 - [simulation](simulation)
+- [library](library)
 - [papers](papers)
 - [questions](questions)
 
