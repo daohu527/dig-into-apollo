@@ -48,5 +48,6 @@ protoc --decode apollo.hdmap.Map modules/map/proto/map.proto < modules/map/data/
 
 ## misc
 
-1. What is the format of the config file in Apollo?
+1. What is the format of the config file in Apollo?  
+
 The config file base by **protobuf** format, and read by `cyber::common::GetProtoFromFile()` method.
