@@ -8,6 +8,7 @@
 - [map](#map)
 - [simulation](#simulation)
 - [planning](#planning)
+- [misc](#misc)
 
 
 <a name="build" />
@@ -41,3 +42,11 @@ protoc --decode apollo.hdmap.Map modules/map/proto/map.proto < modules/map/data/
 * Add config in "modules/planning/conf/scenario/lane_follow_config.pb.txt"
 * Add TaskType in "modules/planning/proto/planning_config.proto"
 * Register your task in "TaskFactory::Init"
+
+
+<a name="misc" />
+
+## misc
+
+1. What is the format of the config file in Apollo?
+The config file base by **protobuf** format, and read by `cyber::common::GetProtoFromFile()` method.
