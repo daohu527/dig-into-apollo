@@ -17,6 +17,13 @@
 <a name="map" />
 
 ## map
+1. How to change map.bin to human-readable map.txt?
+In apollo docker run below cmds.
+```
+source scripts/apollo_base.sh
+
+protoc --decode apollo.hdmap.Map modules/map/proto/map.proto < modules/map/data/sunnyvale_loop/base_map.bin > base_map.txt
+```
 
 
 <a name="simulation" />
