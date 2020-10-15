@@ -18,7 +18,7 @@
 <a name="map" />
 
 ## map
-1. How to change map.bin to human-readable map.txt?
+* How to change map.bin to human-readable map.txt?
 In apollo docker run below cmds.
 ```
 source scripts/apollo_base.sh
@@ -36,18 +36,30 @@ protoc --decode apollo.hdmap.Map modules/map/proto/map.proto < modules/map/data/
 
 ## Planning
 
-1. How to add decider or optimizer to a planning scenario ?
+* How to add decider or optimizer to a planning scenario ?
 
-* Add your own decider in "modules/planning/tasks/deciders"
-* Add config in "modules/planning/conf/scenario/lane_follow_config.pb.txt"
-* Add TaskType in "modules/planning/proto/planning_config.proto"
-* Register your task in "TaskFactory::Init"
+1. Add your own decider in "modules/planning/tasks/deciders"
+2. Add config in "modules/planning/conf/scenario/lane_follow_config.pb.txt"
+3. Add TaskType in "modules/planning/proto/planning_config.proto"
+4. Register your task in "TaskFactory::Init"
 
 
 <a name="misc" />
 
 ## misc
 
-1. What is the format of the config file in Apollo?  
-
+* What is the format of the config file in Apollo?  
 The config file base by **protobuf** format, and read by `cyber::common::GetProtoFromFile()` method.
+
+* How to open the debug log?
+
+1. modify the "apollo/cyber/setup.bash"
+```
+ # for DEBUG log 
+ #export GLOG_minloglevel=-1   // DO NOT ENABLE THIS!!!
+ export GLOG_v=4 
+```  
+2. Enable environment variables
+```
+source cyber/setup.bash
+```
