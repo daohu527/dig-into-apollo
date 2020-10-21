@@ -56,7 +56,6 @@ The config file base by **protobuf** format, and read by `cyber::common::GetProt
 1. modify the "apollo/cyber/setup.bash"
 ```
  # for DEBUG log 
- #export GLOG_minloglevel=-1   // DO NOT ENABLE THIS!!!
  export GLOG_v=4 
 ```  
 2. Enable environment variables
