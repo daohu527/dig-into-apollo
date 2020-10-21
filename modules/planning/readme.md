@@ -472,7 +472,7 @@ void ScenarioManager::ScenarioDispatch(const common::TrajectoryPoint& ego_point,
 
 ```
 其中"ScenarioDispatch"的状态切换可以参考下图:  
-![Scenario切换](img/flowchart.jpg)  
+![Scenario切换](img/flowchart.png)  
 
 可以看到，每次切换场景必须是从默认场景(LANE_FOLLOW)开始，即每次场景切换之后都会回到默认场景。
 > ScenarioDispatch目前的代码还没完全完成(有些分支TODO)，而且个人感觉这个实现不够简介和优秀，逻辑看起来有些混乱，不知道是否可以用状态机改进？
