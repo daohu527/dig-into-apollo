@@ -35,7 +35,7 @@
 
 #### Planning输入输出
 我们先看下Apollo的数据流向：
-![Apollo_dataflow](https://raw.githubusercontent.com/daohu527/misc/master/blog/planning/dataflow.png)
+![Apollo_dataflow](img/dataflow.png)
 
 可以看到规划(planning)模块的上游是Localization, Prediction, Routing模块，而下游是Control模块。Routing模块先规划出一条导航线路，然后Planning模块根据这条线路做局部优化，如果Planning模块发现短期规划的线路行不通（比如前面修路，或者错过了路口），会触发Routing模块重新规划线路，因此这两个模块的数据流是双向的。  
 Planning模块的输入在"planning_component.h"中，接口如下:
@@ -63,7 +63,7 @@ planning_writer_->Write(std::make_shared<ADCTrajectory>(adc_trajectory_pb));
 
 #### Planning整个流程
 下图是整个Planning模块的执行过程：  
-![planning_flow](https://github.com/daohu527/misc/blob/master/blog/planning/planning_flow.png)  
+![planning_flow](img/planning_flow.png)  
 1. 模块的入口是PlanningComponent，在Cyber中注册模块，订阅和发布消息，并且注册对应的Planning类。
 2. Planning的过程之前是定时器触发，即每隔一段固定的时间执行一次，现已经改为事件触发，即只要收集完成对应TOPIC的消息，就会触发执行，这样的好处是提高的实时性。
 3. Planning类主要实现了2个功能，一个是启动ReferenceLineProvider来提供参考线，后面生成的轨迹都是在参考线的基础上做优化，ReferenceLineProvider启动了一个单独的线程，每隔50ms执行一次，和Planning主流程并行执行。Planning类另外的一个功能是执行Planning主流程。
@@ -118,7 +118,7 @@ Init中实现了模块的初始化：
 * **OnLanePlanning** - 主要的应用场景是开放道路的自动驾驶。
 
 模块之间的关系如下：  
-![planning](https://raw.githubusercontent.com/daohu527/misc/master/blog/planning/planning_base.png)
+![planning](img/planning_base.png)
 
 可以看到"OpenSpacePlanning","NaviPlanning"和"OnLanePlanning"都继承自同一个基类，并且在PlanningComponent中通过配置选择一个具体的实现进行注册。  
 
@@ -340,7 +340,7 @@ Status OnLanePlanning::Plan(
 
 #### Planner注册场景
 下面我们整理一下planner模块的流程：  
-![planner流程](https://raw.githubusercontent.com/daohu527/misc/master/blog/planning/planning_component.png)
+![planner流程](img/planning_component.png)
 1. PlanningComponent在cyber中注册
 2. 选择Planning
 3. 根据不同的Dispatcher，分发Planner
@@ -472,7 +472,7 @@ void ScenarioManager::ScenarioDispatch(const common::TrajectoryPoint& ego_point,
 
 ```
 其中"ScenarioDispatch"的状态切换可以参考下图:  
-![Scenario切换](https://github.com/daohu527/misc/blob/master/blog/planning/Flowchart.jpg)  
+![Scenario切换](img/flowchart.jpg)  
 
 可以看到，每次切换场景必须是从默认场景(LANE_FOLLOW)开始，即每次场景切换之后都会回到默认场景。
 > ScenarioDispatch目前的代码还没完全完成(有些分支TODO)，而且个人感觉这个实现不够简介和优秀，逻辑看起来有些混乱，不知道是否可以用状态机改进？
@@ -481,7 +481,7 @@ void ScenarioManager::ScenarioDispatch(const common::TrajectoryPoint& ego_point,
 
 #### 场景运行
 场景的执行在"scenario.cc"和对应的场景目录中，实际上每个场景又分为一个或者多个阶段(stage)，每个阶段又由不同的任务(task)组成。执行一个场景，就是顺序执行不同阶段的不同任务。
-![Planner结构](https://raw.githubusercontent.com/daohu527/misc/master/blog/planning/Planner.png)  
+![Planner结构](img/planner.png)  
 下面我们来看一个具体的例子，Scenario对应的stage和task在"planning/conf/scenario"中。
 ```c++
 // Scenario对应的Stage
@@ -603,7 +603,7 @@ Status LaneFollowStage::PlanOnReferenceLine(
 可以看到每个Task都可以对应到一个决策器或者优化器（平滑器不作为Task，单独作为一个类）。  
 
 每个Task都实现了"Execute"方法，而每个决策器和优化器都继承至Task类。可以参考下图：  
-![Task类](https://raw.githubusercontent.com/daohu527/misc/master/blog/planning/Task.jpg)  
+![Task类](img/Task.jpg)  
 
 > Task类的生成用到了设计模式的工厂模式，通过"TaskFactory"类生产不同的Task类。
 
