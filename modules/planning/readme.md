@@ -603,7 +603,7 @@ Status LaneFollowStage::PlanOnReferenceLine(
 可以看到每个Task都可以对应到一个决策器或者优化器（平滑器不作为Task，单独作为一个类）。  
 
 每个Task都实现了"Execute"方法，而每个决策器和优化器都继承至Task类。可以参考下图：  
-![Task类](img/Task.jpg)  
+![Task类](img/task.png)  
 
 > Task类的生成用到了设计模式的工厂模式，通过"TaskFactory"类生产不同的Task类。
 
