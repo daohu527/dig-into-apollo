@@ -5,6 +5,7 @@
 ## Table of Contents
 
 - [localization papers](#localization)
+- [perception papers](#perception)
 - [prediction papers](#prediction)
 - [planning papers](#planning)
 - [control papers](#control)
@@ -17,6 +18,11 @@
 
 * [Robust and Precise Vehicle Localization based on Multi-sensor Fusion in Diverse City Scenes](https://arxiv.org/abs/1711.05805)
 
+<a name = 'perception' />
+
+## Perception papers
+
+[ChauffeurNet: Learning to Drive by Imitating the Best and Synthesizing the Worst](https://arxiv.org/abs/1812.03079)
 
 <a name = "prediction" />
 
