@@ -251,7 +251,7 @@ bool GraphCreator::Create() {
       continue;
     }
     
-    // 存储图中节点index和lane_id的关系，因为跳过node可以找到lane，
+    // 存储图中节点index和lane_id的关系，因为通过node可以找到lane，
     // 而通过lane_id需要遍历节点才能找到节点index。
     node_index_map_[lane_id] = graph_.node_size();
     
