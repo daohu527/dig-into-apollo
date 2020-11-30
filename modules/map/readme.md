@@ -19,6 +19,7 @@
     - [停车区域](#parking)
     - [行人道路](#sidewalk)
 - [opendriver地图解析](#parse)
+- [tools](#tools)
 - [高精度地图API](#api)
 - [如何制作高精度地图](#how)
     - [采集](#collect)
@@ -530,6 +531,58 @@ message PNCJunction {
 ## 高精度地图API
 最后在看下hdmap_impl.cc，主要实现了一系列的api来查找道路中的元素。由于实现的接口太多，后面有时间了看是否能够整理下api文档。  
 关于pnc_map和relative_map还没有介绍，关于一些道路元素的使用场景没有介绍。  
+
+
+<a name="tools" />
+
+## tools
+tools的目录结构如下，主要是一些制作和转换地图的工具。  
+```
+.
+├── BUILD
+├── bin_map_generator.cc    // txt地图转换为bin地图
+├── map_datachecker         // 远程地图采集，这里只是采集了pose？
+├── map_tool.cc             // 地图加上偏移
+├── map_xysl.cc             // 功能很多，用来查找lane，以及lane上的点转SL
+├── proto_map_generator.cc  // 转换opendrive格式的地图为apollo proto的地图
+├── quaternion_euler.cc     // 4维旋转转3维旋转
+├── refresh_default_end_way_point.cc  // 更新routing的默认地标
+└── sim_map_generator.cc  // 生成sim map
+```
+
+下面简单介绍下各个工具的实现以及作用。  
+
+
+#### sim_map_generator
+通过base_map生成sim_map，其中sim_map去掉了base_map中的
+```
+left_sample
+right_sample
+left_road_sample
+right_road_sample
+```
+主要的作用为获取当前道路的宽度。  
+
+另外对`central_curve`,`left_boundary`和`right_boundary`进行了降采样，减少了点数。  
+
+
+#### refresh_default_end_way_point
+更新routing POI中的默认点的位置信息，这里的默认点就是比较典型的地标，方便选择routing位置。  
+
+#### quaternion_euler
+4维旋转转3维
+
+#### proto_map_generator
+转换opendrive格式的地图为apollo proto的地图
+
+#### map_xysl
+功能很多，用来查找lane，以及lane上的点转SL  
+
+#### map_tool
+地图整体加上位置偏移。  
+
+#### bin_map_generator
+txt地图转换为bin地图。  
 
 
 <a name="how"/>
