@@ -62,3 +62,8 @@ The config file base by **protobuf** format, and read by `cyber::common::GetProt
 ```
 source cyber/setup.bash
 ```
+
+3. Export bag data to lidar,camera
+```
+./bazel-bin/modules/localization/msf/local_tool/data_extraction/cyber_record_parser --bag_file data/bag/20210305145950.record.00000 --out_folder data/  --cloud_topic=/apollo/sensor/lidar32/compensator/PointCloud2
+```
