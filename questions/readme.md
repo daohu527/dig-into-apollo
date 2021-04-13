@@ -26,6 +26,51 @@ source scripts/apollo_base.sh
 protoc --decode apollo.hdmap.Map modules/map/proto/map.proto < modules/map/data/sunnyvale_loop/base_map.bin > base_map.txt
 ```
 
+* How to create new map with RTK
+1. 解压制作好的地图
+```
+python modules/tools/map_gen/extract_path.py map_file data/bag/20210406112554.record.00000
+```
+查看当前轨迹
+```
+python modules/tools/map_gen/plot_path.py map_file
+```
+
+2. 生成地图
+```
+python modules/tools/map_gen/map_gen.py map_file
+```
+
+3. 查看地图
+```
+python modules/tools/mapshow/mapshow.py -m map_map_file.txt
+```
+
+
+生成地图
+```
+python modules/tools/create_map/convert_map_txt2bin.py -i signal_lane.txt -o /apollo/modules/map/data/xinghe_test/base_map.bin
+```
+
+生成sim_map
+```
+./bazel-bin/modules/map/tools/sim_map_generator -map_dir=/apollo/modules/map/data/xinghe_test -output_dir=/apollo/modules/map/data/xinghe_test
+```
+
+生成routing_map
+```
+/apollo/bazel-bin/modules/routing/topo_creator/topo_creator -map_dir=/apollo/modules/map/data/xinghe_test --flagfile=modules/routing/conf/routing.conf
+```
+
+测试之前需要修改"vi modules/common/data/global_flagfile.txt"，屏蔽选项"--log_dir/--use_navigation_mode"
+```
+--map_dir=/apollo/modules/map/data/sunnyvale_loop
+```
+测试生成的routing_map是否可以联通
+```
+python modules/tools/routing/debug_topo.py
+```
+
 
 <a name="simulation" />
 
