@@ -49,22 +49,22 @@ python modules/tools/mapshow/mapshow.py -m map_map_file.txt
 
 生成地图
 ```
-python modules/tools/create_map/convert_map_txt2bin.py -i signal_lane.txt -o /apollo/modules/map/data/xinghe_test/base_map.bin
+python modules/tools/create_map/convert_map_txt2bin.py -i map_map_file.txt -o /apollo/modules/map/data/your_map_dir/base_map.bin
 ```
 
 生成sim_map
 ```
-./bazel-bin/modules/map/tools/sim_map_generator -map_dir=/apollo/modules/map/data/xinghe_test -output_dir=/apollo/modules/map/data/xinghe_test
+./bazel-bin/modules/map/tools/sim_map_generator -map_dir=/apollo/modules/map/data/your_map_dir -output_dir=/apollo/modules/map/data/your_map_dir
 ```
 
 生成routing_map
 ```
-/apollo/bazel-bin/modules/routing/topo_creator/topo_creator -map_dir=/apollo/modules/map/data/xinghe_test --flagfile=modules/routing/conf/routing.conf
+/apollo/bazel-bin/modules/routing/topo_creator/topo_creator -map_dir=/apollo/modules/map/data/your_map_dir --flagfile=modules/routing/conf/routing.conf
 ```
 
 测试之前需要修改"vi modules/common/data/global_flagfile.txt"，屏蔽选项"--log_dir/--use_navigation_mode"
 ```
---map_dir=/apollo/modules/map/data/sunnyvale_loop
+--map_dir=/apollo/modules/map/data/your_map_dir
 ```
 测试生成的routing_map是否可以联通
 ```
