@@ -89,10 +89,6 @@ ReferenceLine::ReferenceLine(const MapPath& hdmap_path)
    * In the above example, A-B is current reference line, and C-D is the other
    * reference line. If part A and part D matches, we update current reference
    * line to C-A-B.
-   *
-   * @return false if these two reference line cannot be stitched
-   */
-  bool Stitch(const ReferenceLine& other);
 ```
 接下来我们分析下代码。
 ```c++
@@ -511,8 +507,283 @@ bool ReferenceLineProvider::CreateReferenceLine(
 ![create_ref_line](../img/create_ref_line.jpg)  
 
 
+接下来我们分别分析没有发送新routing和发送了新routing的生成参考线的流程。
+
+## 旧routing生成参考线
+
+#### 创建routing路段
+根据车辆当前状态，从Pnc地图中获取routing路段，最后判断是否要提高变道的优先级。
+```c++
+bool ReferenceLineProvider::CreateRouteSegments(
+    const common::VehicleState &vehicle_state,
+    std::list<hdmap::RouteSegments> *segments) {
+  {
+     // 1. pnc_map获取RouteSegments
+    std::lock_guard<std::mutex> lock(pnc_map_mutex_);
+    if (!pnc_map_->GetRouteSegments(vehicle_state, segments)) {
+      AERROR << "Failed to extract segments from routing";
+      return false;
+    }
+  }
+
+  // 2. 是否提高变道的优先级
+  if (FLAGS_prioritize_change_lane) {
+    PrioritzeChangeLane(segments);
+  }
+  return !segments->empty();
+}
+```
+
+#### GetRouteSegments
+pnc地图中获取RouteSegments的过程实际上是根据车辆当前的速度查看前面一小段和后面一小段的路径。  
+```c++
+bool PncMap::GetRouteSegments(const VehicleState &vehicle_state,
+                              std::list<RouteSegments> *const route_segments) {
+  // 1. 前看距离
+  double look_forward_distance =
+      LookForwardDistance(vehicle_state.linear_velocity());
+  // 2. 后看距离
+  double look_backward_distance = FLAGS_look_backward_distance;
+  return GetRouteSegments(vehicle_state, look_backward_distance,
+                          look_forward_distance, route_segments);
+}
+```
+接着我们继续看GetRouteSegments
+```c++
+bool PncMap::GetRouteSegments(const VehicleState &vehicle_state,
+                              const double backward_length,
+                              const double forward_length,
+                              std::list<RouteSegments> *const route_segments) {
+  // 1. 更新车辆状态
+  if (!UpdateVehicleState(vehicle_state)) {
+    AERROR << "Failed to update vehicle state in pnc_map.";
+    return false;
+  }
+  // 2. 车辆是否在路上
+  if (!adc_waypoint_.lane || adc_route_index_ < 0 ||
+      adc_route_index_ >= static_cast<int>(route_indices_.size())) {
+    AERROR << "Invalid vehicle state in pnc_map, update vehicle state first.";
+    return false;
+  }
+
+  const auto &route_index = route_indices_[adc_route_index_].index;
+  const int road_index = route_index[0];
+  const int passage_index = route_index[1];
+  const auto &road = routing_.road(road_index);
+  // 3. 找到相邻的所有passage id
+  auto drive_passages = GetNeighborPassages(road, passage_index);
+  for (const int index : drive_passages) {
+    const auto &passage = road.passage(index);
+    RouteSegments segments;
+    // 3.1 转换passage到segments
+    if (!PassageToSegments(passage, &segments)) {
+      ADEBUG << "Failed to convert passage to lane segments.";
+      continue;
+    }
+    const PointENU nearest_point =
+        index == passage_index
+            ? adc_waypoint_.lane->GetSmoothPoint(adc_waypoint_.s)
+            : PointFactory::ToPointENU(adc_state_);
+    common::SLPoint sl;
+    LaneWaypoint segment_waypoint;
+    // 3.2 获取车辆到segments的投影
+    if (!segments.GetProjection(nearest_point, &sl, &segment_waypoint)) {
+      ADEBUG << "Failed to get projection from point: "
+             << nearest_point.ShortDebugString();
+      continue;
+    }
+    if (index != passage_index) {
+      if (!segments.CanDriveFrom(adc_waypoint_)) {
+        ADEBUG << "You cannot drive from current waypoint to passage: "
+               << index;
+        continue;
+      }
+    }
+    route_segments->emplace_back();
+    const auto last_waypoint = segments.LastWaypoint();
+    // 4. 根据车辆的当前位置前后一段距离，填充segments
+    if (!ExtendSegments(segments, sl.s() - backward_length,
+                        sl.s() + forward_length, &route_segments->back())) {
+      AERROR << "Failed to extend segments with s=" << sl.s()
+             << ", backward: " << backward_length
+             << ", forward: " << forward_length;
+      return false;
+    }
+    // 5. 根据passage设置route_segments的属性
+    if (route_segments->back().IsWaypointOnSegment(last_waypoint)) {
+      route_segments->back().SetRouteEndWaypoint(last_waypoint);
+    }
+    route_segments->back().SetCanExit(passage.can_exit());
+    route_segments->back().SetNextAction(passage.change_lane_type());
+    const std::string route_segment_id = absl::StrCat(road_index, "_", index);
+    route_segments->back().SetId(route_segment_id);
+    route_segments->back().SetStopForDestination(stop_for_destination_);
+    if (index == passage_index) {
+      route_segments->back().SetIsOnSegment(true);
+      route_segments->back().SetPreviousAction(routing::FORWARD);
+    } else if (sl.l() > 0) {
+      route_segments->back().SetPreviousAction(routing::RIGHT);
+    } else {
+      route_segments->back().SetPreviousAction(routing::LEFT);
+    }
+  }
+  return !route_segments->empty();
+}
+```
+
+#### 扩展参考线(ExtendReferenceLine)
+```c++
+bool ReferenceLineProvider::ExtendReferenceLine(const VehicleState &state,
+                                                RouteSegments *segments,
+                                                ReferenceLine *reference_line) {
+  RouteSegments segment_properties;
+  segment_properties.SetProperties(*segments);
+  auto prev_segment = route_segments_.begin();
+  auto prev_ref = reference_lines_.begin();
+  // 1. 查找和segments连接的segment
+  while (prev_segment != route_segments_.end()) {
+    if (prev_segment->IsConnectedSegment(*segments)) {
+      break;
+    }
+    ++prev_segment;
+    ++prev_ref;
+  }
+  if (prev_segment == route_segments_.end()) {
+    if (!route_segments_.empty() && segments->IsOnSegment()) {
+      AWARN << "Current route segment is not connected with previous route "
+               "segment";
+    }
+    return SmoothRouteSegment(*segments, reference_line);
+  }
+  common::SLPoint sl_point;
+  Vec2d vec2d(state.x(), state.y());
+  LaneWaypoint waypoint;
+  // 2. 获取车辆到segment的投影
+  if (!prev_segment->GetProjection(vec2d, &sl_point, &waypoint)) {
+    AWARN << "Vehicle current point: " << vec2d.DebugString()
+          << " not on previous reference line";
+    return SmoothRouteSegment(*segments, reference_line);
+  }
+  const double prev_segment_length = RouteSegments::Length(*prev_segment);
+  const double remain_s = prev_segment_length - sl_point.s();
+  const double look_forward_required_distance =
+      PncMap::LookForwardDistance(state.linear_velocity());
+  // 3. 如果remain_s大于look_forward_required_distance，则返回当前segment
+  if (remain_s > look_forward_required_distance) {
+    *segments = *prev_segment;
+    segments->SetProperties(segment_properties);
+    *reference_line = *prev_ref;
+    ADEBUG << "Reference line remain " << remain_s
+           << ", which is more than required " << look_forward_required_distance
+           << " and no need to extend";
+    return true;
+  }
+  // 4. 如果小于，则需要补充下一个segment
+  double future_start_s =
+      std::max(sl_point.s(), prev_segment_length -
+                                 FLAGS_reference_line_stitch_overlap_distance);
+  double future_end_s =
+      prev_segment_length + FLAGS_look_forward_extend_distance;
+  RouteSegments shifted_segments;
+  std::unique_lock<std::mutex> lock(pnc_map_mutex_);
+  if (!pnc_map_->ExtendSegments(*prev_segment, future_start_s, future_end_s,
+                                &shifted_segments)) {
+    lock.unlock();
+    AERROR << "Failed to shift route segments forward";
+    return SmoothRouteSegment(*segments, reference_line);
+  }
+  lock.unlock();
+  if (prev_segment->IsWaypointOnSegment(shifted_segments.LastWaypoint())) {
+    *segments = *prev_segment;
+    segments->SetProperties(segment_properties);
+    *reference_line = *prev_ref;
+    ADEBUG << "Could not further extend reference line";
+    return true;
+  }
+  hdmap::Path path(shifted_segments);
+  ReferenceLine new_ref(path);
+  if (!SmoothPrefixedReferenceLine(*prev_ref, new_ref, reference_line)) {
+    AWARN << "Failed to smooth forward shifted reference line";
+    return SmoothRouteSegment(*segments, reference_line);
+  }
+  if (!reference_line->Stitch(*prev_ref)) {
+    AWARN << "Failed to stitch reference line";
+    return SmoothRouteSegment(*segments, reference_line);
+  }
+  if (!shifted_segments.Stitch(*prev_segment)) {
+    AWARN << "Failed to stitch route segments";
+    return SmoothRouteSegment(*segments, reference_line);
+  }
+  *segments = shifted_segments;
+  segments->SetProperties(segment_properties);
+  common::SLPoint sl;
+  if (!reference_line->XYToSL(vec2d, &sl)) {
+    AWARN << "Failed to project point: " << vec2d.DebugString()
+          << " to stitched reference line";
+  }
+  return Shrink(sl, reference_line, segments);
+}
+```
+
+#### Shrink
+根据本车位置裁剪参考线和RouteSegments
+```c++
+bool ReferenceLineProvider::Shrink(const common::SLPoint &sl,
+                                   ReferenceLine *reference_line,
+                                   RouteSegments *segments) {
+  static constexpr double kMaxHeadingDiff = M_PI * 5.0 / 6.0;
+  // 1. 确定前后查看的距离
+  double new_backward_distance = sl.s();
+  double new_forward_distance = reference_line->Length() - sl.s();
+  bool need_shrink = false;
+  if (sl.s() > FLAGS_look_backward_distance * 1.5) {
+    ADEBUG << "reference line back side is " << sl.s()
+           << ", shrink reference line: origin length: "
+           << reference_line->Length();
+    new_backward_distance = FLAGS_look_backward_distance;
+    need_shrink = true;
+  }
+  // 2. 角度差小于kMaxHeadingDiff
+  const auto index = reference_line->GetNearestReferenceIndex(sl.s());
+  const auto &ref_points = reference_line->reference_points();
+  const double cur_heading = ref_points[index].heading();
+  auto last_index = index;
+  while (last_index < ref_points.size() &&
+         AngleDiff(cur_heading, ref_points[last_index].heading()) <
+             kMaxHeadingDiff) {
+    ++last_index;
+  }
+  --last_index;
+  if (last_index != ref_points.size() - 1) {
+    need_shrink = true;
+    common::SLPoint forward_sl;
+    reference_line->XYToSL(ref_points[last_index], &forward_sl);
+    new_forward_distance = forward_sl.s() - sl.s();
+  }
+  // 3. 分割并且收缩参考线
+  if (need_shrink) {
+    if (!reference_line->Segment(sl.s(), new_backward_distance,
+                                 new_forward_distance)) {
+      AWARN << "Failed to shrink reference line";
+    }
+    if (!segments->Shrink(sl.s(), new_backward_distance,
+                          new_forward_distance)) {
+      AWARN << "Failed to shrink route segment";
+    }
+  }
+  return true;
+}
+```
+
+自此没有更新routing情况下的参考线生成流程已经分析完成了。
+
+
+## 新routing生成参考线
+todo
+
+
 #### UpdatedReferenceLine
-只是更新标签
+根据是否更新了routing重新给参考线进行赋值。
 ```c++
 void ReferenceLineProvider::UpdateReferenceLine(
     const std::list<ReferenceLine> &reference_lines,
