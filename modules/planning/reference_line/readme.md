@@ -23,10 +23,10 @@ ReferenceLine提供的是轨迹信息，而ReferenceLineInfo在ReferenceLine的�
 
 <a name="rf_provider" />
 
-## ReferenceLineProvider  
+## 参考线提供者(ReferenceLineProvider)  
 
 单独的线程并发执行ReferenceLineProvider。  
-[reference_line](../img/reference_line.jpg)
+![reference_line](../img/reference_line.jpg)
 
 1. 整个流程的过程是怎样的？
 2. 如何生成的参考线，输入是什么？输出是什么？
@@ -46,10 +46,7 @@ ReferenceLine提供的是轨迹信息，而ReferenceLineInfo在ReferenceLine的�
 
 接下来我们分析下参考点的结构
 #### ReferencePoint
-参考点的数据结构是路径和路径的曲率（kappa_）以及dkappa_
-
-#### 
-根据s，返回初始化的`PathPoint`。
+参考点的数据结构是路径和路径的曲率（kappa_）以及dkappa_，根据s，返回初始化的`PathPoint`。
 ```c++
 common::PathPoint ReferencePoint::ToPathPoint(double s) const {
   return common::util::PointFactory::ToPathPoint(x(), y(), 0.0, s, heading(),
@@ -77,10 +74,7 @@ void ReferencePoint::RemoveDuplicates(std::vector<ReferencePoint>* points) {
 ```
 
 
-#### 
 知道了数据结构接下来我们分析下其中的方法。
-
-
 
 #### GetReferenceLines
 获取参考线
@@ -339,10 +333,10 @@ bool Frame::CreateReferenceLineInfo(
 
 <a name="rf_line" />
 
-## ReferenceLineInfo
+## 参考线(ReferenceLineInfo)
 参考线信息，在参考线的基础添加了决策信息，ST图等。
 
 
 <a name="rf_smoother" />
 
-## 平滑器
+## 平滑器(ReferenceLineSmoother)  
