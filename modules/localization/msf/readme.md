@@ -1,7 +1,10 @@
-# Dig into Apollo - Localization ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout) 
+# Dig into Apollo - MSF Localization ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout) 
 
 ## 目录
-MSF模块的整体目录结构如下。
+由于依赖单一的定位都会出现失效的情况，因此MSF融合了GPS、IMU和激光雷达3者输出定位信息，因此结果会比较鲁棒，相关的论文可以参考《Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes》。 单个的定位信息的获取我们已经了解过了，例如GPS和IMU的RTK定位、激光雷达和IMU的NDT定位，而MSF则是融合（一般采用卡尔曼滤波）了2者的结果。最后定位都会面临现有地图还是先定位的问题，因此如何验证地图的准确性是值得研究和讨论的方向。  
+
+MSF模块的整体目录结构如下。主要分为地图、工具和定位器。其中MSF的部分代码是采用so文件来提供的，不过好在我们可以看到接口定义，这部分头文件在`third_party/localization_msf/x86_64/include`中。
+
 ```
 .
 ├── BUILD

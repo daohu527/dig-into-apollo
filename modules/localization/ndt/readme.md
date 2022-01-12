@@ -1,24 +1,30 @@
-# Dig into Apollo - Localization ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout) 
+# Dig into Apollo - NDT Localization ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout) 
 
 ## 目录
+NDT定位的原理是通过点云配准获取车辆当前的位置，通过激光雷达当前帧的点云和事先制作好的点云地图进行NDT匹配，从而获取当前帧的位置。由于当前帧的点云很好获取，NDT算法PCL也有对应的库实现，因此主要的难点在于点云地图的构建。除此之外NDT定位需要点云有明确的特征，因此在NDT失败的时候如何分析NDT为什么匹配度不高，以及原因是什么也同样值得研究。  
+
+下面是NDT定位的目录结构，其中主要的功能一是创建地图在map_creation中，NDT算法实现在ndt_locator中。除此之外，ndt_localization_component负责消息的接收和发布。
 ```
 .
 ├── BUILD
 ├── localization_pose_buffer.cc
 ├── localization_pose_buffer.h
 ├── localization_pose_buffer_test.cc
-├── map_creation
+├── map_creation           // 创建地图
 ├── ndt_localization.cc
 ├── ndt_localization_component.cc
 ├── ndt_localization_component.h
 ├── ndt_localization.h
 ├── ndt_localization_test.cc
-├── ndt_locator
+├── ndt_locator        // NDT定位器
 ├── README.md
 └── test_data
 ```
 
+了解目录结构之后，下面我们开始详细分析NDT部分的代码。  
+
 ## map_creation
+地图创建是复用了msf定位中的`pyramid_map`，因此在创建地图之前，我们有必要了解pyramid_map的数据结构。  
 加载pcd pose文件
 ```c++
     apollo::localization::msf::velodyne::LoadPcdPoses(
