@@ -6,6 +6,8 @@
 - [Localization模块简介](#introduction)
 - [代码目录](#content)
 - [RTK定位流程](#rtk)
+- [NDT定位流程](ndt)
+- [MSF定位流程](msf)
 - [Reference](#reference)
 
 
