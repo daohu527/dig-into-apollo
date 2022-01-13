@@ -69,12 +69,17 @@ MSF模块的整体目录结构如下。主要分为地图、工具和定位器�
 ```
 
 ## local_tool
+`local_tool`包含了3个工具：解压数据、可视化定位结果和创建地图。
 ```
 .
-├── data_extraction
-├── local_visualization
-└── map_creation
+├── data_extraction       // 解压数据
+├── local_visualization   // 本地可视化
+└── map_creation          // 创建地图
 ```
+
+#### local_visualization
+可视化定位结果分为在线工具和离线工具，实际上只是消息的获取方式不一样，实现的原理都是一样，采用opencv绘制不同的定位结果和历史轨迹，方便进行分析。个人认为这一部分还可以优化，例如记录历史轨迹的方差大小，以及点云匹配差异的可视化展示等。
+
 
 ## params
 ```
