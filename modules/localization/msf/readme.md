@@ -23,6 +23,7 @@ MSF模块的整体目录结构如下。主要分为地图、工具和定位器�
 ```
 
 ## local_integ
+MSF定位的功能主要在以下模块中实现，它的*入口函数*在`localization_integ.h`和`localization_integ.cc`中，*输入*为激光雷达消息、IMU消息、GPS消息和汽车heading消息，*输出*为融合后的定位信息。  
 ```
 .
 ├── BUILD
@@ -48,6 +49,64 @@ MSF模块的整体目录结构如下。主要分为地图、工具和定位器�
 ├── online_localization_expert.cc
 └── online_localization_expert.h
 ```
+
+接下来我们开始按照执行过程分析代码。
+
+#### localization_integ
+`LocalizationInteg`的函数接口简单明了，分别对应了激光雷达消息、IMU消息、GPS消息和汽车heading消息的处理。这里唯一需要注意的时IMU和GPS有2个接口。
+
+我们先看IMU的接口。这2个接口分别代表了FLU（前-左-天空）坐标系和RFU（右-前-天空）坐标系，需要根据坐标系调用不同的接口。
+```c++
+  void RawImuProcessFlu(const drivers::gnss::Imu &imu_msg);
+  void RawImuProcessRfu(const drivers::gnss::Imu &imu_msg);
+```
+在看GPS的接口，其中`RawObservationProcess`和`RawEphemerisProcess`组合使用，效果类似于`GnssBestPoseProcess`。由于组合导航的差异选择不同的接口，这里默认采用`GnssBestPoseProcess`。
+```c++
+  // Gnss Info process.
+  void RawObservationProcess(
+      const drivers::gnss::EpochObservation &raw_obs_msg);
+  void RawEphemerisProcess(const drivers::gnss::GnssEphemeris &gnss_orbit_msg);
+  // gnss best pose process
+  void GnssBestPoseProcess(const drivers::gnss::GnssBestPose &bestgnsspos_msg);
+```
+
+localization_integ调用的是`localization_integ_impl`接口，也就是说具体的功能实现在`localization_integ_impl`中。
+
+#### localization_integ_impl
+`localization_integ_impl`分为3个部分：
+1. 处理消息（LocalizationGnssProcess, LocalizationLidarProcess）
+2. 重新发布（MeasureRepublishProcess）
+3. 融合过程（LocalizationIntegProcess）
+4. 完善状态（OnlineLocalizationExpert）
+也就是说先分别处理激光雷达、GPS、IMU等的消息，然后重新发布，转换为一种类型的消息（MeasureData），然后交给`LocalizationIntegProcess`做融合，最后完善融合结果的状态。
+
+
+#### localization_gnss_process
+求解GNSS的结果，求解器在`GnssSolver`中实现，头文件在`localization_msf/gnss_solver.h`中，以库文件的方式提供。
+
+#### localization_lidar_process
+求解Lidar的定位结果，和NDT定位类似，加入了反射率信息，实现在`localization_lidar_process`和`localization_lidar`中，也用到了Lidar求解器`LidarLocator`，同样头文件在`localization_msf/lidar_locator.h`中，以库文件的方式提供。
+
+#### localization_integ_process
+最后，我们最关注的融合过程，求解过程在`localization_msf/sins.h`中。
+
+1. 在`StartThreadLoop`中处理之前放入`measure_data_queue_`的消息。
+2. RawImuProcess中接收IMU的消息，并且计算融合之后的Pose。
+```c++
+  // add imu msg and get current predict pose
+  sins_->AddImu(imu_msg);
+  sins_->GetPose(&ins_pva_, pva_covariance_);
+  sins_->GetRemoveBiasImu(&corrected_imu_);
+  sins_->GetEarthParameter(&earth_param_);
+```
+
+#### measure_republish_process
+重新发布消息，实际上是转换不同的消息到`MeasureData`。
+
+
+#### online_localization_expert
+主要完善各个定位的状态信息
+
 
 
 ## local_map
@@ -82,6 +141,7 @@ MSF模块的整体目录结构如下。主要分为地图、工具和定位器�
 
 
 ## params
+`params`目录主要是存放一些参数，用于坐标转换，例如激光雷达到IMU的转换矩阵（激光雷达外参，通过标定获取），世界坐标到IMU的转换关系等。由于比较简单，这里就不赘述了。  
 ```
 .
 ├── BUILD
