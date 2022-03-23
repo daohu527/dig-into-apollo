@@ -5,8 +5,9 @@ Dig into Apollo is mainly to help learning [Apollo](https://github.com/ApolloAut
 
 ## Friendly tips
 
-If "git clone" on github is too slow, pls try apollo **[mirror](https://gitee.com/baidu/apolloauto)**. If you have any questions, please feel free to ask in [git issue](https://github.com/daohu527/dig-into-apollo/issues).  
-
+* If "git clone" on github is too slow, pls try apollo **[mirror](https://gitee.com/baidu/apolloauto)**. 
+* If you have any questions, please feel free to ask in **[git issue](https://github.com/daohu527/dig-into-apollo/issues)**.  
+* If you need to add new documents or give suggestions, welcome to participate in **[git discussion](https://github.com/daohu527/dig-into-apollo/discussions)**
 
 ## Table of Contents
 
