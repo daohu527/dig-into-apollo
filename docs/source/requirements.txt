@@ -1,2 +1,2 @@
-breathe
-myst_parser
+breathe==4.33.1
+myst_parser==0.17.2
