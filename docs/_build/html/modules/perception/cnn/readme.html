@@ -1,0 +1,1115 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Table of Contents &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="table-of-contents">
+<h1>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><span class="xref myst">什么是CNN？</span></p></li>
+<li><p><span class="xref myst">CNN的原理</span></p>
+<ul>
+<li><p><span class="xref myst">卷积层(Convolutional Layer)</span></p></li>
+<li><p><span class="xref myst">池化层(Max Pooling Layer)</span></p></li>
+<li><p><span class="xref myst">全连接层(Fully Connected Layer)</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">如何构建CNN</span></p></li>
+<li><p><span class="xref myst">基本概念</span></p></li>
+<li><p><span class="xref myst">论文汇总</span></p></li>
+<li><p><span class="xref myst">引用</span></p></li>
+</ul>
+<a name="what_is_cnn" />
+</div>
+<div class="section" id="cnn">
+<h1>什么是CNN？<a class="headerlink" href="#cnn" title="Permalink to this headline">¶</a></h1>
+<p>首先什么是CNN呢？我们在这里模仿儿童的学习方式，当小孩子学习一个陌生东西的时候，往往会从问题开始，这里我们拿CNN做对比，来介绍什么是CNN。<br />
+<img alt="cnn" src="../../../_images/cnn_qa.jpg" /><br />
+从上面的对话，我们知道CNN的全称是”Convolutional Neural Network”(卷积神经网络)。而神经网络是一种模仿生物神经网络（动物的中枢神经系统，特别是大脑）结构和功能的数学模型或计算模型。神经网络由大量的人工神经元组成，按不同的连接方式构建不同的网络。CNN是其中的一种，还有GAN(生成对抗网络)，RNN（递归神经网络）等，神经网络能够类似人一样具有简单的决定能力和简单的判断能力，在图像和语音识别方面能够给出更好的结果。</p>
+<a name="cnn_principle" />
+</div>
+<div class="section" id="id1">
+<h1>CNN的原理<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>CNN被广泛应用在图像识别领域，那么CNN是如何实现图像识别的呢？我们根据图中的例子来解释CNN的原理。<br />
+<img alt="cnn" src="../../../_images/cnn.png" /><br />
+CNN是一种人工神经网络，CNN的结构可以分为3层：</p>
+<ol class="arabic simple">
+<li><p><strong>卷积层(Convolutional Layer)</strong> - 主要作用是提取特征。</p></li>
+<li><p><strong>池化层(Max Pooling Layer)</strong> - 主要作用是下采样(downsampling)，却不会损坏识别结果。</p></li>
+<li><p><strong>全连接层(Fully Connected Layer)</strong> - 主要作用是分类。</p></li>
+</ol>
+<p>我们可以拿人类来做类比，比如你现在看到上图中的小鸟，人类如何识别它就是鸟的呢？首先你判断鸟的嘴是尖的，全身有羽毛和翅膀，有尾巴。然后通过这些联系起来判断这是一只鸟。而CNN的原理也类似，通过卷积层来查找特征，然后通过全连接层来做分类判断这是一只鸟，而池化层则是为了让训练的参数更少，在保持采样不变的情况下，忽略掉一些信息。</p>
+<a name="convolutional" />
+<div class="section" id="convolutional-layer">
+<h2>卷积层(Convolutional Layer)<a class="headerlink" href="#convolutional-layer" title="Permalink to this headline">¶</a></h2>
+<p>那么卷基层是如何提取特征的呢？我们都知道卷积就是2个函数的叠加，<strong>应用在图像上，则可以理解为拿一个滤镜放在图像上，找出图像中的某些特征</strong>，而我们需要找到很多特征才能区分某一物体，所以我们会有很多滤镜，通过这些滤镜的组合，我们可以得出很多的特征。<br />
+首先一张图片在计算机中保存的格式为一个个的像素，比如一张长度为1080，宽度为1024的图片，总共包含了1080 * 1024的像素，如果为RGB图片，因为RGB图片由3种颜色叠加而成，包含3个通道，因此我们需要用1080 * 1024 * 3的数组来表示RGB图片。<br />
+<img alt="imgsee" src="../../../_images/imgsee.jpg" /><br />
+我们先从简单的情况开始考虑，假设我们有一组灰度图片，这样图片就可以表示为一个矩阵，假设我们的图片大小为5 * 5，那么我们就可以得到一个5 * 5的矩阵，接下来，我们用一组过滤器(Filter)来对图片过滤，过滤的过程就是求卷积的过程。假设我们的Filter的大小为3 * 3，我们从图片的左上角开始移动Filter，并且把每次矩阵相乘的结果记录下来。可以通过下面的过程来演示。<br />
+<img alt="convolution" src="../../../_images/convolution.gif" /><br />
+每次Filter从矩阵的左上角开始移动，每次移动的步长是1，从左到右，从上到下，依次移动到矩阵末尾之后结束，每次都把Filter和矩阵对应的区域做乘法，得出一个新的矩阵。这其实就是做卷积的过程。而Filer的选择非常关键，Filter决定了过滤方式，通过不同的Filter会得到不同的特征。举一个例子就是：<br />
+<img alt="conv_1" src="../../../_images/conv_1.png" /><br />
+我们选择了2种Filter分别对图中的矩阵做卷积，可以看到值越大的就表示找到的特征越匹配，值越小的就表示找到的特征越偏离。Filter1主要是找到为”|”形状的特征，可以看到找到1处，转换后相乘值为3的网格就表示原始的图案中有”|”，而Filter2则表示找到”&quot;形状的特征，我们可以看到在图中可以找到2处。拿真实的图像举例子，我们经过卷积层的处理之后，得到如下的一些特征结果：<br />
+<img alt="weights" src="../../../_images/weights.jpeg" /></p>
+<a name="max_pool" />
+</div>
+<div class="section" id="max-pooling-layer">
+<h2>池化层(Max Pooling Layer)<a class="headerlink" href="#max-pooling-layer" title="Permalink to this headline">¶</a></h2>
+<p>经过卷积层处理的特征是否就可以直接用来分类了呢，答案是不能。我们假设一张图片的大小为500 * 500，经过50个Filter的卷积层之后，得到的结果为500 * 500 * 50”，维度非常大，我们需要减少数据大小，而不会对识别的结果产生影响，即对卷积层的输出做下采样(downsampling)，这时候就引入了池化层。池化层的原理很简单，先看一个例子：<br />
+<img alt="maxpool" src="../../../_images/maxpool.jpeg" /><br />
+我们先从右边看起，可以看到把一个4 * 4的矩阵按照2 * 2做切分，每个2 * 2的矩阵里，我们取最大的值保存下来，红色的矩阵里面最大值为6，所以输出为6，绿色的矩阵最大值为8，输出为8，黄色的为3，蓝色的为4,。这样我们就把原来4 * 4的矩阵变为了一个2 * 2的矩阵。在看左边，我们发现原来224 * 224的矩阵，缩小为112 * 112了，减少了一半大小。<br />
+那么为什么这样做可行呢？丢失的一部分数据会不会对结果有影响，实际上，池化层不会对数据丢失产生影响，因为我们每次保留的输出都是局部最显著的一个输出，<strong>而池化之后，最显著的特征并没有丢失</strong>。我们只保留了认为最显著的特征，而把其他无用的信息丢掉，来减少运算。池化层的引入还保证了平移不变性，即同样的图像经过翻转变形之后，通过池化层，可以得到相似的结果。<br />
+既然是降采样，那么是否有其他方法实现降采样，也能达到同样的效果呢？当然有，通过其它的降采样方式，我们同样可以得到和池化层相同的结果，因此就可以拿这种方式替换掉池化层，可以起到相同的效果。</p>
+<blockquote>
+<div><p>通常卷积层和池化层会重复多次形成具有多个隐藏层的网络，俗称深度神经网络。</p>
+</div></blockquote>
+<a name="fully_connect" />
+</div>
+<div class="section" id="fully-connected-layer">
+<h2>全连接层(Fully Connected Layer)<a class="headerlink" href="#fully-connected-layer" title="Permalink to this headline">¶</a></h2>
+<p>全连接层的作用主要是进行分类。<strong>前面通过卷积和池化层得出的特征，在全连接层对这些总结好的特征做分类</strong>。全连接层就是一个完全连接的神经网络，根据权重每个神经元反馈的比重不一样，最后通过调整权重和网络得到分类的结果。<br />
+<img alt="fully_connect" src="../../../_images/fully_connect.png" /><br />
+因为全连接层占用了神经网络80%的参数，因此对全连接层的优化就显得至关重要，现在也有用平均值来做最后的分类的。</p>
+<a name="how_to" />
+</div>
+</div>
+<div class="section" id="id2">
+<h1>如何构建CNN<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<p>现在我们已经清楚了CNN的原理，那么现在你想不想动手做一个CNN呢？下面我们通过tensorflow来实现一个CNN神经网络的例子：</p>
+<ol class="arabic simple">
+<li><p>首先我们需要载入tensorflow环境，python代码如下:</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+
+<span class="c1"># Imports</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+
+<span class="n">tf</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">set_verbosity</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="c1"># Our application logic will be added here</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>其中tf.layers模块包含用于创建上述3种层的方法：</p>
+<ul class="simple">
+<li><p>conv2d()。构建一个二维卷积层。接受的参数为过滤器数量，过滤器核大小，填充和激活函数。</p></li>
+<li><p>max_pooling2d()。构建一个使用最大池化算法的二维池化层。接受的参数为池化过滤器大小和步长。</p></li>
+<li><p>dense()。构建全连接层，接受的岑姝为神经元数量和激活函数。<br />
+上述这些方法都接受张量作为输入，并返回转换后的张量作为输出。这样可轻松地将一个层连接到另一个层：只需从一个层创建方法中获取输出，并将其作为输入提供给另一个层即可。</p></li>
+</ul>
+<div class="section" id="id3">
+<h2>输入层<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>对输入进行转换，输入的张量的形状应该为[batch_size, image_height, image_width, channels]。</p>
+<ul class="simple">
+<li><p>batch_size。在训练期间执行梯度下降法时使用的样本子集的大小。</p></li>
+<li><p>image_height。样本图像的高度。</p></li>
+<li><p>image_width。样本图像的宽度。</p></li>
+<li><p>channels。样本图像中颜色通道的数量。彩色图像有 3 个通道（红色、绿色、蓝色）。单色图像只有 1 个通道（黑色）。</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">input_layer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">features</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>卷积层<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>我们的第一个卷积层创建32个5 * 5的过滤器。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conv1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="n">input_layer</span><span class="p">,</span>
+    <span class="n">filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+    <span class="n">kernel_size</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+    <span class="n">padding</span><span class="o">=</span><span class="s2">&quot;same&quot;</span><span class="p">,</span>
+    <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>池化层<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>接下来，我们将第一个池化层连接到刚刚创建的卷积层。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pool1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">max_pooling2d</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">conv1</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">strides</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>卷积层2和池化层2<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>对于卷积层 2，我们配置 64 个 5x5 过滤器，并应用 ReLU 激活函数；对于池化层 2，我们使用与池化层 1 相同的规格（一个 2x2 最大池化过滤器，步长为2）：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conv2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="n">pool1</span><span class="p">,</span>
+    <span class="n">filters</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+    <span class="n">kernel_size</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+    <span class="n">padding</span><span class="o">=</span><span class="s2">&quot;same&quot;</span><span class="p">,</span>
+    <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">)</span>
+
+<span class="n">pool2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">max_pooling2d</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">conv2</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">strides</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id7">
+<h2>全连接层<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<p>接下来，我们需要向CNN添加全连接层（具有1024个神经元和ReLU激活函数），以对卷积/池化层提取的特征执行分类。不过，在我们连接该层之前，我们需要先扁平化特征图(pool2)，以将其变形为 [batch_size, features]，使张量只有两个维度：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pool2_flat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">pool2</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">64</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>在上面的 reshape() 操作中，-1 表示 batch_size 维度将根据输入数据中的样本数量动态计算。每个样本都具有 7（pool2 高度）* 7（pool2 宽度）* 64（pool2 通道）个特征。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dense</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">pool2_flat</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>为了改善模型的结果，我们还会使用 layers 中的 dropout 方法，向密集层应用丢弃正则化：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dropout</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="n">dense</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="n">mode</span> <span class="o">==</span> <span class="n">tf</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">ModeKeys</span><span class="o">.</span><span class="n">TRAIN</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id8">
+<h2>对数层<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<p>我们的神经网络中的最后一层是对数层，该层返回预测的原始值。我们创建一个具有 10 个神经元（介于 0 到 9 之间的每个目标类别对应一个神经元）的密集层，并应用线性激活函数（默认函数）：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">logits</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">dropout</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id9">
+<h2>生成预测<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tf</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">logits</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>我们可以使用 tf.nn.softmax 应用 softmax 激活函数，以从对数层中得出概率：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;softmax_tensor&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>我们将预测编译为字典，并返回:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">predictions</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">logits</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="s2">&quot;probabilities&quot;</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;softmax_tensor&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="n">tf</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">ModeKeys</span><span class="o">.</span><span class="n">PREDICT</span><span class="p">:</span>
+  <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">EstimatorSpec</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">predictions</span><span class="o">=</span><span class="n">predictions</span><span class="p">)</span>
+</pre></div>
+</div>
+<a name="base_concept" />
+</div>
+</div>
+<div class="section" id="id10">
+<h1>基本概念<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><strong>卷积核</strong> - 卷积核就是图像处理时，给定输入图像，在输出图像中每一个像素是输入图像中一个小区域中像素的加权平均，其中权值由一个函数定义，这个函数称为卷积核。<a class="reference external" href="https://en.wikipedia.org/wiki/Kernel_(image_processing)">kernel</a></p></li>
+<li><p><strong>卷积</strong> 卷积可以对应到2个函数叠加，因此用一个filter和图片叠加就可以求出整个图片的情况，可以用在图像的边缘检测，图片锐化，模糊等方面。<a class="reference external" href="https://en.wikipedia.org/wiki/Convolution">Convolution</a></p></li>
+</ul>
+<a name="paper" />
+</div>
+<div class="section" id="id11">
+<h1>论文汇总<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h1>
+<p>以下内容引用自<a class="reference external" href="https://skymind.ai/wiki/convolutional-network">A Beginner’s Guide to Convolutional Neural Networks (CNNs)</a>，主要是为了整理和学习相关内容，从新整理了一遍。</p>
+<div class="section" id="imagenet">
+<h2>ImageNet分类<a class="headerlink" href="#imagenet" title="Permalink to this headline">¶</a></h2>
+<p><img alt="imageNet" src="../../../_images/imageNet.PNG" /></p>
+<ul class="simple">
+<li><p>Microsoft (Deep Residual Learning) <a class="reference external" href="https://arxiv.org/pdf/1512.03385v1.pdf">Paper</a> <a class="reference external" href="http://image-net.org/challenges/talks/ilsvrc2015_deep_residual_learning_kaiminghe.pdf">Slide</a></p>
+<ul>
+<li><p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun, Deep Residual Learning for Image Recognition, arXiv:1512.03385.</p></li>
+</ul>
+</li>
+<li><p>Microsoft (PReLu/Weight initialization) <a class="reference external" href="https://arxiv.org/pdf/1502.01852.pdf">Paper</a></p>
+<ul>
+<li><p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun, Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification, arXiv:1502.01852.</p></li>
+</ul>
+</li>
+<li><p>Batch Normalization <a class="reference external" href="https://arxiv.org/pdf/1502.03167.pdf">Paper</a></p>
+<ul>
+<li><p>Sergey Ioffe, Christian Szegedy, Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift, arXiv:1502.03167.</p></li>
+</ul>
+</li>
+<li><p>GoogLeNet <a class="reference external" href="http://arxiv.org/pdf/1409.4842">Paper</a></p>
+<ul>
+<li><p>Christian Szegedy, Wei Liu, Yangqing Jia, Pierre Sermanet, Scott Reed, Dragomir Anguelov, Dumitru Erhan, Vincent Vanhoucke, Andrew Rabinovich, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>VGG-Net <a class="reference external" href="http://www.robots.ox.ac.uk/~vgg/research/very_deep/">Web</a> <a class="reference external" href="https://arxiv.org/pdf/1409.1556.pdf">Paper</a></p>
+<ul>
+<li><p>Karen Simonyan and Andrew Zisserman, Very Deep Convolutional Networks for Large-Scale Visual Recognition, ICLR, 2015.</p></li>
+</ul>
+</li>
+<li><p>AlexNet <a class="reference external" href="http://papers.nips.cc/book/advances-in-neural-information-processing-systems-25-2012">Paper</a></p>
+<ul>
+<li><p>Alex Krizhevsky, Ilya Sutskever, Geoffrey E. Hinton, ImageNet Classification with Deep Convolutional Neural Networks, NIPS, 2012.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="object-detection">
+<h2>物体检测(Object Detection)<a class="headerlink" href="#object-detection" title="Permalink to this headline">¶</a></h2>
+<p><img alt="object_detection" src="../../../_images/object_detection.PNG" /></p>
+<ul class="simple">
+<li><p>PVANET <a class="reference external" href="https://arxiv.org/pdf/1608.08021.pdf">paper</a> <a class="reference external" href="https://github.com/sanghoon/pva-faster-rcnn">Code</a></p>
+<ul>
+<li><p>Kye-Hyeon Kim, Sanghoon Hong, Byungseok Roh, Yeongjae Cheon, Minje Park, PVANET: Deep but Lightweight Neural Networks for Real-time Object Detection, arXiv:1608.08021</p></li>
+</ul>
+</li>
+<li><p>OverFeat, NYU <a class="reference external" href="https://arxiv.org/pdf/1312.6229.pdf">Paper</a></p>
+<ul>
+<li><p>OverFeat: Integrated Recognition, Localization and Detection using Convolutional Networks, ICLR, 2014.</p></li>
+</ul>
+</li>
+<li><p>R-CNN, UC Berkeley <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2014/papers/Girshick_Rich_Feature_Hierarchies_2014_CVPR_paper.pdf">Paper-CVPR14</a> <a class="reference external" href="https://arxiv.org/pdf/1311.2524.pdf">Paper-arXiv14</a></p>
+<ul>
+<li><p>Ross Girshick, Jeff Donahue, Trevor Darrell, Jitendra Malik, Rich feature hierarchies for accurate object detection and semantic segmentation, CVPR, 2014.</p></li>
+</ul>
+</li>
+<li><p>SPP, Microsoft Research <a class="reference external" href="https://arxiv.org/pdf/1406.4729.pdf">Paper</a></p>
+<ul>
+<li><p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun, Spatial Pyramid Pooling in Deep Convolutional Networks for Visual Recognition, ECCV, 2014.</p></li>
+</ul>
+</li>
+<li><p>Fast R-CNN, Microsoft Research <a class="reference external" href="https://arxiv.org/pdf/1504.08083.pdf">Paper</a></p>
+<ul>
+<li><p>Ross Girshick, Fast R-CNN, arXiv:1504.08083.</p></li>
+</ul>
+</li>
+<li><p>Faster R-CNN, Microsoft Research <a class="reference external" href="https://arxiv.org/pdf/1506.01497.pdf">Paper</a></p>
+<ul>
+<li><p>Shaoqing Ren, Kaiming He, Ross Girshick, Jian Sun, Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks, arXiv:1506.01497.</p></li>
+</ul>
+</li>
+<li><p>R-CNN minus R, Oxford <a class="reference external" href="https://arxiv.org/pdf/1506.06981.pdf">Paper</a></p>
+<ul>
+<li><p>Karel Lenc, Andrea Vedaldi, R-CNN minus R, arXiv:1506.06981.</p></li>
+</ul>
+</li>
+<li><p>End-to-end people detection in crowded scenes <a class="reference external" href="https://arxiv.org/abs/1506.04878">Paper</a></p>
+<ul>
+<li><p>Russell Stewart, Mykhaylo Andriluka, End-to-end people detection in crowded scenes, arXiv:1506.04878.</p></li>
+</ul>
+</li>
+<li><p>You Only Look Once: Unified, Real-Time object Detection <a class="reference external" href="https://arxiv.org/abs/1506.02640">Paper</a>, <a class="reference external" href="https://arxiv.org/abs/1612.08242">Paper Version 2</a>, <a class="reference external" href="https://github.com/pjreddie/darknet">C Code</a>, <a class="reference external" href="https://github.com/thtrieu/darkflow">Tensorflow Code</a></p>
+<ul>
+<li><p>Joseph Redmon, Santosh Divvala, Ross Girshick, Ali Farhadi, You Only Look Once: Unified, Real-Time Object Detection, arXiv:1506.02640</p></li>
+<li><p>Joseph Redmon, Ali Farhadi (Version 2)</p></li>
+</ul>
+</li>
+<li><p>Inside-Outside Net <a class="reference external" href="https://arxiv.org/abs/1512.04143">Paper</a></p>
+<ul>
+<li><p>Sean Bell, C. Lawrence Zitnick, Kavita Bala, Ross Girshick, Inside-Outside Net: Detecting Objects in Context with Skip Pooling and Recurrent Neural Networks</p></li>
+</ul>
+</li>
+<li><p>Deep Residual Network (Current State-of-the-Art) <a class="reference external" href="https://arxiv.org/abs/1512.03385">Paper</a></p>
+<ul>
+<li><p>Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun, Deep Residual Learning for Image Recognition</p></li>
+</ul>
+</li>
+<li><p>Weakly Supervised Object Localization with Multi-fold Multiple instance Learning <a class="reference external" href="https://arxiv.org/pdf/1503.00949.pdf">Paper</a></p></li>
+<li><p>R-FCN <a class="reference external" href="https://arxiv.org/abs/1605.06409">Paper</a> <a class="reference external" href="https://github.com/daijifeng001/R-FCN">Code</a></p>
+<ul>
+<li><p>Jifeng Dai, Yi Li, Kaiming He, Jian Sun, R-FCN: Object Detection via Region-based Fully Convolutional Networks</p></li>
+</ul>
+</li>
+<li><p>SSD <a class="reference external" href="https://arxiv.org/pdf/1512.02325v2.pdf">Paper</a> <a class="reference external" href="https://github.com/weiliu89/caffe/tree/ssd">Code</a></p>
+<ul>
+<li><p>Wei Liu1, Dragomir Anguelov, Dumitru Erhan, Christian Szegedy, Scott Reed, Cheng-Yang Fu, Alexander C. Berg, SSD: Single Shot MultiBox Detector, arXiv:1512.02325</p></li>
+</ul>
+</li>
+<li><p>Speed/accuracy trade-offs for modern convolutional object detectors <a class="reference external" href="https://arxiv.org/pdf/1611.10012v1.pdf">Paper</a></p>
+<ul>
+<li><p>Jonathan Huang, Vivek Rathod, Chen Sun, Menglong Zhu, Anoop Korattikara, Alireza Fathi, Ian Fischer, Zbigniew Wojna, Yang Song, Sergio Guadarrama, Kevin Murphy, Google Research, arXiv:1611.10012</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="video-classification">
+<h2>视频分类(Video Classification)<a class="headerlink" href="#video-classification" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Nicolas Ballas, Li Yao, Pal Chris, Aaron Courville, “Delving Deeper into Convolutional Networks for Learning Video Representations”, ICLR 2016. <a class="reference external" href="https://arxiv.org/pdf/1511.06432v4.pdf">Paper</a></p></li>
+<li><p>Michael Mathieu, camille couprie, Yann Lecun, “Deep Multi Scale Video Prediction Beyond Mean Square Error”, ICLR 2016. <a class="reference external" href="https://arxiv.org/pdf/1511.05440v6.pdf">Paper</a></p></li>
+</ul>
+</div>
+<div class="section" id="object-tracking">
+<h2>对象跟踪(Object Tracking)<a class="headerlink" href="#object-tracking" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Seunghoon Hong, Tackgeun You, Suha Kwak, Bohyung Han, Online Tracking by Learning Discriminative Saliency Map with Convolutional Neural Network, arXiv:1502.06796. <a class="reference external" href="https://arxiv.org/pdf/1502.06796.pdf">Paper</a></p></li>
+<li><p>Hanxi Li, Yi Li and Fatih Porikli, DeepTrack: Learning Discriminative Feature Representations by Convolutional Neural Networks for Visual Tracking, BMVC, 2014. <a class="reference external" href="http://www.bmva.org/bmvc/2014/files/paper028.pdf">Paper</a></p></li>
+<li><p>N Wang, DY Yeung, Learning a Deep Compact Image Representation for Visual Tracking, NIPS, 2013. <a class="reference external" href="http://winsty.net/papers/dlt.pdf">Paper</a></p></li>
+<li><p>N Wang, DY Yeung, Learning a Deep Compact Image Representation for Visual Tracking, NIPS, 2013. <a class="reference external" href="http://winsty.net/papers/dlt.pdf">Paper</a></p></li>
+<li><p>Chao Ma, Jia-Bin Huang, Xiaokang Yang and Ming-Hsuan Yang, Hierarchical Convolutional Features for Visual Tracking, ICCV 2015 <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/Ma_Hierarchical_Convolutional_Features_ICCV_2015_paper.pdf">Paper</a> <a class="reference external" href="https://github.com/jbhuang0604/CF2">Code</a></p></li>
+<li><p>Lijun Wang, Wanli Ouyang, Xiaogang Wang, and Huchuan Lu, Visual Tracking with fully Convolutional Networks, ICCV 2015 <a class="reference external" href="http://202.118.75.4/lu/Paper/ICCV2015/iccv15_lijun.pdf">Paper</a> <a class="reference external" href="https://github.com/scott89/FCNT">Code</a></p></li>
+<li><p>Hyeonseob Namand Bohyung Han, Learning Multi-Domain Convolutional Neural Networks for Visual Tracking, <a class="reference external" href="https://arxiv.org/pdf/1510.07945.pdf">Paper</a> <a class="reference external" href="https://github.com/HyeonseobNam/MDNet">Code</a> <a class="reference external" href="http://cvlab.postech.ac.kr/research/mdnet/">Project Page</a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="low-level-vision">
+<h1>底层视觉(Low-Level Vision)<a class="headerlink" href="#low-level-vision" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="super-resolution">
+<h2>超分辨率(Super-Resolution)<a class="headerlink" href="#super-resolution" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>迭代图像重建(Iterative Image Reconstruction)</p>
+<ul>
+<li><p>Sven Behnke: Learning Iterative Image Reconstruction. IJCAI, 2001. <a class="reference external" href="http://www.ais.uni-bonn.de/behnke/papers/ijcai01.pdf">Paper</a></p></li>
+<li><p>Sven Behnke: Learning Iterative Image Reconstruction in the Neural Abstraction Pyramid. International Journal of Computational Intelligence and Applications, vol. 1, no. 4, pp. 427-438, 2001. <a class="reference external" href="http://www.ais.uni-bonn.de/behnke/papers/ijcia01.pdf">Paper</a></p></li>
+</ul>
+</li>
+<li><p>Super-Resolution (SRCNN) <a class="reference external" href="http://mmlab.ie.cuhk.edu.hk/projects/SRCNN.html">Web</a> <a class="reference external" href="http://personal.ie.cuhk.edu.hk/~ccloy/files/eccv_2014_deepresolution.pdf">Paper-ECCV14</a> <a class="reference external" href="https://arxiv.org/pdf/1501.00092.pdf">Paper-arXiv15</a></p>
+<ul>
+<li><p>Chao Dong, Chen Change Loy, Kaiming He, Xiaoou Tang, Learning a Deep Convolutional Network for Image Super-Resolution, ECCV, 2014.</p></li>
+<li><p>Chao Dong, Chen Change Loy, Kaiming He, Xiaoou Tang, Image Super-Resolution Using Deep Convolutional Networks, arXiv:1501.00092.</p></li>
+</ul>
+</li>
+<li><p>Very Deep Super-Resolution</p>
+<ul>
+<li><p>Jiwon Kim, Jung Kwon Lee, Kyoung Mu Lee, Accurate Image Super-Resolution Using Very Deep Convolutional Networks, arXiv:1511.04587, 2015. <a class="reference external" href="https://arxiv.org/abs/1511.04587">Paper</a></p></li>
+</ul>
+</li>
+<li><p>Deeply-Recursive Convolutional Network</p>
+<ul>
+<li><p>Jiwon Kim, Jung Kwon Lee, Kyoung Mu Lee, Deeply-Recursive Convolutional Network for Image Super-Resolution, arXiv:1511.04491, 2015. <a class="reference external" href="https://arxiv.org/abs/1511.04491">Paper</a></p></li>
+</ul>
+</li>
+<li><p>Casade-Sparse-Coding-Network</p>
+<ul>
+<li><p>Zhaowen Wang, Ding Liu, Wei Han, Jianchao Yang and Thomas S. Huang, Deep Networks for Image Super-Resolution with Sparse Prior. ICCV, 2015. <a class="reference external" href="http://www.ifp.illinois.edu/~dingliu2/iccv15/iccv15.pdf">Paper</a> <a class="reference external" href="http://www.ifp.illinois.edu/~dingliu2/iccv15/">Code</a></p></li>
+</ul>
+</li>
+<li><p>Perceptual Losses for Super-Resolution</p>
+<ul>
+<li><p>Justin Johnson, Alexandre Alahi, Li Fei-Fei, Perceptual Losses for Real-Time Style Transfer and Super-Resolution, arXiv:1603.08155, 2016. <a class="reference external" href="https://arxiv.org/abs/1603.08155">Paper</a> <a class="reference external" href="https://cs.stanford.edu/people/jcjohns/papers/fast-style/fast-style-supp.pdf">Supplementary</a></p></li>
+</ul>
+</li>
+<li><p>SRGAN</p>
+<ul>
+<li><p>Christian Ledig, Lucas Theis, Ferenc Huszar, Jose Caballero, Andrew Cunningham, Alejandro Acosta, Andrew Aitken, Alykhan Tejani, Johannes Totz, Zehan Wang, Wenzhe Shi, Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network, arXiv:1609.04802v3, 2016. <a class="reference external" href="https://arxiv.org/pdf/1609.04802v3.pdf">Paper</a></p></li>
+</ul>
+</li>
+<li><p>Others</p>
+<ul>
+<li><p>Osendorfer, Christian, Hubert Soyer, and Patrick van der Smagt, Image Super-Resolution with Fast Approximate Convolutional Sparse Coding, ICONIP, 2014. <a class="reference external" href="http://brml.org/uploads/tx_sibibtex/281.pdf">Paper ICONIP-2014</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="other-applications">
+<h2>其他应用(Other Applications)<a class="headerlink" href="#other-applications" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Optical Flow (FlowNet) <a class="reference external" href="http://arxiv.org/pdf/1504.06852">Paper</a></p>
+<ul>
+<li><p>Philipp Fischer, Alexey Dosovitskiy, Eddy Ilg, Philip Häusser, Caner Hazırbaş, Vladimir Golkov, Patrick van der Smagt, Daniel Cremers, Thomas Brox, FlowNet: Learning Optical Flow with Convolutional Networks, arXiv:1504.06852.</p></li>
+</ul>
+</li>
+<li><p>Compression Artifacts Reduction <a class="reference external" href="http://arxiv.org/pdf/1504.06993">Paper-arXiv15</a></p>
+<ul>
+<li><p>Chao Dong, Yubin Deng, Chen Change Loy, Xiaoou Tang, Compression Artifacts Reduction by a Deep Convolutional Network, arXiv:1504.06993.</p></li>
+</ul>
+</li>
+<li><p>Blur Removal</p>
+<ul>
+<li><p>Christian J. Schuler, Michael Hirsch, Stefan Harmeling, Bernhard Schölkopf, Learning to Deblur, arXiv:1406.7444 <a class="reference external" href="https://arxiv.org/pdf/1406.7444.pdf">Paper</a></p></li>
+<li><p>Jian Sun, Wenfei Cao, Zongben Xu, Jean Ponce, Learning a Convolutional Neural Network for Non-uniform Motion Blur Removal, CVPR, 2015 <a class="reference external" href="https://arxiv.org/pdf/1503.00593.pdf">Paper</a></p></li>
+</ul>
+</li>
+<li><p>Image Deconvolution <a class="reference external" href="http://lxu.me/projects/dcnn/">Web</a> <a class="reference external" href="http://lxu.me/mypapers/dcnn_nips14.pdf">Paper</a></p>
+<ul>
+<li><p>Li Xu, Jimmy SJ. Ren, Ce Liu, Jiaya Jia, Deep Convolutional Neural Network for Image Deconvolution, NIPS, 2014.</p></li>
+</ul>
+</li>
+<li><p>Deep Edge-Aware Filter <a class="reference external" href="http://proceedings.mlr.press/v37/xub15.pdf">Paper</a></p>
+<ul>
+<li><p>Li Xu, Jimmy SJ. Ren, Qiong Yan, Renjie Liao, Jiaya Jia, Deep Edge-Aware Filters, ICML, 2015.</p></li>
+</ul>
+</li>
+<li><p>Computing the Stereo Matching Cost with a Convolutional Neural Network <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Zbontar_Computing_the_Stereo_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Jure Žbontar, Yann LeCun, Computing the Stereo Matching Cost with a Convolutional Neural Network, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>Colorful Image Colorization Richard Zhang, Phillip Isola, Alexei A. Efros, ECCV, 2016 <a class="reference external" href="http://arxiv.org/pdf/1603.08511.pdf">Paper</a>, <a class="reference external" href="https://github.com/richzhang/colorization">Code</a></p></li>
+<li><p>Ryan Dahl, <a class="reference external" href="https://tinyclouds.org/colorize/">Blog</a></p></li>
+<li><p>Feature Learning by Inpainting <a class="reference external" href="https://arxiv.org/pdf/1604.07379v1.pdf">Paper</a> <a class="reference external" href="https://github.com/pathak22/context-encoder">Code</a></p>
+<ul>
+<li><p>Deepak Pathak, Philipp Krahenbuhl, Jeff Donahue, Trevor Darrell, Alexei A. Efros, Context Encoders: Feature Learning by Inpainting, CVPR, 2016</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="edge-detection">
+<h2>边缘检测(Edge Detection)<a class="headerlink" href="#edge-detection" title="Permalink to this headline">¶</a></h2>
+<p><img alt="edge_detection" src="../../../_images/edge_detection.PNG" /></p>
+<ul class="simple">
+<li><p>Holistically-Nested Edge Detection <a class="reference external" href="https://arxiv.org/pdf/1504.06375.pdf">Paper</a> <a class="reference external" href="https://github.com/s9xie/hed">Code</a></p>
+<ul>
+<li><p>Saining Xie, Zhuowen Tu, Holistically-Nested Edge Detection, arXiv:1504.06375.</p></li>
+</ul>
+</li>
+<li><p>DeepEdge <a class="reference external" href="http://arxiv.org/pdf/1412.1123">Paper</a></p>
+<ul>
+<li><p>Gedas Bertasius, Jianbo Shi, Lorenzo Torresani, DeepEdge: A Multi-Scale Bifurcated Deep Network for Top-Down Contour Detection, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>DeepContour <a class="reference external" href="http://mc.eistar.net/UpLoadFiles/Papers/DeepContour_cvpr15.pdf">Paper</a></p>
+<ul>
+<li><p>Wei Shen, Xinggang Wang, Yan Wang, Xiang Bai, Zhijiang Zhang, DeepContour: A Deep Convolutional Feature Learned by Positive-Sharing Loss for Contour Detection, CVPR, 2015.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="semantic-segmentation">
+<h2>语义分割(Semantic Segmentation)<a class="headerlink" href="#semantic-segmentation" title="Permalink to this headline">¶</a></h2>
+<p><img alt="semantic" src="../../../_images/semantic.PNG" /></p>
+<ul class="simple">
+<li><p>PASCAL VOC2012 Challenge Leaderboard (01 Sep. 2016)
+<img alt="" src="../../../_images/pascal.png" /><br />
+<a class="reference external" href="http://host.robots.ox.ac.uk:8080/leaderboard/displaylb.php?challengeid=11&amp;compid=6">from PASCAL VOC2012 leaderboards</a></p></li>
+<li><p>SEC: Seed, Expand and Constrain</p>
+<ul>
+<li><p>Alexander Kolesnikov, Christoph Lampert, Seed, Expand and Constrain: Three Principles for Weakly-Supervised Image Segmentation, ECCV, 2016. <a class="reference external" href="http://pub.ist.ac.at/~akolesnikov/files/ECCV2016/main.pdf">Paper</a> <a class="reference external" href="https://github.com/kolesman/SEC">Code</a></p></li>
+</ul>
+</li>
+<li><p>Adelaide</p>
+<ul>
+<li><p>Guosheng Lin, Chunhua Shen, Ian Reid, Anton van dan Hengel, Efficient piecewise training of deep structured models for semantic segmentation, arXiv:1504.01013. <a class="reference external" href="https://arxiv.org/pdf/1504.01013.pdf">Paper</a> (1st ranked in VOC2012)</p></li>
+<li><p>Guosheng Lin, Chunhua Shen, Ian Reid, Anton van den Hengel, Deeply Learning the Messages in Message Passing Inference, arXiv:1508.02108. <a class="reference external" href="https://arxiv.org/pdf/1506.02108.pdf">Paper</a> (4th ranked in VOC2012)</p></li>
+</ul>
+</li>
+<li><p>Deep Parsing Network (DPN)</p>
+<ul>
+<li><p>Ziwei Liu, Xiaoxiao Li, Ping Luo, Chen Change Loy, Xiaoou Tang, Semantic Image Segmentation via Deep Parsing Network, arXiv:1509.02634 / ICCV 2015 <a class="reference external" href="https://arxiv.org/pdf/1509.02634.pdf">Paper</a> (2nd ranked in VOC 2012)</p></li>
+</ul>
+</li>
+<li><p>CentraleSuperBoundaries, INRIA <a class="reference external" href="https://arxiv.org/pdf/1511.07386.pdf">Paper</a></p>
+<ul>
+<li><p>Iasonas Kokkinos, Surpassing Humans in Boundary Detection using Deep Learning, arXiv:1411.07386 (4th ranked in VOC 2012)</p></li>
+</ul>
+</li>
+<li><p>BoxSup <a class="reference external" href="http://arxiv.org/pdf/1503.01640.pdf">Paper</a></p>
+<ul>
+<li><p>Jifeng Dai, Kaiming He, Jian Sun, BoxSup: Exploiting Bounding Boxes to Supervise Convolutional Networks for Semantic Segmentation, arXiv:1503.01640. (6th ranked in VOC2012)</p></li>
+</ul>
+</li>
+<li><p>POSTECH</p>
+<ul>
+<li><p>Hyeonwoo Noh, Seunghoon Hong, Bohyung Han, Learning Deconvolution Network for Semantic Segmentation, arXiv:1505.04366. <a class="reference external" href="https://arxiv.org/pdf/1505.04366.pdf">Paper</a> (7th ranked in VOC2012)</p></li>
+<li><p>Seunghoon Hong, Hyeonwoo Noh, Bohyung Han, Decoupled Deep Neural Network for Semi-supervised Semantic Segmentation, arXiv:1506.04924. <a class="reference external" href="https://arxiv.org/pdf/1506.04924.pdf">Paper</a></p></li>
+<li><p>Seunghoon Hong,Junhyuk Oh,	Bohyung Han, and	Honglak Lee, Learning Transferrable Knowledge for Semantic Segmentation with Deep Convolutional Neural Network, arXiv:1512.07928 <a class="reference external" href="https://arxiv.org/pdf/1512.07928.pdf">Paper</a> <a class="reference external" href="http://cvlab.postech.ac.kr/research/transfernet/">Project Page</a></p></li>
+</ul>
+</li>
+<li><p>Conditional Random Fields as Recurrent Neural Networks <a class="reference external" href="https://arxiv.org/pdf/1502.03240.pdf">Paper</a></p>
+<ul>
+<li><p>Shuai Zheng, Sadeep Jayasumana, Bernardino Romera-Paredes, Vibhav Vineet, Zhizhong Su, Dalong Du, Chang Huang, Philip H. S. Torr, Conditional Random Fields as Recurrent Neural Networks, arXiv:1502.03240. (8th ranked in VOC2012)</p></li>
+</ul>
+</li>
+<li><p>DeepLab</p>
+<ul>
+<li><p>Liang-Chieh Chen, George Papandreou, Kevin Murphy, Alan L. Yuille, Weakly-and semi-supervised learning of a DCNN for semantic image segmentation, arXiv:1502.02734. <a class="reference external" href="https://arxiv.org/pdf/1502.02734.pdf">Paper</a> (9th ranked in VOC2012)</p></li>
+</ul>
+</li>
+<li><p>Zoom-out <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Mostajabi_Feedforward_Semantic_Segmentation_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Mohammadreza Mostajabi, Payman Yadollahpour, Gregory Shakhnarovich, Feedforward Semantic Segmentation With Zoom-Out Features, CVPR, 2015</p></li>
+</ul>
+</li>
+<li><p>Joint Calibration <a class="reference external" href="https://arxiv.org/pdf/1507.01581.pdf">Paper</a></p>
+<ul>
+<li><p>Holger Caesar, Jasper Uijlings, Vittorio Ferrari, Joint Calibration for Semantic Segmentation, arXiv:1507.01581.</p></li>
+</ul>
+</li>
+<li><p>Fully Convolutional Networks for Semantic Segmentation <a class="reference external" href="https://arxiv.org/pdf/1411.4038.pdf">Paper-arXiv15</a></p>
+<ul>
+<li><p>Jonathan Long, Evan Shelhamer, Trevor Darrell, Fully Convolutional Networks for Semantic Segmentation, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>Hypercolumn <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Hariharan_Hypercolumns_for_Object_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Bharath Hariharan, Pablo Arbelaez, Ross Girshick, Jitendra Malik, Hypercolumns for Object Segmentation and Fine-Grained Localization, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>Deep Hierarchical Parsing <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Sharma_Deep_Hierarchical_Parsing_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Abhishek Sharma, Oncel Tuzel, David W. Jacobs, Deep Hierarchical Parsing for Semantic Segmentation, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>Learning Hierarchical Features for Scene Labeling <a class="reference external" href="http://yann.lecun.com/exdb/publis/pdf/farabet-icml-12.pdf">Paper-ICML12</a> <a class="reference external" href="http://yann.lecun.com/exdb/publis/pdf/farabet-pami-13.pdf">Paper-PAMI13</a></p>
+<ul>
+<li><p>Clement Farabet, Camille Couprie, Laurent Najman, Yann LeCun, Scene Parsing with Multiscale Feature Learning, Purity Trees, and Optimal Covers, ICML, 2012.</p></li>
+<li><p>Clement Farabet, Camille Couprie, Laurent Najman, Yann LeCun, Learning Hierarchical Features for Scene Labeling, PAMI, 2013.</p></li>
+</ul>
+</li>
+<li><p>University of Cambridge <a class="reference external" href="http://mi.eng.cam.ac.uk/projects/segnet/">Web</a></p>
+<ul>
+<li><p>Vijay Badrinarayanan, Alex Kendall and Roberto Cipolla “SegNet: A Deep Convolutional Encoder-Decoder Architecture for Image Segmentation.” arXiv preprint arXiv:1511.00561, 2015. <a class="reference external" href="https://arxiv.org/abs/1511.00561">Paper</a></p></li>
+</ul>
+</li>
+<li><p>Alex Kendall, Vijay Badrinarayanan and Roberto Cipolla “Bayesian SegNet: Model Uncertainty in Deep Convolutional Encoder-Decoder Architectures for Scene Understanding.” arXiv preprint arXiv:1511.02680, 2015. <a class="reference external" href="https://arxiv.org/abs/1511.00561">Paper</a></p></li>
+<li><p>Princeton</p>
+<ul>
+<li><p>Fisher Yu, Vladlen Koltun, “Multi-Scale Context Aggregation by Dilated Convolutions”, ICLR 2016, <a class="reference external" href="https://arxiv.org/pdf/1511.07122v2.pdf">Paper</a></p></li>
+</ul>
+</li>
+<li><p>Univ. of Washington, Allen AI</p>
+<ul>
+<li><p>Hamid Izadinia, Fereshteh Sadeghi, Santosh Kumar Divvala, Yejin Choi, Ali Farhadi, “Segment-Phrase Table for Semantic Segmentation, Visual Entailment and Paraphrasing”, ICCV, 2015, <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/Izadinia_Segment-Phrase_Table_for_ICCV_2015_paper.pdf">Paper</a></p></li>
+</ul>
+</li>
+<li><p>INRIA</p>
+<ul>
+<li><p>Iasonas Kokkinos, “Pusing the Boundaries of Boundary Detection Using deep Learning”, ICLR 2016, <a class="reference external" href="http://arxiv.org/pdf/1511.07386v2.pdf">Paper</a></p></li>
+</ul>
+</li>
+<li><p>UCSB</p>
+<ul>
+<li><p>Niloufar Pourian, S. Karthikeyan, and B.S. Manjunath, “Weakly supervised graph based semantic segmentation by learning communities of image-parts”, ICCV, 2015, <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/Pourian_Weakly_Supervised_Graph_ICCV_2015_paper.pdf">Paper</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="visual-attention-and-saliency">
+<h2>视觉注意力和显着性(Visual Attention and Saliency)<a class="headerlink" href="#visual-attention-and-saliency" title="Permalink to this headline">¶</a></h2>
+<p><img alt="attention" src="../../../_images/attention.png" /></p>
+<ul class="simple">
+<li><p>Mr-CNN <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Liu_Predicting_Eye_Fixations_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Nian Liu, Junwei Han, Dingwen Zhang, Shifeng Wen, Tianming Liu, Predicting Eye Fixations using Convolutional Neural Networks, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li></li>
+</ul>
+<p>Saurabh Singh, Derek Hoiem, David Forsyth, Learning a Sequential Search for Landmarks, CVPR, 2015.</p>
+<ul class="simple">
+<li><p>Multiple Object Recognition with Visual Attention <a class="reference external" href="https://arxiv.org/pdf/1412.7755.pdf">Paper</a></p>
+<ul>
+<li><p>Jimmy Lei Ba, Volodymyr Mnih, Koray Kavukcuoglu, Multiple Object Recognition with Visual Attention, ICLR, 2015.</p></li>
+</ul>
+</li>
+<li><p>Recurrent Models of Visual Attention <a class="reference external" href="http://papers.nips.cc/paper/5542-recurrent-models-of-visual-attention.pdf">Paper</a></p>
+<ul>
+<li><p>Volodymyr Mnih, Nicolas Heess, Alex Graves, Koray Kavukcuoglu, Recurrent Models of Visual Attention, NIPS, 2014.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="learning-a-sequential-search-for-landmarks-paper">
+<h1>Learning a Sequential Search for Landmarks <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Singh_Learning_a_Sequential_2015_CVPR_paper.pdf">Paper</a><a class="headerlink" href="#learning-a-sequential-search-for-landmarks-paper" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="object-recognition">
+<h2>物体识别(Object Recognition)<a class="headerlink" href="#object-recognition" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Weakly-supervised learning with convolutional neural networks <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Oquab_Is_Object_Localization_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Maxime Oquab, Leon Bottou, Ivan Laptev, Josef Sivic, Is object localization for free? – Weakly-supervised learning with convolutional neural networks, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>FV-CNN <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Cimpoi_Deep_Filter_Banks_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Mircea Cimpoi, Subhransu Maji, Andrea Vedaldi, Deep Filter Banks for Texture Recognition and Segmentation, CVPR, 2015.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="human-pose-estimation">
+<h2>人体姿势估计(Human Pose Estimation)<a class="headerlink" href="#human-pose-estimation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Zhe Cao, Tomas Simon, Shih-En Wei, and Yaser Sheikh, Realtime Multi-Person 2D Pose Estimation using Part Affinity Fields, CVPR, 2017.</p></li>
+<li><p>Leonid Pishchulin, Eldar Insafutdinov, Siyu Tang, Bjoern Andres, Mykhaylo Andriluka, Peter Gehler, and Bernt Schiele, Deepcut: Joint subset partition and labeling for multi person pose estimation, CVPR, 2016.</p></li>
+<li><p>Shih-En Wei, Varun Ramakrishna, Takeo Kanade, and Yaser Sheikh, Convolutional pose machines, CVPR, 2016.</p></li>
+<li><p>Alejandro Newell, Kaiyu Yang, and Jia Deng, Stacked hourglass networks for human pose estimation, ECCV, 2016.</p></li>
+<li><p>Tomas Pfister, James Charles, and Andrew Zisserman, Flowing convnets for human pose estimation in videos, ICCV, 2015.</p></li>
+<li><p>Jonathan J. Tompson, Arjun Jain, Yann LeCun, Christoph Bregler, Joint training of a convolutional network and a graphical model for human pose estimation, NIPS, 2014.</p></li>
+</ul>
+</div>
+<div class="section" id="understanding-cnn">
+<h2>Understanding CNN<a class="headerlink" href="#understanding-cnn" title="Permalink to this headline">¶</a></h2>
+<p><img alt="understanding" src="../../../_images/understanding.PNG" /></p>
+<ul class="simple">
+<li><p>Karel Lenc, Andrea Vedaldi, Understanding image representations by measuring their equivariance and equivalence, CVPR, 2015. <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Lenc_Understanding_Image_Representations_2015_CVPR_paper.pdf">Paper</a></p></li>
+<li><p>Anh Nguyen, Jason Yosinski, Jeff Clune, Deep Neural Networks are Easily Fooled:High Confidence Predictions for Unrecognizable Images, CVPR, 2015. <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Nguyen_Deep_Neural_Networks_2015_CVPR_paper.pdf">Paper</a></p></li>
+<li><p>Aravindh Mahendran, Andrea Vedaldi, Understanding Deep Image Representations by Inverting Them, CVPR, 2015. <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Mahendran_Understanding_Deep_Image_2015_CVPR_paper.pdf">Paper</a></p></li>
+<li><p>Bolei Zhou, Aditya Khosla, Agata Lapedriza, Aude Oliva, Antonio Torralba, Object Detectors Emerge in Deep Scene CNNs, ICLR, 2015. <a class="reference external" href="https://arxiv.org/abs/1412.6856">arXiv Paper</a></p></li>
+<li><p>Alexey Dosovitskiy, Thomas Brox, Inverting Visual Representations with Convolutional Networks, arXiv, 2015. <a class="reference external" href="https://arxiv.org/abs/1506.02753">Paper</a></p></li>
+<li><p>Matthrew Zeiler, Rob Fergus, Visualizing and Understanding Convolutional Networks, ECCV, 2014. <a class="reference external" href="https://cs.nyu.edu/~fergus/papers/zeilerECCV2014.pdf">Paper</a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="image-and-language">
+<h1>Image and Language<a class="headerlink" href="#image-and-language" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="image-captioning">
+<h2>Image Captioning<a class="headerlink" href="#image-captioning" title="Permalink to this headline">¶</a></h2>
+<p><img alt="image_caption" src="../../../_images/image_caption.PNG" /></p>
+<ul class="simple">
+<li><p>Pay Less Attention with Lightweight and Dynamic Convolutions <a class="reference external" href="https://arxiv.org/abs/1901.10430">Paper</a></p></li>
+<li><p>UCLA / Baidu <a class="reference external" href="https://arxiv.org/pdf/1410.1090.pdf">Paper</a></p>
+<ul>
+<li><p>Junhua Mao, Wei Xu, Yi Yang, Jiang Wang, Alan L. Yuille, Explain Images with Multimodal Recurrent Neural Networks, arXiv:1410.1090.</p></li>
+</ul>
+</li>
+<li><p>Toronto <a class="reference external" href="https://arxiv.org/pdf/1411.2539.pdf">Paper</a></p>
+<ul>
+<li><p>Ryan Kiros, Ruslan Salakhutdinov, Richard S. Zemel, Unifying Visual-Semantic Embeddings with Multimodal Neural Language Models, arXiv:1411.2539.</p></li>
+</ul>
+</li>
+<li><p>Berkeley <a class="reference external" href="https://arxiv.org/pdf/1411.4389.pdf">Paper</a></p>
+<ul>
+<li><p>Jeff Donahue, Lisa Anne Hendricks, Sergio Guadarrama, Marcus Rohrbach, Subhashini Venugopalan, Kate Saenko, Trevor Darrell, Long-term Recurrent Convolutional Networks for Visual Recognition and Description, arXiv:1411.4389.</p></li>
+</ul>
+</li>
+<li><p>Google <a class="reference external" href="https://arxiv.org/pdf/1411.4555.pdf">Paper</a></p>
+<ul>
+<li><p>Oriol Vinyals, Alexander Toshev, Samy Bengio, Dumitru Erhan, Show and Tell: A Neural Image Caption Generator, arXiv:1411.4555.</p></li>
+</ul>
+</li>
+<li><p>Stanford <a class="reference external" href="https://cs.stanford.edu/people/karpathy/deepimagesent/">Web</a> <a class="reference external" href="https://cs.stanford.edu/people/karpathy/cvpr2015.pdf">Paper</a></p>
+<ul>
+<li><p>Andrej Karpathy, Li Fei-Fei, Deep Visual-Semantic Alignments for Generating Image Description, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>UML / UT <a class="reference external" href="https://arxiv.org/pdf/1412.4729.pdf">Paper</a></p>
+<ul>
+<li><p>Subhashini Venugopalan, Huijuan Xu, Jeff Donahue, Marcus Rohrbach, Raymond Mooney, Kate Saenko, Translating Videos to Natural Language Using Deep Recurrent Neural Networks, NAACL-HLT, 2015.</p></li>
+</ul>
+</li>
+<li><p>CMU / Microsoft <a class="reference external" href="https://arxiv.org/pdf/1411.5654.pdf">Paper-arXiv</a></p>
+<ul>
+<li><p>Xinlei Chen, C. Lawrence Zitnick, Learning a Recurrent Visual Representation for Image Caption Generation, arXiv:1411.5654.</p></li>
+<li><p>Xinlei Chen, C. Lawrence Zitnick, Mind’s Eye: A Recurrent Visual Representation for Image Caption Generation, CVPR 2015</p></li>
+</ul>
+</li>
+<li><p>Microsoft <a class="reference external" href="https://arxiv.org/pdf/1411.4952.pdf">Paper</a></p>
+<ul>
+<li><p>Hao Fang, Saurabh Gupta, Forrest Iandola, Rupesh Srivastava, Li Deng, Piotr Dollár, Jianfeng Gao, Xiaodong He, Margaret Mitchell, John C. Platt, C. Lawrence Zitnick, Geoffrey Zweig, From Captions to Visual Concepts and Back, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>Univ. Montreal / Univ. Toronto <a class="reference external" href="http://kelvinxu.github.io/projects/capgen.html">Web</a> <a class="reference external" href="http://www.cs.toronto.edu/~zemel/documents/captionAttn.pdf">Paper</a></p>
+<ul>
+<li><p>Kelvin Xu, Jimmy Lei Ba, Ryan Kiros, Kyunghyun Cho, Aaron Courville, Ruslan Salakhutdinov, Richard S. Zemel, Yoshua Bengio, Show, Attend, and Tell: Neural Image Caption Generation with Visual Attention, arXiv:1502.03044 / ICML 2015</p></li>
+</ul>
+</li>
+<li><p>Idiap / EPFL / Facebook <a class="reference external" href="https://arxiv.org/pdf/1502.03671.pdf">Paper</a></p>
+<ul>
+<li><p>Remi Lebret, Pedro O. Pinheiro, Ronan Collobert, Phrase-based Image Captioning, arXiv:1502.03671 / ICML 2015</p></li>
+</ul>
+</li>
+<li><p>UCLA / Baidu <a class="reference external" href="https://arxiv.org/pdf/1504.06692.pdf">Paper</a></p>
+<ul>
+<li><p>Junhua Mao, Wei Xu, Yi Yang, Jiang Wang, Zhiheng Huang, Alan L. Yuille, Learning like a Child: Fast Novel Visual Concept Learning from Sentence Descriptions of Images, arXiv:1504.06692</p></li>
+</ul>
+</li>
+<li><p>MS + Berkeley</p>
+<ul>
+<li><p>Jacob Devlin, Saurabh Gupta, Ross Girshick, Margaret Mitchell, C. Lawrence Zitnick, Exploring Nearest Neighbor Approaches for Image Captioning, arXiv:1505.04467 <a class="reference external" href="https://arxiv.org/pdf/1505.04467.pdf">Paper</a></p></li>
+<li><p>Jacob Devlin, Hao Cheng, Hao Fang, Saurabh Gupta, Li Deng, Xiaodong He, Geoffrey Zweig, Margaret Mitchell, Language Models for Image Captioning: The Quirks and What Works, arXiv:1505.01809 [Paper]</p></li>
+</ul>
+</li>
+<li><p>Adelaide <a class="reference external" href="https://arxiv.org/pdf/1505.01809.pdf">Paper</a></p>
+<ul>
+<li><p>Qi Wu, Chunhua Shen, Anton van den Hengel, Lingqiao Liu, Anthony Dick, Image Captioning with an Intermediate Attributes Layer, arXiv:1506.01144</p></li>
+</ul>
+</li>
+<li><p>Tilburg <a class="reference external" href="https://arxiv.org/pdf/1506.03694.pdf">Paper</a></p>
+<ul>
+<li><p>Grzegorz Chrupala, Akos Kadar, Afra Alishahi, Learning language through pictures, arXiv:1506.03694</p></li>
+</ul>
+</li>
+<li><p>Univ. Montreal <a class="reference external" href="https://arxiv.org/pdf/1507.01053.pdf">Paper</a></p>
+<ul>
+<li><p>Kyunghyun Cho, Aaron Courville, Yoshua Bengio, Describing Multimedia Content using Attention-based Encoder-Decoder Networks, arXiv:1507.01053</p></li>
+</ul>
+</li>
+<li><p>Cornell <a class="reference external" href="https://arxiv.org/pdf/1508.02091.pdf">Paper</a></p>
+<ul>
+<li><p>Jack Hessel, Nicolas Savva, Michael J. Wilber, Image Representations and New Domains in Neural Image Captioning, arXiv:1508.02091</p></li>
+</ul>
+</li>
+<li><p>MS + City Univ. of HongKong <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/Yao_Learning_Query_and_ICCV_2015_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Ting Yao, Tao Mei, and Chong-Wah Ngo, “Learning Query and Image Similarities with Ranking Canonical Correlation Analysis”, ICCV, 2015</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="video-captioning">
+<h2>Video Captioning<a class="headerlink" href="#video-captioning" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Berkeley <a class="reference external" href="http://jeffdonahue.com/lrcn/">Web</a> <a class="reference external" href="https://arxiv.org/pdf/1411.4389.pdf">Paper</a></p>
+<ul>
+<li><p>Jeff Donahue, Lisa Anne Hendricks, Sergio Guadarrama, Marcus Rohrbach, Subhashini Venugopalan, Kate Saenko, Trevor Darrell, Long-term Recurrent Convolutional Networks for Visual Recognition and Description, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>UT / UML / Berkeley <a class="reference external" href="https://arxiv.org/pdf/1412.4729.pdf">Paper</a></p>
+<ul>
+<li><p>Subhashini Venugopalan, Huijuan Xu, Jeff Donahue, Marcus Rohrbach, Raymond Mooney, Kate Saenko, Translating Videos to Natural Language Using Deep Recurrent Neural Networks, arXiv:1412.4729.</p></li>
+</ul>
+</li>
+<li><p>Microsoft <a class="reference external" href="https://arxiv.org/pdf/1505.01861.pdf">Paper</a></p>
+<ul>
+<li><p>Yingwei Pan, Tao Mei, Ting Yao, Houqiang Li, Yong Rui, Joint Modeling Embedding and Translation to Bridge Video and Language, arXiv:1505.01861.</p></li>
+</ul>
+</li>
+<li><p>UT / Berkeley / UML <a class="reference external" href="https://arxiv.org/pdf/1505.00487.pdf">Paper</a></p>
+<ul>
+<li><p>Subhashini Venugopalan, Marcus Rohrbach, Jeff Donahue, Raymond Mooney, Trevor Darrell, Kate Saenko, Sequence to Sequence–Video to Text, arXiv:1505.00487.</p></li>
+</ul>
+</li>
+<li><p>Univ. Montreal / Univ. Sherbrooke <a class="reference external" href="https://arxiv.org/pdf/1502.08029.pdf">Paper</a></p>
+<ul>
+<li><p>Li Yao, Atousa Torabi, Kyunghyun Cho, Nicolas Ballas, Christopher Pal, Hugo Larochelle, Aaron Courville, Describing Videos by Exploiting Temporal Structure, arXiv:1502.08029</p></li>
+</ul>
+</li>
+<li><p>MPI / Berkeley <a class="reference external" href="https://arxiv.org/pdf/1506.01698.pdf">Paper</a></p>
+<ul>
+<li><p>Anna Rohrbach, Marcus Rohrbach, Bernt Schiele, The Long-Short Story of Movie Description, arXiv:1506.01698</p></li>
+</ul>
+</li>
+<li><p>Univ. Toronto / MIT <a class="reference external" href="https://arxiv.org/pdf/1506.06724.pdf">Paper</a></p>
+<ul>
+<li><p>Yukun Zhu, Ryan Kiros, Richard Zemel, Ruslan Salakhutdinov, Raquel Urtasun, Antonio Torralba, Sanja Fidler, Aligning Books and Movies: Towards Story-like Visual Explanations by Watching Movies and Reading Books, arXiv:1506.06724</p></li>
+</ul>
+</li>
+<li><p>Univ. Montreal <a class="reference external" href="https://arxiv.org/pdf/1507.01053.pdf">Paper</a></p>
+<ul>
+<li><p>Kyunghyun Cho, Aaron Courville, Yoshua Bengio, Describing Multimedia Content using Attention-based Encoder-Decoder Networks, arXiv:1507.01053</p></li>
+</ul>
+</li>
+<li><p>TAU / USC <a class="reference external" href="https://arxiv.org/pdf/1612.06950.pdf">paper</a></p>
+<ul>
+<li><p>Dotan Kaufman, Gil Levi, Tal Hassner, Lior Wolf, Temporal Tessellation for Video Annotation and Summarization, arXiv:1612.06950.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="question-answering">
+<h2>Question Answering<a class="headerlink" href="#question-answering" title="Permalink to this headline">¶</a></h2>
+<p><img alt="question" src="../../../_images/question.PNG" /></p>
+<ul class="simple">
+<li><p>Virginia Tech / MSR <a class="reference external" href="https://visualqa.org/">Web</a> <a class="reference external" href="https://arxiv.org/pdf/1505.00468.pdf">Paper</a></p>
+<ul>
+<li><p>Stanislaw Antol, Aishwarya Agrawal, Jiasen Lu, Margaret Mitchell, Dhruv Batra, C. Lawrence Zitnick, Devi Parikh, VQA: Visual Question Answering, CVPR, 2015 SUNw:Scene Understanding workshop.</p></li>
+</ul>
+</li>
+<li><p>MPI / Berkeley <a class="reference external" href="https://www.mpi-inf.mpg.de/departments/computer-vision-and-multimodal-computing/research/vision-and-language/visual-turing-challenge/">Web</a> <a class="reference external" href="https://arxiv.org/pdf/1505.01121.pdf">Paper</a></p>
+<ul>
+<li><p>Mateusz Malinowski, Marcus Rohrbach, Mario Fritz, Ask Your Neurons: A Neural-based Approach to Answering Questions about Images, arXiv:1505.01121.</p></li>
+</ul>
+</li>
+<li><p>Toronto <a class="reference external" href="https://arxiv.org/pdf/1505.02074.pdf">Paper</a> <a class="reference external" href="http://www.cs.toronto.edu/~mren/imageqa/data/cocoqa/">Dataset</a></p>
+<ul>
+<li><p>Mengye Ren, Ryan Kiros, Richard Zemel, Image Question Answering: A Visual Semantic Embedding Model and a New Dataset, arXiv:1505.02074 / ICML 2015 deep learning workshop.</p></li>
+</ul>
+</li>
+<li><p>Baidu / UCLA <a class="reference external" href="https://arxiv.org/pdf/1505.05612.pdf">Paper</a> [Dataset] //todo</p>
+<ul>
+<li><p>Hauyuan Gao, Junhua Mao, Jie Zhou, Zhiheng Huang, Lei Wang, Wei Xu, Are You Talking to a Machine? Dataset and Methods for Multilingual Image Question Answering, arXiv:1505.05612.</p></li>
+</ul>
+</li>
+<li><p>POSTECH <a class="reference external" href="https://arxiv.org/pdf/1511.05756.pdf">Paper</a> <a class="reference external" href="http://cvlab.postech.ac.kr/research/dppnet/">Project Page</a></p>
+<ul>
+<li><p>Hyeonwoo Noh, Paul Hongsuck Seo, and Bohyung Han, Image Question Answering using Convolutional Neural Network with Dynamic Parameter Prediction, arXiv:1511.05765</p></li>
+</ul>
+</li>
+<li><p>CMU / Microsoft Research <a class="reference external" href="https://arxiv.org/pdf/1511.02274v2.pdf">Paper</a></p>
+<ul>
+<li><p>Yang, Z., He, X., Gao, J., Deng, L., &amp; Smola, A. (2015). Stacked Attention Networks for Image Question Answering. arXiv:1511.02274.</p></li>
+</ul>
+</li>
+<li><p>MetaMind <a class="reference external" href="https://arxiv.org/pdf/1603.01417v1.pdf">Paper</a></p>
+<ul>
+<li><p>Xiong, Caiming, Stephen Merity, and Richard Socher. “Dynamic Memory Networks for Visual and Textual Question Answering.” arXiv:1603.01417 (2016).</p></li>
+</ul>
+</li>
+<li><p>SNU + NAVER <a class="reference external" href="https://arxiv.org/abs/1606.01455">Paper</a></p>
+<ul>
+<li><p>Jin-Hwa Kim, Sang-Woo Lee, Dong-Hyun Kwak, Min-Oh Heo, Jeonghee Kim, Jung-Woo Ha, Byoung-Tak Zhang, Multimodal Residual Learning for Visual QA, arXiv:1606:01455</p></li>
+</ul>
+</li>
+<li><p>UC Berkeley + Sony <a class="reference external" href="https://arxiv.org/pdf/1606.01847.pdf">Paper</a></p>
+<ul>
+<li><p>Akira Fukui, Dong Huk Park, Daylen Yang, Anna Rohrbach, Trevor Darrell, and Marcus Rohrbach, Multimodal Compact Bilinear Pooling for Visual Question Answering and Visual Grounding, arXiv:1606.01847</p></li>
+</ul>
+</li>
+<li><p>Postech <a class="reference external" href="https://arxiv.org/pdf/1606.03647.pdf">Paper</a></p>
+<ul>
+<li><p>Hyeonwoo Noh and Bohyung Han, Training Recurrent Answering Units with Joint Loss Minimization for VQA, arXiv:1606.03647</p></li>
+</ul>
+</li>
+<li><p>SNU + NAVER <a class="reference external" href="https://arxiv.org/abs/1610.04325">Paper</a></p>
+<ul>
+<li><p>Jin-Hwa Kim, Kyoung Woon On, Jeonghee Kim, Jung-Woo Ha, Byoung-Tak Zhang, Hadamard Product for Low-rank Bilinear Pooling, arXiv:1610.04325.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="image-generation">
+<h2>Image Generation<a class="headerlink" href="#image-generation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Convolutional / Recurrent Networks</p>
+<ul>
+<li><p>Aäron van den Oord, Nal Kalchbrenner, Oriol Vinyals, Lasse Espeholt, Alex Graves, Koray Kavukcuoglu. “Conditional Image Generation with PixelCNN Decoders” <a class="reference external" href="https://arxiv.org/pdf/1606.05328v2.pdf">Paper</a> <a class="reference external" href="https://github.com/kundan2510/pixelCNN">Code</a></p></li>
+<li><p>Alexey Dosovitskiy, Jost Tobias Springenberg, Thomas Brox, “Learning to Generate Chairs with Convolutional Neural Networks”, CVPR, 2015. <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Dosovitskiy_Learning_to_Generate_2015_CVPR_paper.pdf">Paper</a></p></li>
+<li><p>Karol Gregor, Ivo Danihelka, Alex Graves, Danilo Jimenez Rezende, Daan Wierstra, “DRAW: A Recurrent Neural Network For Image Generation”, ICML, 2015. <a class="reference external" href="https://arxiv.org/pdf/1502.04623v2.pdf">Paper</a></p></li>
+</ul>
+</li>
+<li><p>Adversarial Networks</p>
+<ul>
+<li><p>Ian J. Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, Yoshua Bengio, Generative Adversarial Networks, NIPS, 2014. <a class="reference external" href="https://arxiv.org/abs/1406.2661">Paper</a></p></li>
+<li><p>Emily Denton, Soumith Chintala, Arthur Szlam, Rob Fergus, Deep Generative Image Models using a ￼Laplacian Pyramid of Adversarial Networks, NIPS, 2015. <a class="reference external" href="https://arxiv.org/abs/1506.05751">Paper</a></p></li>
+<li><p>Lucas Theis, Aäron van den Oord, Matthias Bethge, “A note on the evaluation of generative models”, ICLR 2016. <a class="reference external" href="https://arxiv.org/abs/1511.01844">Paper</a></p></li>
+<li><p>Zhenwen Dai, Andreas Damianou, Javier Gonzalez, Neil Lawrence, “Variationally Auto-Encoded Deep Gaussian Processes”, ICLR 2016. <a class="reference external" href="https://arxiv.org/pdf/1511.06455v2.pdf">Paper</a></p></li>
+<li><p>Elman Mansimov, Emilio Parisotto, Jimmy Ba, Ruslan Salakhutdinov, “Generating Images from Captions with Attention”, ICLR 2016, <a class="reference external" href="https://arxiv.org/pdf/1511.02793v2.pdf">Paper</a></p></li>
+<li><p>Jost Tobias Springenberg, “Unsupervised and Semi-supervised Learning with Categorical Generative Adversarial Networks”, ICLR 2016, <a class="reference external" href="https://arxiv.org/pdf/1511.06390v1.pdf">Paper</a></p></li>
+<li><p>Harrison Edwards, Amos Storkey, “Censoring Representations with an Adversary”, ICLR 2016, <a class="reference external" href="https://arxiv.org/pdf/1511.05897v3.pdf">Paper</a></p></li>
+<li><p>Takeru Miyato, Shin-ichi Maeda, Masanori Koyama, Ken Nakae, Shin Ishii, “Distributional Smoothing with Virtual Adversarial Training”, ICLR 2016, <a class="reference external" href="https://arxiv.org/pdf/1507.00677v8.pdf">Paper</a></p></li>
+<li><p>Jun-Yan Zhu, Philipp Krahenbuhl, Eli Shechtman, and Alexei A. Efros, “Generative Visual Manipulation on the Natural Image Manifold”, ECCV 2016. <a class="reference external" href="https://arxiv.org/pdf/1609.03552v2.pdf">Paper</a> <a class="reference external" href="https://github.com/junyanz/iGAN">Code</a> <a class="reference external" href="https://youtu.be/9c4z6YsBGQ0">Video</a></p></li>
+</ul>
+</li>
+<li><p>Mixing Convolutional and Adversarial Networks</p>
+<ul>
+<li><p>Alec Radford, Luke Metz, Soumith Chintala, “Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks”, ICLR 2016. <a class="reference external" href="https://arxiv.org/pdf/1511.06434.pdf">Paper</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="other-topics">
+<h2>Other Topics<a class="headerlink" href="#other-topics" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Visual Analogy <a class="reference external" href="https://web.eecs.umich.edu/~honglak/nips2015-analogy.pdf">Paper</a></p>
+<ul>
+<li><p>Scott Reed, Yi Zhang, Yuting Zhang, Honglak Lee, Deep Visual Analogy Making, NIPS, 2015</p></li>
+</ul>
+</li>
+<li><p>Surface Normal Estimation <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Wang_Designing_Deep_Networks_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Xiaolong Wang, David F. Fouhey, Abhinav Gupta, Designing Deep Networks for Surface Normal Estimation, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>Action Detection <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Gkioxari_Finding_Action_Tubes_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Georgia Gkioxari, Jitendra Malik, Finding Action Tubes, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>Crowd Counting <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Zhang_Cross-Scene_Crowd_Counting_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Cong Zhang, Hongsheng Li, Xiaogang Wang, Xiaokang Yang, Cross-scene Crowd Counting via Deep Convolutional Neural Networks, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>3D Shape Retrieval <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Wang_Sketch-Based_3D_Shape_2015_CVPR_paper.pdf">Paper</a></p>
+<ul>
+<li><p>Fang Wang, Le Kang, Yi Li, Sketch-based 3D Shape Retrieval using Convolutional Neural Networks, CVPR, 2015.</p></li>
+</ul>
+</li>
+<li><p>Weakly-supervised Classification</p>
+<ul>
+<li><p>Samaneh Azadi, Jiashi Feng, Stefanie Jegelka, Trevor Darrell, “Auxiliary Image Regularization for Deep CNNs with Noisy Labels”, ICLR 2016, <a class="reference external" href="https://arxiv.org/pdf/1511.07069v2.pdf">Paper</a></p></li>
+</ul>
+</li>
+<li><p>Artistic Style <a class="reference external" href="https://arxiv.org/abs/1508.06576">Paper</a> <a class="reference external" href="https://github.com/jcjohnson/neural-style">Code</a></p>
+<ul>
+<li><p>Leon A. Gatys, Alexander S. Ecker, Matthias Bethge, A Neural Algorithm of Artistic Style.</p></li>
+</ul>
+</li>
+<li><p>Human Gaze Estimation</p>
+<ul>
+<li><p>Xucong Zhang, Yusuke Sugano, Mario Fritz, Andreas Bulling, Appearance-Based Gaze Estimation in the Wild, CVPR, 2015. <a class="reference external" href="https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Zhang_Appearance-Based_Gaze_Estimation_2015_CVPR_paper.pdf">Paper</a> <a class="reference external" href="https://www.mpi-inf.mpg.de/departments/computer-vision-and-multimodal-computing/research/gaze-based-human-computer-interaction/appearance-based-gaze-estimation-in-the-wild-mpiigaze/">Website</a></p></li>
+</ul>
+</li>
+<li><p>Face Recognition</p>
+<ul>
+<li><p>Yaniv Taigman, Ming Yang, Marc’Aurelio Ranzato, Lior Wolf, DeepFace: Closing the Gap to Human-Level Performance in Face Verification, CVPR, 2014. <a class="reference external" href="https://www.cs.toronto.edu/~ranzato/publications/taigman_cvpr14.pdf">Paper</a></p></li>
+<li><p>Yi Sun, Ding Liang, Xiaogang Wang, Xiaoou Tang, DeepID3: Face Recognition with Very Deep Neural Networks, 2015. <a class="reference external" href="https://arxiv.org/abs/1502.00873">Paper</a></p></li>
+<li><p>Florian Schroff, Dmitry Kalenichenko, James Philbin, FaceNet: A Unified Embedding for Face Recognition and Clustering, CVPR, 2015. <a class="reference external" href="https://arxiv.org/abs/1503.03832">Paper</a></p></li>
+</ul>
+</li>
+<li><p>Facial Landmark Detection</p>
+<ul>
+<li><p>Yue Wu, Tal Hassner, KangGeon Kim, Gerard Medioni, Prem Natarajan, Facial Landmark Detection with Tweaked Convolutional Neural Networks, 2015. <a class="reference external" href="https://arxiv.org/abs/1511.04031">Paper</a> <a class="reference external" href="https://talhassner.github.io/home/publication/2017_TPAMI_2">Project</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="courses">
+<h2>Courses<a class="headerlink" href="#courses" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Deep Vision</p>
+<ul>
+<li><p>[Stanford] <a class="reference external" href="http://cs231n.stanford.edu/">CS231n: Convolutional Neural Networks for Visual Recognition</a></p></li>
+<li><p>[CUHK] <a class="reference external" href="https://piazza.com/cuhk.edu.hk/spring2015/eleg5040/home">ELEG 5040: Advanced Topics in Signal Processing(Introduction to Deep Learning)</a></p></li>
+</ul>
+</li>
+<li><p>More Deep Learning</p>
+<ul>
+<li><p>[Stanford] <a class="reference external" href="http://cs224d.stanford.edu/">CS224d: Deep Learning for Natural Language Processing</a></p></li>
+<li><p>[Oxford] <a class="reference external" href="https://www.cs.ox.ac.uk/people/nando.defreitas/machinelearning/">Deep Learning by Prof. Nando de Freitas</a></p></li>
+<li><p>[NYU] <a class="reference external" href="https://cilvr.cs.nyu.edu/doku.php?id=courses:deeplearning2014:start">Deep Learning by Prof. Yann LeCun</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="books">
+<h2>Books<a class="headerlink" href="#books" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Free Online Books</p>
+<ul>
+<li><p><a class="reference external" href="https://www.deeplearningbook.org/">Deep Learning by Ian Goodfellow, Yoshua Bengio, and Aaron Courville</a></p></li>
+<li><p><a class="reference external" href="http://neuralnetworksanddeeplearning.com/">Neural Networks and Deep Learning by Michael Nielsen</a></p></li>
+<li><p><a class="reference external" href="http://deeplearning.net/tutorial/deeplearning.pdf">Deep Learning Tutorial by LISA lab, University of Montreal</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="videos">
+<h2>Videos<a class="headerlink" href="#videos" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Talks</p>
+<ul>
+<li><p>Deep Learning, Self-Taught Learning and Unsupervised Feature Learning By Andrew Ng <a class="reference external" href="https://www.youtube.com/watch?v=n1ViNeWhC24">video</a></p></li>
+<li><p>Recent Developments in Deep Learning By Geoff Hinton <a class="reference external" href="https://www.youtube.com/watch?v=vShMxxqtDDs">video</a></p></li>
+<li><p>The Unreasonable Effectiveness of Deep Learning by Yann LeCun <a class="reference external" href="https://www.youtube.com/watch?v=sc-KbuZqGkI">video</a></p></li>
+<li><p>Deep Learning of Representations by Yoshua bengio <a class="reference external" href="https://www.youtube.com/watch?v=4xsVFLnHC_0">video</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="applications">
+<h2>Applications<a class="headerlink" href="#applications" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Adversarial Training</p>
+<ul>
+<li><p>Code and hyperparameters for the paper “Generative Adversarial Networks” <a class="reference external" href="https://github.com/goodfeli/adversarial">Web</a></p></li>
+</ul>
+</li>
+<li><p>Understanding and Visualizing</p>
+<ul>
+<li><p>Source code for “Understanding Deep Image Representations by Inverting Them,” CVPR, 2015. <a class="reference external" href="https://github.com/aravindhm/deep-goggle">Web</a></p></li>
+</ul>
+</li>
+<li><p>Semantic Segmentation</p>
+<ul>
+<li><p>Source code for the paper “Rich feature hierarchies for accurate object detection and semantic segmentation,” CVPR, 2014. <a class="reference external" href="https://github.com/rbgirshick/rcnn">Web</a></p></li>
+<li><p>Source code for the paper “Fully Convolutional Networks for Semantic Segmentation,” CVPR, 2015. <a class="reference external" href="https://github.com/longjon/caffe/tree/future">Web</a></p></li>
+</ul>
+</li>
+<li><p>Super-Resolution</p>
+<ul>
+<li><p>Image Super-Resolution for Anime-Style-Art <a class="reference external" href="https://github.com/nagadomi/waifu2x">Web</a></p></li>
+</ul>
+</li>
+<li><p>Edge Detection</p>
+<ul>
+<li><p>Source code for the paper “DeepContour: A Deep Convolutional Feature Learned by Positive-Sharing Loss for Contour Detection,” CVPR, 2015. <a class="reference external" href="https://github.com/shenwei1231/DeepContour">Web</a></p></li>
+<li><p>Source code for the paper “Holistically-Nested Edge Detection”, ICCV 2015. <a class="reference external" href="https://github.com/s9xie/hed">Web</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="blogs">
+<h2>Blogs<a class="headerlink" href="#blogs" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Deep down the rabbit hole: CVPR 2015 and beyond&#64;Tombone’s Computer Vision Blog <a class="reference external" href="http://www.computervisionblog.com/2015/06/deep-down-rabbit-hole-cvpr-2015-and.html">Web</a></p></li>
+<li><p>CVPR recap and where we’re going&#64;Zoya Bylinskii (MIT PhD Student)’s Blog <a class="reference external" href="http://zoyathinks.blogspot.kr/2015/06/cvpr-recap-and-where-were-going.html">Web</a></p></li>
+<li><p>Facebook’s AI Painting&#64;Wired <a class="reference external" href="https://www.wired.com/2015/06/facebook-googles-fake-brains-spawn-new-visual-reality/">Web</a></p></li>
+<li><p>Inceptionism: Going Deeper into Neural Networks&#64;Google Research <a class="reference external" href="http://googleresearch.blogspot.kr/2015/06/inceptionism-going-deeper-into-neural.html">Web</a></p></li>
+<li><p>Implementing Neural networks <a class="reference external" href="https://peterroelants.github.io/">Web</a></p></li>
+</ul>
+<a name="reference" />
+</div>
+</div>
+<div class="section" id="id12">
+<h1>引用<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="https://skymind.ai/wiki/convolutional-network">A Beginner’s Guide to Convolutional Neural Networks (CNNs)</a><br />
+<a class="reference external" href="https://adeshpande3.github.io/A-Beginner%27s-Guide-To-Understanding-Convolutional-Neural-Networks/">A Beginner’s Guide To Understanding Convolutional Neural Networks</a><br />
+<a class="reference external" href="http://cs231n.github.io/convolutional-networks/">Convolutional Neural Networks (CNNs / ConvNets)</a><br />
+<a class="reference external" href="https://www.freecodecamp.org/news/an-intuitive-guide-to-convolutional-neural-networks-260c2de0a050/">An intuitive guide to Convolutional Neural Networks</a><br />
+<a class="reference external" href="https://www.oreilly.com/library/view/tensorflow-for-deep/9781491980446/ch04.html">Fully Connected Deep Networks</a><br />
+<a class="reference external" href="https://www.tensorflow.org/tutorials/estimators/cnn?hl=zh-cn">使用 Estimator 构建卷积神经网络</a></p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/modules/perception/cnn/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

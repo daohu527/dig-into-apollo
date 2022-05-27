@@ -1,0 +1,570 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dig into Apollo - Localization &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="dig-into-apollo-localization-github">
+<h1>Dig into Apollo - Localization <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-localization-github" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>虽千万人，吾往矣。</p>
+</div></blockquote>
+<div class="section" id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><span class="xref myst">Localization模块简介</span></p></li>
+<li><p><span class="xref myst">代码目录</span></p></li>
+<li><p><span class="xref myst">RTK定位流程</span></p></li>
+<li><p><span class="xref myst">Reference</span></p></li>
+</ul>
+<a name="introduction" />
+</div>
+<div class="section" id="localization">
+<h2>Localization模块简介<a class="headerlink" href="#localization" title="Permalink to this headline">¶</a></h2>
+<p>localization模块主要实现了以下2个功能：</p>
+<ol class="arabic simple">
+<li><p>输出车辆的位置信息（planning模块使用）</p></li>
+<li><p>输出车辆的姿态，速度信息（control模块使用）</p></li>
+</ol>
+<p>其中apollo代码中分别实现了3种定位方法：</p>
+<ol class="arabic simple">
+<li><p>GNSS + IMU定位</p></li>
+<li><p>NDT定位（点云定位）</p></li>
+<li><p>MSF（融合定位）</p></li>
+</ol>
+<blockquote>
+<div><p>MSF方法参考论文”Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes”</p>
+</div></blockquote>
+<a name="content" />
+</div>
+<div class="section" id="id1">
+<h2>代码目录<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>下面是localization的目录结构，在查看具体的代码之前最好看下定位模块的readme文件:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── common          // 声明配置(flags)，从conf目录中读取相应的值
+├── conf            // 配置文件存放目录
+├── dag             // cyber DAG流
+├── launch          // cyber的配置文件，依赖DAG图（这2个和cyber有关的后面再分析）
+├── msf             // 融合定位（gnss,点云,IMU融合定位）
+│   ├── common
+│   │   ├── io
+│   │   ├── test_data
+│   │   └── util
+│   ├── local_integ
+│   ├── local_map
+│   │   ├── base_map
+│   │   ├── lossless_map
+│   │   ├── lossy_map
+│   │   ├── ndt_map
+│   │   └── test_data
+│   ├── local_tool
+│   │   ├── data_extraction
+│   │   ├── local_visualization
+│   │   └── map_creation
+│   └── params
+│       ├── gnss_params
+│       ├── vehicle_params
+│       └── velodyne_params
+├── ndt                         // ndt定位
+│   ├── map_creation
+│   ├── ndt_locator
+│   └── test_data
+│       ├── ndt_map
+│       └── pcds
+├── proto                   // 消息格式
+├── rtk                     // rtk定位
+└── testdata                // imu和gps的测试数据
+</pre></div>
+</div>
+<p>通过上述目录可以知道，定位模块主要实现了rtk，ndt，msf这3个定位方法，分别对应不同的目录。proto文件夹定义了消息的格式，common和conf主要是存放一些配置和消息TOPIC。下面我们逐个分析RTK定位、NDT定位和MSF定位。</p>
+<a name="rtk" />
+</div>
+<div class="section" id="rtk">
+<h2>RTK定位流程<a class="headerlink" href="#rtk" title="Permalink to this headline">¶</a></h2>
+<p>RTK定位是通过GPS和IMU的信息做融合然后输出车辆所在的位置。RTK通过基准站的获取当前GPS信号的误差，用来校正无人车当前的位置，可以得到厘米级别的精度。IMU的输出频率高，可以在GPS没有刷新的情况下（通常是1s刷新一次）用IMU获取车辆的位置。下面是RTK模块的目录结构。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── BUILD                               // bazel编译文件
+├── rtk_localization.cc                 // rtk定位功能实现模块
+├── rtk_localization_component.cc       // rtk消息发布模块
+├── rtk_localization_component.h
+├── rtk_localization.h
+└── rtk_localization_test.cc            // 测试
+</pre></div>
+</div>
+<p>其中”rtk_localization_component.cc”注册为标准的cyber模块，RTK定位模块在”Init”中初始化，每当接收到”localization::Gps”消息就触发执行”Proc”函数。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">RTKLocalizationComponent</span><span class="w"> </span><span class="k">final</span><span class="w"></span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">localization</span><span class="o">::</span><span class="n">Gps</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="n">RTKLocalizationComponent</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="o">~</span><span class="n">RTKLocalizationComponent</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Init</span><span class="p">()</span><span class="w"> </span><span class="k">override</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Proc</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">localization</span><span class="o">::</span><span class="n">Gps</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">gps_msg</span><span class="p">)</span><span class="w"> </span><span class="k">override</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+</div>
+<p>下面我们分别查看这2个函数。</p>
+<ol class="arabic simple">
+<li><p>Init函数<br />
+Init函数实现比较简单，一是初始化配置信息，二是初始化IO。初始化配置信息主要是读取一些配置，例如一些topic信息等。下面主要看下初始化IO。</p></li>
+</ol>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RTKLocalizationComponent::InitIO</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1.读取IMU信息，每次接收到localization::CorrectedImu消息，则回调执行“RTKLocalization::ImuCallback”</span>
+<span class="w">  </span><span class="n">corrected_imu_listener_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">localization</span><span class="o">::</span><span class="n">CorrectedImu</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">imu_topic_</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">RTKLocalization</span><span class="o">::</span><span class="n">ImuCallback</span><span class="p">,</span><span class="w"> </span><span class="n">localization_</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                            </span><span class="n">std</span><span class="o">::</span><span class="n">placeholders</span><span class="o">::</span><span class="n">_1</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="n">CHECK</span><span class="p">(</span><span class="n">corrected_imu_listener_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2.读取GPS状态信息，每次接收到GPS状态消息，则回调执行&quot;RTKLocalization::GpsStatusCallback&quot;</span>
+<span class="w">  </span><span class="n">gps_status_listener_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">drivers</span><span class="o">::</span><span class="n">gnss</span><span class="o">::</span><span class="n">InsStat</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">gps_status_topic_</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">RTKLocalization</span><span class="o">::</span><span class="n">GpsStatusCallback</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="n">localization_</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">placeholders</span><span class="o">::</span><span class="n">_1</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="n">CHECK</span><span class="p">(</span><span class="n">gps_status_listener_</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 3.发布位置信息和位置状态信息</span>
+<span class="w">  </span><span class="n">localization_talker_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">LocalizationEstimate</span><span class="o">&gt;</span><span class="p">(</span><span class="n">localization_topic_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">CHECK</span><span class="p">(</span><span class="n">localization_talker_</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">localization_status_talker_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">LocalizationStatus</span><span class="o">&gt;</span><span class="p">(</span><span class="n">localization_status_topic_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">CHECK</span><span class="p">(</span><span class="n">localization_status_talker_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>也就是说，RTK模块同时还接收IMU和GPS的状态信息，然后触发对应的回调函数。具体的实现在”RTKLocalization”类中，我们先看下回调的具体实现。以”GpsStatusCallback”为例，每次读取到gps状态信息之后，会把信息保存到”gps_status_list_”列表中。”ImuCallback”类似，也是接收到IMU消息后，保存到”imu_list_”列表中。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">RTKLocalization::GpsStatusCallback</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">drivers</span><span class="o">::</span><span class="n">gnss</span><span class="o">::</span><span class="n">InsStat</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">status_msg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">gps_status_list_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">gps_status_list_</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">gps_status_list_max_size_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">gps_status_list_</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="o">*</span><span class="n">status_msg</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">gps_status_list_</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">gps_status_list_</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="o">*</span><span class="n">status_msg</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Proc<br />
+在每次接收到”localization::Gps”消息后，触发执行”Proc”函数。这里注意如果需要接收多个消息，这里是3个消息，则选择最慢的消息作为触发，否则，如果选择比较快的消息作为触发，这样会导致作为触发的消息刷新了，而其它的消息还没有刷新。所以这里采用的是GPS消息作为触发消息，IMU的消息刷新快。下面我们看具体的实现。</p></li>
+</ol>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RTKLocalizationComponent::Proc</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">localization</span><span class="o">::</span><span class="n">Gps</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">gps_msg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 通过RTKLocalization处理GPS消息回调</span>
+<span class="w">  </span><span class="n">localization_</span><span class="o">-&gt;</span><span class="n">GpsCallback</span><span class="p">(</span><span class="n">gps_msg</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">localization_</span><span class="o">-&gt;</span><span class="n">IsServiceStarted</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">LocalizationEstimate</span><span class="w"> </span><span class="n">localization</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 2. 获取定位消息</span>
+<span class="w">    </span><span class="n">localization_</span><span class="o">-&gt;</span><span class="n">GetLocalization</span><span class="p">(</span><span class="o">&amp;</span><span class="n">localization</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">LocalizationStatus</span><span class="w"> </span><span class="n">localization_status</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 3. 获取定位状态</span>
+<span class="w">    </span><span class="n">localization_</span><span class="o">-&gt;</span><span class="n">GetLocalizationStatus</span><span class="p">(</span><span class="o">&amp;</span><span class="n">localization_status</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">    </span><span class="c1">// publish localization messages</span>
+<span class="w">    </span><span class="c1">// 4. 发布位置信息</span>
+<span class="w">    </span><span class="n">PublishPoseBroadcastTopic</span><span class="p">(</span><span class="n">localization</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 5. 发布位置转换信息</span>
+<span class="w">    </span><span class="n">PublishPoseBroadcastTF</span><span class="p">(</span><span class="n">localization</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 6. 发布位置状态信息</span>
+<span class="w">    </span><span class="n">PublishLocalizationStatus</span><span class="p">(</span><span class="n">localization_status</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;[OnTimer]: Localization message publish success!&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>具体的执行过程如下图所示。
+<img alt="rtk" src="../../_images/location_rtk.jpg" /><br />
+主要的执行过程在”GpsCallback”中，然后通过”GetLocalization”和”GetLocalizationStatus”获取结果，最后发布对应的位置信息、位置转换信息和位置状态信息。<br />
+由于”GpsCallback”主要执行过程在”PrepareLocalizationMsg”中，因此我们主要分析”PrepareLocalizationMsg”的实现。</p>
+<div class="section" id="id2">
+<h3>获取定位信息<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>PrepareLocalizationMsg函数的具体实现如下。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">RTKLocalization::PrepareLocalizationMsg</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">localization</span><span class="o">::</span><span class="n">Gps</span><span class="w"> </span><span class="o">&amp;</span><span class="n">gps_msg</span><span class="p">,</span><span class="w"> </span><span class="n">LocalizationEstimate</span><span class="w"> </span><span class="o">*</span><span class="n">localization</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">LocalizationStatus</span><span class="w"> </span><span class="o">*</span><span class="n">localization_status</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// find the matching gps and imu message</span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">gps_time_stamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gps_msg</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">CorrectedImu</span><span class="w"> </span><span class="n">imu_msg</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1.寻找最匹配的IMU信息  </span>
+<span class="w">  </span><span class="n">FindMatchingIMU</span><span class="p">(</span><span class="n">gps_time_stamp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">imu_msg</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2.根据GPS和IMU信息，给位置信息赋值</span>
+<span class="w">  </span><span class="n">ComposeLocalizationMsg</span><span class="p">(</span><span class="n">gps_msg</span><span class="p">,</span><span class="w"> </span><span class="n">imu_msg</span><span class="p">,</span><span class="w"> </span><span class="n">localization</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">drivers</span><span class="o">::</span><span class="n">gnss</span><span class="o">::</span><span class="n">InsStat</span><span class="w"> </span><span class="n">gps_status</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3.查找最近的GPS状态信息</span>
+<span class="w">  </span><span class="n">FindNearestGpsStatus</span><span class="p">(</span><span class="n">gps_time_stamp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">gps_status</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 4.根据GPS状态信息，给位置状态信息赋值</span>
+<span class="w">  </span><span class="n">FillLocalizationStatusMsg</span><span class="p">(</span><span class="n">gps_status</span><span class="p">,</span><span class="w"> </span><span class="n">localization_status</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>下面我们逐个分析上述4个过程。</p>
+</div>
+<div class="section" id="findmatchingimu">
+<h3>FindMatchingIMU<a class="headerlink" href="#findmatchingimu" title="Permalink to this headline">¶</a></h3>
+<p>在队列中找到最匹配的IMU消息，其中区分了队列的第一个，最后一个，以及如果在中间位置则进行插值。插值的时候根据距离最近的原则进行反比例插值。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RTKLocalization::FindMatchingIMU</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">gps_timestamp_sec</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                      </span><span class="n">CorrectedImu</span><span class="w"> </span><span class="o">*</span><span class="n">imu_msg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 加锁，这里有疑问，为什么换个变量就没有锁了呢？</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">imu_list_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">imu_list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu_list_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">lock</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 在IMU队列中找到最新的IMU消息</span>
+<span class="w">  </span><span class="c1">// scan imu buffer, find first imu message that is newer than the given</span>
+<span class="w">  </span><span class="c1">// timestamp</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">imu_it</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu_list</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(;</span><span class="w"> </span><span class="n">imu_it</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">imu_list</span><span class="p">.</span><span class="n">end</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">imu_it</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="o">*</span><span class="n">imu_it</span><span class="p">).</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">gps_timestamp_sec</span><span class="w"> </span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;::</span><span class="n">min</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">break</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">imu_it</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">imu_list</span><span class="p">.</span><span class="n">end</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="c1">// found one</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">imu_it</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">imu_list</span><span class="p">.</span><span class="n">begin</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;IMU queue too short or request too old. &quot;</span><span class="w"></span>
+<span class="w">             </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Oldest timestamp[&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">imu_list</span><span class="p">.</span><span class="n">front</span><span class="p">().</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"></span>
+<span class="w">             </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;], Newest timestamp[&quot;</span><span class="w"></span>
+<span class="w">             </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">imu_list</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;], GPS timestamp[&quot;</span><span class="w"></span>
+<span class="w">             </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">gps_timestamp_sec</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;]&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="o">*</span><span class="n">imu_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu_list</span><span class="p">.</span><span class="n">front</span><span class="p">();</span><span class="w">  </span><span class="c1">// the oldest imu</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// here is the normal case</span>
+<span class="w">      </span><span class="k">auto</span><span class="w"> </span><span class="n">imu_it_1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu_it</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">imu_it_1</span><span class="o">--</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="o">*</span><span class="n">imu_it</span><span class="p">).</span><span class="n">has_header</span><span class="p">()</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="p">(</span><span class="o">*</span><span class="n">imu_it_1</span><span class="p">).</span><span class="n">has_header</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;imu1 and imu_it_1 must both have header.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// 根据最新的IMU消息和它之前的消息做插值。</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">InterpolateIMU</span><span class="p">(</span><span class="o">*</span><span class="n">imu_it_1</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">imu_it</span><span class="p">,</span><span class="w"> </span><span class="n">gps_timestamp_sec</span><span class="p">,</span><span class="w"> </span><span class="n">imu_msg</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;failed to interpolate IMU&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 如果没有找到，则取最新的20ms以内的消息，如果超过20ms则报错。</span>
+<span class="w">    </span><span class="c1">// give the newest imu, without extrapolation</span>
+<span class="w">    </span><span class="o">*</span><span class="n">imu_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu_list</span><span class="p">.</span><span class="n">back</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">imu_msg</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Fail to get latest observed imu_msg.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">imu_msg</span><span class="o">-&gt;</span><span class="n">has_header</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;imu_msg must have header.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">fabs</span><span class="p">(</span><span class="n">imu_msg</span><span class="o">-&gt;</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">gps_timestamp_sec</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">        </span><span class="n">gps_imu_time_diff_threshold_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// 20ms threshold to report error</span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Cannot find Matching IMU. IMU messages too old. &quot;</span><span class="w"></span>
+<span class="w">             </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Newest timestamp[&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">imu_list</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"></span>
+<span class="w">             </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;], GPS timestamp[&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">gps_timestamp_sec</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;]&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>接下来我们看线性插值</p>
+<ol class="arabic simple">
+<li><p>InterpolateIMU<br />
+根据上述函数得到2个IMU消息分别对角速度、线性加速度、欧拉角进行插值。原则是根据比例，反比例进行插值。</p></li>
+</ol>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RTKLocalization::InterpolateIMU</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">CorrectedImu</span><span class="w"> </span><span class="o">&amp;</span><span class="n">imu1</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                     </span><span class="k">const</span><span class="w"> </span><span class="n">CorrectedImu</span><span class="w"> </span><span class="o">&amp;</span><span class="n">imu2</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                     </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">timestamp_sec</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                     </span><span class="n">CorrectedImu</span><span class="w"> </span><span class="o">*</span><span class="n">imu_msg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">timestamp_sec</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">imu1</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"></span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;::</span><span class="n">min</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;[InterpolateIMU1]: the given time stamp[&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">timestamp_sec</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;] is older than the 1st message[&quot;</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">imu1</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;]&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="o">*</span><span class="n">imu_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu1</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">timestamp_sec</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">imu2</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">             </span><span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;::</span><span class="n">min</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;[InterpolateIMU2]: the given time stamp[&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">timestamp_sec</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;] is newer than the 2nd message[&quot;</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">imu2</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;]&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="o">*</span><span class="n">imu_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu1</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 线性插值</span>
+<span class="w">    </span><span class="o">*</span><span class="n">imu_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu1</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">imu_msg</span><span class="o">-&gt;</span><span class="n">mutable_header</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_timestamp_sec</span><span class="p">(</span><span class="n">timestamp_sec</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">time_diff</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">imu2</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">imu1</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">fabs</span><span class="p">(</span><span class="n">time_diff</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mf">0.001</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="kt">double</span><span class="w"> </span><span class="n">frac1</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">          </span><span class="p">(</span><span class="n">timestamp_sec</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">imu1</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">())</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">time_diff</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// 1. 分别对角速度、线性加速度、欧拉角进行插值</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">imu1</span><span class="p">.</span><span class="n">imu</span><span class="p">().</span><span class="n">has_angular_velocity</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">          </span><span class="n">imu2</span><span class="p">.</span><span class="n">imu</span><span class="p">().</span><span class="n">has_angular_velocity</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">InterpolateXYZ</span><span class="p">(</span><span class="n">imu1</span><span class="p">.</span><span class="n">imu</span><span class="p">().</span><span class="n">angular_velocity</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                                  </span><span class="n">imu2</span><span class="p">.</span><span class="n">imu</span><span class="p">().</span><span class="n">angular_velocity</span><span class="p">(),</span><span class="w"> </span><span class="n">frac1</span><span class="p">);</span><span class="w"></span>
+<span class="w">        </span><span class="n">imu_msg</span><span class="o">-&gt;</span><span class="n">mutable_imu</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">mutable_angular_velocity</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">CopyFrom</span><span class="p">(</span><span class="n">val</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">      </span><span class="p">...</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>InterpolateXYZ<br />
+根据距离插值，反比例，即frac1越小，则越靠近p1，frac1越大，则越靠近p2</p></li>
+</ol>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span><span class="w"></span>
+<span class="n">T</span><span class="w"> </span><span class="n">RTKLocalization</span><span class="o">::</span><span class="n">InterpolateXYZ</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="o">&amp;</span><span class="n">p1</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="o">&amp;</span><span class="n">p2</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">frac1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">T</span><span class="w"> </span><span class="n">p</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">frac2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">frac1</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p1</span><span class="p">.</span><span class="n">has_x</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">std</span><span class="o">::</span><span class="n">isnan</span><span class="p">(</span><span class="n">p1</span><span class="p">.</span><span class="n">x</span><span class="p">())</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">p2</span><span class="p">.</span><span class="n">has_x</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">std</span><span class="o">::</span><span class="n">isnan</span><span class="p">(</span><span class="n">p2</span><span class="p">.</span><span class="n">x</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">p</span><span class="p">.</span><span class="n">set_x</span><span class="p">(</span><span class="n">p1</span><span class="p">.</span><span class="n">x</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">frac2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">p2</span><span class="p">.</span><span class="n">x</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">frac1</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p1</span><span class="p">.</span><span class="n">has_y</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">std</span><span class="o">::</span><span class="n">isnan</span><span class="p">(</span><span class="n">p1</span><span class="p">.</span><span class="n">y</span><span class="p">())</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">p2</span><span class="p">.</span><span class="n">has_y</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">std</span><span class="o">::</span><span class="n">isnan</span><span class="p">(</span><span class="n">p2</span><span class="p">.</span><span class="n">y</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">p</span><span class="p">.</span><span class="n">set_y</span><span class="p">(</span><span class="n">p1</span><span class="p">.</span><span class="n">y</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">frac2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">p2</span><span class="p">.</span><span class="n">y</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">frac1</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p1</span><span class="p">.</span><span class="n">has_z</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">std</span><span class="o">::</span><span class="n">isnan</span><span class="p">(</span><span class="n">p1</span><span class="p">.</span><span class="n">z</span><span class="p">())</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">p2</span><span class="p">.</span><span class="n">has_z</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">std</span><span class="o">::</span><span class="n">isnan</span><span class="p">(</span><span class="n">p2</span><span class="p">.</span><span class="n">z</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">p</span><span class="p">.</span><span class="n">set_z</span><span class="p">(</span><span class="n">p1</span><span class="p">.</span><span class="n">z</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">frac2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">p2</span><span class="p">.</span><span class="n">z</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">frac1</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">p</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="composelocalizationmsg">
+<h3>ComposeLocalizationMsg<a class="headerlink" href="#composelocalizationmsg" title="Permalink to this headline">¶</a></h3>
+<p>填充位置信息，这里实际上涉及到姿态解算，具体是根据GPS和IMU消息对位置信息进行赋值。需要注意需要根据航向对IMU的信息进行转换。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">RTKLocalization::ComposeLocalizationMsg</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">localization</span><span class="o">::</span><span class="n">Gps</span><span class="w"> </span><span class="o">&amp;</span><span class="n">gps_msg</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">localization</span><span class="o">::</span><span class="n">CorrectedImu</span><span class="w"> </span><span class="o">&amp;</span><span class="n">imu_msg</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">LocalizationEstimate</span><span class="w"> </span><span class="o">*</span><span class="n">localization</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">localization</span><span class="o">-&gt;</span><span class="n">Clear</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">FillLocalizationMsgHeader</span><span class="p">(</span><span class="n">localization</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">localization</span><span class="o">-&gt;</span><span class="n">set_measurement_time</span><span class="p">(</span><span class="n">gps_msg</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">());</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// combine gps and imu</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">mutable_pose</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">localization</span><span class="o">-&gt;</span><span class="n">mutable_pose</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// GPS消息包含位置信息</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">gps_msg</span><span class="p">.</span><span class="n">has_localization</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">pose</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gps_msg</span><span class="p">.</span><span class="n">localization</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 1. 获取位置</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pose</span><span class="p">.</span><span class="n">has_position</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// position</span>
+<span class="w">      </span><span class="c1">// world frame -&gt; map frame</span>
+<span class="w">      </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">mutable_position</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_x</span><span class="p">(</span><span class="n">pose</span><span class="p">.</span><span class="n">position</span><span class="p">().</span><span class="n">x</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"></span>
+<span class="w">                                              </span><span class="n">map_offset_</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span><span class="w"></span>
+<span class="w">      </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">mutable_position</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_y</span><span class="p">(</span><span class="n">pose</span><span class="p">.</span><span class="n">position</span><span class="p">().</span><span class="n">y</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"></span>
+<span class="w">                                              </span><span class="n">map_offset_</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span><span class="w"></span>
+<span class="w">      </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">mutable_position</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_z</span><span class="p">(</span><span class="n">pose</span><span class="p">.</span><span class="n">position</span><span class="p">().</span><span class="n">z</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"></span>
+<span class="w">                                              </span><span class="n">map_offset_</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 2. 获取方向</span>
+<span class="w">    </span><span class="c1">// orientation</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pose</span><span class="p">.</span><span class="n">has_orientation</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">mutable_orientation</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">CopyFrom</span><span class="p">(</span><span class="n">pose</span><span class="p">.</span><span class="n">orientation</span><span class="p">());</span><span class="w"></span>
+<span class="w">      </span><span class="kt">double</span><span class="w"> </span><span class="n">heading</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">QuaternionToHeading</span><span class="p">(</span><span class="w"></span>
+<span class="w">          </span><span class="n">pose</span><span class="p">.</span><span class="n">orientation</span><span class="p">().</span><span class="n">qw</span><span class="p">(),</span><span class="w"> </span><span class="n">pose</span><span class="p">.</span><span class="n">orientation</span><span class="p">().</span><span class="n">qx</span><span class="p">(),</span><span class="w"></span>
+<span class="w">          </span><span class="n">pose</span><span class="p">.</span><span class="n">orientation</span><span class="p">().</span><span class="n">qy</span><span class="p">(),</span><span class="w"> </span><span class="n">pose</span><span class="p">.</span><span class="n">orientation</span><span class="p">().</span><span class="n">qz</span><span class="p">());</span><span class="w"></span>
+<span class="w">      </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">set_heading</span><span class="p">(</span><span class="n">heading</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// linear velocity</span>
+<span class="w">    </span><span class="c1">// 3. 获取速度</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pose</span><span class="p">.</span><span class="n">has_linear_velocity</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">mutable_linear_velocity</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">CopyFrom</span><span class="p">(</span><span class="n">pose</span><span class="p">.</span><span class="n">linear_velocity</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">imu_msg</span><span class="p">.</span><span class="n">has_imu</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">imu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">imu_msg</span><span class="p">.</span><span class="n">imu</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// linear acceleration</span>
+<span class="w">    </span><span class="c1">// 4. 获取imu的线性加速度</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">imu</span><span class="p">.</span><span class="n">has_linear_acceleration</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">localization</span><span class="o">-&gt;</span><span class="n">pose</span><span class="p">().</span><span class="n">has_orientation</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="c1">// linear_acceleration:</span>
+<span class="w">        </span><span class="c1">// convert from vehicle reference to map reference</span>
+<span class="w">        </span><span class="c1">// 为什么需要做旋转？？？转换为车当前方向的速度？？？</span>
+<span class="w">        </span><span class="n">Vector3d</span><span class="w"> </span><span class="n">orig</span><span class="p">(</span><span class="n">imu</span><span class="p">.</span><span class="n">linear_acceleration</span><span class="p">().</span><span class="n">x</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                      </span><span class="n">imu</span><span class="p">.</span><span class="n">linear_acceleration</span><span class="p">().</span><span class="n">y</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                      </span><span class="n">imu</span><span class="p">.</span><span class="n">linear_acceleration</span><span class="p">().</span><span class="n">z</span><span class="p">());</span><span class="w"></span>
+<span class="w">        </span><span class="n">Vector3d</span><span class="w"> </span><span class="n">vec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">QuaternionRotate</span><span class="p">(</span><span class="w"></span>
+<span class="w">            </span><span class="n">localization</span><span class="o">-&gt;</span><span class="n">pose</span><span class="p">().</span><span class="n">orientation</span><span class="p">(),</span><span class="w"> </span><span class="n">orig</span><span class="p">);</span><span class="w"></span>
+<span class="w">        </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">mutable_linear_acceleration</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_x</span><span class="p">(</span><span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span><span class="w"></span>
+<span class="w">        </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">mutable_linear_acceleration</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_y</span><span class="p">(</span><span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span><span class="w"></span>
+<span class="w">        </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">mutable_linear_acceleration</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_z</span><span class="p">(</span><span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span><span class="w"></span>
+
+<span class="w">        </span><span class="c1">// linear_acceleration_vfr</span>
+<span class="w">        </span><span class="c1">// 设置线性加速度</span>
+<span class="w">        </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">mutable_linear_acceleration_vrf</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">CopyFrom</span><span class="p">(</span><span class="w"></span>
+<span class="w">            </span><span class="n">imu</span><span class="p">.</span><span class="n">linear_acceleration</span><span class="p">());</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;[PrepareLocalizationMsg]: &quot;</span><span class="w"></span>
+<span class="w">               </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;fail to convert linear_acceleration&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">    </span><span class="c1">// 5. 设置角速度，也需要根据航向转换</span>
+<span class="w">    </span><span class="c1">// angular velocity</span>
+<span class="w">    </span><span class="p">...</span><span class="w"></span>
+
+<span class="w">    </span><span class="c1">// 6. 设置欧拉角</span>
+<span class="w">    </span><span class="c1">// euler angle</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">imu</span><span class="p">.</span><span class="n">has_euler_angles</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">mutable_pose</span><span class="o">-&gt;</span><span class="n">mutable_euler_angles</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">CopyFrom</span><span class="p">(</span><span class="n">imu</span><span class="p">.</span><span class="n">euler_angles</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="findnearestgpsstatus">
+<h3>FindNearestGpsStatus<a class="headerlink" href="#findnearestgpsstatus" title="Permalink to this headline">¶</a></h3>
+<p>获取最近的Gps状态信息，这里实现的算法是遍历查找离”gps_time_stamp”最近的状态，GPS状态信息不是按照时间顺序排列的？？？</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RTKLocalization::FindNearestGpsStatus</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">gps_timestamp_sec</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                           </span><span class="n">drivers</span><span class="o">::</span><span class="n">gnss</span><span class="o">::</span><span class="n">InsStat</span><span class="w"> </span><span class="o">*</span><span class="n">status</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 遍历查找最近的GPS状态信息</span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">timestamp_diff_sec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1e8</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">nearest_itr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gps_status_list</span><span class="p">.</span><span class="n">end</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">itr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gps_status_list</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"> </span><span class="n">itr</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">gps_status_list</span><span class="p">.</span><span class="n">end</span><span class="p">();</span><span class="w"></span>
+<span class="w">       </span><span class="o">++</span><span class="n">itr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">diff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">abs</span><span class="p">(</span><span class="n">itr</span><span class="o">-&gt;</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">gps_timestamp_sec</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">diff</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">timestamp_diff_sec</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">timestamp_diff_sec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">diff</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">nearest_itr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">itr</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="filllocalizationstatusmsg">
+<h3>FillLocalizationStatusMsg<a class="headerlink" href="#filllocalizationstatusmsg" title="Permalink to this headline">¶</a></h3>
+<p>获取位置状态，一共有3种状态：稳定状态(INS_RTKFIXED)、浮动状态(INS_RTKFLOAT)、错误状态(ERROR)。由于代码比较简单，这里就不分析了。</p>
+</div>
+<div class="section" id="id3">
+<h3>发布消息<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>最后通过以下几个函数发布消息。</p>
+<ol class="arabic simple">
+<li><p>PublishPoseBroadcastTopic  // 发布位置信息</p></li>
+<li><p>PublishPoseBroadcastTF     // 发布位置转换transform信息</p></li>
+<li><p>PublishLocalizationStatus  // 发布位置状态信息</p></li>
+</ol>
+<p>以上就是整个RTK的定位流程，主要的思路是通过接收GPS和IMU信息结合输出无人车的位置信息，这里还有一个疑问是为什么最后输出的定位信息的位置是直接采用的GPS的位置信息，没有通过IMU信息对位置信息做解算，还是说在其它模块中实现的？？？</p>
+<a name="reference" />
+</div>
+</div>
+<div class="section" id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://ieeexplore.ieee.org/document/8461224">Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes</a></p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/localization/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,363 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dig into Apollo - Control &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="dig-into-apollo-control-github">
+<h1>Dig into Apollo - Control <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-control-github" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>岁不寒，无以知松柏；事不难，无以知君子。</p>
+</div></blockquote>
+<div class="section" id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><span class="xref myst">Control模块简介</span></p></li>
+<li><p><span class="xref myst">Control模块主流程</span></p>
+<ul>
+<li><p><span class="xref myst">控制器注册</span></p></li>
+<li><p><span class="xref myst">Pad消息</span></p></li>
+<li><p><span class="xref myst">estop_标志位</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">控制器</span></p></li>
+<li><p><span class="xref myst">LonController控制器</span></p>
+<ul>
+<li><p><span class="xref myst">校准表</span></p></li>
+<li><p><span class="xref myst">PID参数调节</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">LatController控制器</span></p></li>
+<li><p><span class="xref myst">MPCController控制器</span></p></li>
+<li><p><span class="xref myst">StanleyLatController控制器</span></p></li>
+<li><p><span class="xref myst">Reference</span></p></li>
+</ul>
+<a name="introduction" />
+</div>
+<div class="section" id="control">
+<h2>Control模块简介<a class="headerlink" href="#control" title="Permalink to this headline">¶</a></h2>
+<p>Apollo控制模块的逻辑相对比较简单，控制模块的作用是<strong>根据规划(planning模块)生成的轨迹，计算出汽车的油门，刹车和方向盘信号，控制汽车按照规定的轨迹行驶</strong>。采用的方法是根据汽车动力和运动学的知识，对汽车进行建模，实现对汽车的控制。目前apollo主要用到了2种控制方式：PID控制和模型控制。</p>
+<p>首先我们需要搞清楚control模块的输入是什么，输出是什么？<br />
+<img alt="input.jpg" src="../../_images/input1.jpg" /><br />
+可以看到control模块：</p>
+<ul class="simple">
+<li><p><strong>输入</strong> - Chassis(车辆状态信息), LocalizationEstimate(位置信息), ADCTrajectory(planning模块规划的轨迹)</p></li>
+<li><p><strong>输出</strong> - ControlCommand(油门，刹车，方向盘)</p></li>
+</ul>
+<p>Control模块的目录结构如下：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── BUILD      // bazel编译文件
+├── common     // PID和控制器的具体实现     --- 算法具体实现
+├── conf       // 配置文件                 --- 配置文件
+├── control_component.cc  // 模块入口
+├── control_component.h   
+├── control_component_test.cc
+├── controller           // 控制器         --- 具体的控制器实现
+├── dag                  // dag依赖
+├── integration_tests    // 测试
+├── launch               // launch加载
+├── proto                // protobuf文件，主要是各个控制器的配置数据结构
+├── testdata             // 测试数据
+└── tools                // 工具类
+</pre></div>
+</div>
+<p>下面我们接着分析下control模块的执行流程。</p>
+<a name="main" />
+</div>
+<div class="section" id="id1">
+<h2>Control模块主流程<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Control模块的入口在”control_component.cc”中，和其它的模块一样，Control模块注册为cyber的一个模块，其中control模块为定时模块，也就是每隔10ms执行一次命令。这里需要注意了planning模块的输出是100ms一次，也就是说100ms才给出一条曲线，而control模块会根据这条曲线，每10ms处理一次，控制汽车按照指定的速度到达指定的位置。<br />
+Control模块执行的主函数是”ControlComponent::Proc()”，即每10ms调用一次该函数，处理的流程在该函数中：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ControlComponent::Proc</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 读取输入数据，通过拷贝读取输入信息</span>
+<span class="w">  </span><span class="n">chassis_reader_</span><span class="o">-&gt;</span><span class="n">Observe</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">chassis_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">chassis_reader_</span><span class="o">-&gt;</span><span class="n">GetLatestObserved</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">chassis_msg</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Chassis msg is not ready!&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">OnChassis</span><span class="p">(</span><span class="n">chassis_msg</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">trajectory_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trajectory_reader_</span><span class="o">-&gt;</span><span class="n">GetLatestObserved</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">localization_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">localization_reader_</span><span class="o">-&gt;</span><span class="n">GetLatestObserved</span><span class="p">();</span><span class="w"></span>
+
+
+<span class="w">  </span><span class="n">ControlCommand</span><span class="w"> </span><span class="n">control_command</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 生成控制命令</span>
+<span class="w">  </span><span class="n">Status</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ProduceControlCommand</span><span class="p">(</span><span class="o">&amp;</span><span class="n">control_command</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">common</span><span class="o">::</span><span class="n">util</span><span class="o">::</span><span class="n">FillHeader</span><span class="p">(</span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">control_command</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 发送控制命令</span>
+<span class="w">  </span><span class="n">control_cmd_writer_</span><span class="o">-&gt;</span><span class="n">Write</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">ControlCommand</span><span class="o">&gt;</span><span class="p">(</span><span class="n">control_command</span><span class="p">));</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>上述的流程大概分为3个阶段：</p>
+<ol class="arabic simple">
+<li><p><strong>读取输入数据</strong></p></li>
+<li><p><strong>生成控制命令</strong></p></li>
+<li><p><strong>发送控制命令</strong></p></li>
+</ol>
+<p>生成控制命令的核心函数在”ProduceControlCommand”中，其实这个函数还包含了参数检查和_estop(紧急情况)的处理，真正生成命令的函数只有一行:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="n">Status</span><span class="w"> </span><span class="n">status_compute</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">controller_agent_</span><span class="p">.</span><span class="n">ComputeControlCommand</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="o">&amp;</span><span class="n">local_view_</span><span class="p">.</span><span class="n">localization</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">local_view_</span><span class="p">.</span><span class="n">chassis</span><span class="p">,</span><span class="w"></span>
+<span class="w">        </span><span class="o">&amp;</span><span class="n">local_view_</span><span class="p">.</span><span class="n">trajectory</span><span class="p">,</span><span class="w"> </span><span class="n">control_command</span><span class="p">);</span><span class="w"></span>
+</pre></div>
+</div>
+<a name="register" />
+<div class="section" id="id2">
+<h3>控制器注册<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>上述过程是通过”controller_agent_”产生控制命令，而”controller_agent_”是一个代理，其它的控制器通过注册到代理控制器，从而实现多个控制器的访问（是否用到了设计模式的代理模式？）：<br />
+<img alt="agent.jpg" src="../../_images/agent.jpg" /><br />
+其中控制器包括：</p>
+<ul class="simple">
+<li><p><strong>纵向控制</strong></p></li>
+<li><p><strong>横向控制</strong></p></li>
+<li><p><strong>模型预测控制</strong></p></li>
+<li><p><strong>Stanley横向控制</strong></p></li>
+</ul>
+<blockquote>
+<div><p>Stanley横向控制可以<a class="reference external" href="https://www.ri.cmu.edu/pub_files/2009/2/Automatic_Steering_Methods_for_Autonomous_Automobile_Path_Tracking.pdf">参考</a></p>
+</div></blockquote>
+<p>那么这些控制器是如何注册到”controller_agent_”的呢？</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// 1. 在ControlComponent::Init()中调用初始化</span>
+<span class="kt">bool</span><span class="w"> </span><span class="nf">ControlComponent::Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 注册控制器</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">controller_agent_</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">control_conf_</span><span class="p">).</span><span class="n">ok</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">monitor_logger_buffer_</span><span class="p">.</span><span class="n">ERROR</span><span class="p">(</span><span class="s">&quot;Control init controller failed! Stopping...&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="c1">// 2. 在ControllerAgent类中注册和初始化</span>
+<span class="n">Status</span><span class="w"> </span><span class="nf">ControllerAgent::Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ControlConf</span><span class="w"> </span><span class="o">*</span><span class="n">control_conf</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 注册控制器</span>
+<span class="w">  </span><span class="n">RegisterControllers</span><span class="p">(</span><span class="n">control_conf</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 实例化控制器</span>
+<span class="w">  </span><span class="n">CHECK</span><span class="p">(</span><span class="n">InitializeConf</span><span class="p">(</span><span class="n">control_conf</span><span class="p">).</span><span class="n">ok</span><span class="p">())</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Fail to initialize config.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 控制器初始化</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">controller</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">controller_list_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">controller</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="n">controller</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">(</span><span class="n">control_conf_</span><span class="p">).</span><span class="n">ok</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">controller</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Controller &lt;&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">controller</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;&gt; init failed!&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Status</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">CONTROL_INIT_ERROR</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="s">&quot;Failed to init Controller:&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">controller</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">());</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Status</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">CONTROL_INIT_ERROR</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="s">&quot;Failed to init Controller&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Controller &lt;&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">controller</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;&gt; init done!&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">Status</span><span class="o">::</span><span class="n">OK</span><span class="p">();</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>上面就是control模块的主流程，我们接下来先介绍下control模块中的”pad message”和”estop_”，然后再逐个介绍各个控制器。</p>
+<a name="pad" />
+</div>
+<div class="section" id="pad">
+<h3>Pad消息<a class="headerlink" href="#pad" title="Permalink to this headline">¶</a></h3>
+<p>Pad消息通过发送状态来控制汽车的模式（自动驾驶还是人工驾驶），其中”DrivingAction”一共有3种状态，在”pad_msg.proto”中:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">enum</span> <span class="n">DrivingAction</span> <span class="p">{</span>
+  <span class="n">STOP</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">START</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">RESET</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Control模块中只能使用pad消息”RESET”来清空”estop_”的状态。实际上control模块会判断”driving_mode”来决定是否启动自动驾驶，而”driving_mode”是通过发送pad消息状态给”canbus”模块来控制的，这会在canbus模块中详细介绍。<br />
+总之pad消息的2个作用是:</p>
+<ol class="arabic simple">
+<li><p><strong>发送消息给canbus模块，来控制driving_mode，control模块判断当前driving_mode的状态来决定是否启动自动驾驶</strong></p></li>
+<li><p><strong>通过reset来清空estop_的状态</strong></p></li>
+</ol>
+<a name="estop" />
+</div>
+<div class="section" id="estop">
+<h3>estop_标志位<a class="headerlink" href="#estop" title="Permalink to this headline">¶</a></h3>
+<p>那么”estop_”有什么作用呢? estop_标志位的作用是判断control模块是否处于紧急状态，而触发紧急停车。那么在哪些状态下，”estop_”为真，汽车进入紧急停车状态呢？</p>
+<ol class="arabic simple">
+<li><p>输入错误(CheckInput返回false)</p></li>
+<li><p>控制命令计算失败(ComputeControlCommand失败)</p></li>
+<li><p>planning模块直接给出紧急停车</p></li>
+</ol>
+<p>下面是”estop_”的状态变迁图和紧急停车流程:<br />
+<img alt="estop" src="../../_images/estop.jpg" /></p>
+<p>紧急停车的流程很好理解，我们学驾照的时候都知道，紧急停车的时候不能够狂打方向盘，特别是高速的时候，容易侧翻，因此这里的紧急停车流程也是保持方向盘，然后紧急制动。</p>
+<a name="controller" />
+</div>
+</div>
+<div class="section" id="id3">
+<h2>控制器<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>首先我们把汽车的控制分为横向控制和纵向控制2部分，其中纵向控制通过油门和刹车控制车纵向的加减速，而横向控制则通过控制方向盘的转动来控制前轮的方向，从而控制汽车的行驶方向。</p>
+<a name="lon_controller" />
+<div class="section" id="loncontroller">
+<h3>LonController控制器<a class="headerlink" href="#loncontroller" title="Permalink to this headline">¶</a></h3>
+<p>纵向控制器，主要是通过油门和刹车控制车的纵向速度。汽车的纵向模型比较简单，我们可以通过经典力学对汽车进行建模，汽车的纵向受力如果是前轮驱动，那么前轮提供一个向前的滚动摩擦，后轮有一个滚动摩擦阻力再加上风阻，如果有坡度则再加上重力分量，这就构成了汽车的纵向受力模型：<br />
+<img alt="lon" src="../../_images/lon.jpg" /><br />
+纵向控制要实现的目标是让汽车在指定的时间内到达指定的地点，首先是保证位置准确，如果能够直接通过油门去控制汽车的位置，那么采用单一的PID环就够了。重点是位置是和速度与时间相关的，因此先通过位置PID得到需要的速度，然后再通过速度PID得到需要多大油门，这样的方式叫做串级PID控制器。通过2级PID来控制汽车的速度，从而确定需要踩多少的油门。<br />
+现在自动驾驶普遍是电动汽车的情况下，汽车的动力实际上由内燃机换成了电动马达，这种控制方式完全可以由伺服控制器来解决，传统的伺服控制器实现了位置控制，速度控制，可以把汽车的控制模块直接由伺服控制器来替代（也许可以解放汽车的控制，如果是线性的电机，那么其实很好办，油门可以直接对应为电机的电流，而电流对应电机输出的扭矩大小），但汽车有个最大的不同点是后退需要换倒车档。<br />
+下面是串级PID的示意图，其中先根据位置误差得到速度，然后根据速度误差得到油门和刹车，同时在汽车有俯仰角度（汽车行驶在有坡度的路面上）这时候会对PID提供重力分量的补偿：<br />
+<img alt="PID" src="../../_images/PID.jpg" /></p>
+<a name="lon_controller" />
+</div>
+<div class="section" id="id4">
+<h3>校准表<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>知道速度之后我们可以根据当前速度的误差，来确定是增大油门或者是刹车，而油门和速度的关系是如何对应的呢，举个例子：当你发现车的速度和预期相差为3km/h，你应该踩多大油门呢？当然你可以先假设一个值，比如油门增加2，如果速度低了你再增加到3，总之根据一个经验值，然后再通过PID算法去调节，那怎么去拟合速度和油门的关系曲线呢？<br />
+我们需要控制汽车到达某个速度，根据牛顿经典力学，只需要知道汽车的初速度和加速度，就可以知道物体一段时候后的速度。因此我们只要找到速度，加速度和油门的关系，就可以通过控制汽车的加速度来让汽车达到某个速度。也就是对速度加速度和油门的关系进行建模，得到它们之间的关系。Apollo采用的是在实际的汽车行驶过程中记录不同速度下，不同的油门值对汽车的加速度的影响，从而得到一张表格，最后通过查表的方式来得到具体的油门和刹车值大小，得到的配置最后保存在conf文件夹中。<br />
+<img alt="table" src="../../_images/table.png" /><br />
+这个表的生成需要测试每种油门以及每种速度下的表现，但是表不可能列出无限连续的数据，因此最后还是需要通过插值的方式来得到结果。</p>
+<a name="pid" />
+</div>
+<div class="section" id="pid">
+<h3>PID参数调节<a class="headerlink" href="#pid" title="Permalink to this headline">¶</a></h3>
+<p>什么样的PID参数比较合适？这一部分可以参考WIKI百科的PID参数动画。调试参数的方法是先调节速度环，再调节位置环；先调节比例系数，再调节积分系数。<br />
+<img alt="PID_varyingP" src="../../_images/PID_varyingP.jpg" /><br />
+另外关于PID的控制，正常情况下没有问题，如果遇到路面不平的情况，相当于一张巨大的手在拨弄小车，这样就对PID引入了一个震荡反馈，震荡的引入之后系统是否能够保持稳态呢，这就是PID控制需要研究的范围？？？</p>
+<a name="lat_controller" />
+</div>
+</div>
+<div class="section" id="latcontroller">
+<h2>LatController控制器<a class="headerlink" href="#latcontroller" title="Permalink to this headline">¶</a></h2>
+<p>纵向控制主要是控制速度，而横向控制主要是控制方向。方向盘的角度不一样，车的行驶路径不一样，因此汽车的横向控制主要是通过控制方向盘的转角来控制汽车行驶的角度。<br />
+纵向控制采用的是<strong>LQR控制器</strong>，为什么不继续采用PID控制器呢？因为每种控制器都有它的适合情况和不适合情况（有一篇文章专门介绍了不同的控制器的优劣，PID主要的缺点是不适合泊车和曲率比较大的情况）。关于LQR控制器主要是一些公式的推导，后面再详细介绍下推导过程。</p>
+<a name="mpc_controller" />
+</div>
+<div class="section" id="mpccontroller">
+<h2>MPCController控制器<a class="headerlink" href="#mpccontroller" title="Permalink to this headline">¶</a></h2>
+<p>模型预测控制(MPC)是一类特殊的控制。它的当前控制动作是在每一个采样瞬间通过求解一个有限时域开环最优控制问题而获得。过程的当前状态作为最优控制问题的初始状态，解得的最优控制序列只实施第一个控制作用。这是它与那些使用预先计算控制律的算法的最大不同。本质上模型预测控制求解一个开环最优控制问题。它的思想与具体的模型无关，但是实现则与模型有关。</p>
+<a name="stanleylat_controller" />
+</div>
+<div class="section" id="stanleylatcontroller">
+<h2>StanleyLatController控制器<a class="headerlink" href="#stanleylatcontroller" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id5">
+<h2>问题<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>遇到上坡\下坡的情况，原来的系数表就只能提供一个参考，如何提供补偿，PID的每次输入都是从表中查询还是根据调节的结果来的？</p></li>
+<li><p>遇到下雨的时候，路面的摩擦系数改变和上述问题一样</p></li>
+<li><p>遇到长下坡，PID调节是否会和人一样“不能长时间踩脚踏板”</p></li>
+<li><p>转弯的场景是否适合这个参数？</p></li>
+<li><p>是否所有的场景都适合这个参数？比如自主泊车的情况？</p></li>
+<li><p>提供的是TrajectoryPoint，里面包含距离，速度，加速度和时间，这3者只要知道2者即可以了。控制的时候如何选择的颗粒度？比如提供的轨迹的时间间隔是否固定，是否每次都需要control模块自己调节（在时间间隔比较长的情况下），PID每次只能参考一个标准，这里是以距离为准，还是已速度为准？如果是，速度还有何意义？planning生成的TrajectoryPoint是否符合物理学规律？</p></li>
+</ol>
+<a name="reference" />
+</div>
+<div class="section" id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://blog.csdn.net/u013914471/article/details/82775091">Apollo代码学习(一)—控制模块概述</a><br />
+<a class="reference external" href="https://blog.csdn.net/weijimin1/article/details/85794084">百度Apollo 2.0 车辆控制算法之LQR控制算法解读</a><br />
+<a class="reference external" href="https://blog.csdn.net/u013914471/article/details/83748571">Apollo代码学习(五)—横纵向控制</a><br />
+<a class="reference external" href="https://blog.csdn.net/cg129054036/article/details/83413482">Apollo自动驾驶入门课程第⑩讲 — 控制（下）</a><br />
+<a class="reference external" href="https://github.com/ApolloAuto/apollo/blob/master/docs/howto/how_to_tune_control_parameters.md">how_to_tune_control_parameters</a><br />
+<a class="reference external" href="https://www.physicsforums.com/threads/how-does-the-throttle-affect-the-rpm-of-an-engine.832029/">throttle-affect-the-rpm-of-an-engine</a><br />
+<a class="reference external" href="https://en.wikipedia.org/wiki/PID_controller">PID_controller</a><br />
+<a class="reference external" href="https://www.ri.cmu.edu/pub_files/2009/2/Automatic_Steering_Methods_for_Autonomous_Automobile_Path_Tracking.pdf">Stanley横向控制</a><br />
+<a class="reference external" href="https://en.wikipedia.org/wiki/Linear%E2%80%93quadratic_regulator">Linear–quadratic regulator</a><br />
+<a class="reference external" href="https://baike.baidu.com/item/%E6%A8%A1%E5%9E%8B%E9%A2%84%E6%B5%8B%E6%8E%A7%E5%88%B6">模型预测控制</a></p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/control/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

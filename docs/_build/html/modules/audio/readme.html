@@ -1,0 +1,417 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dig into Apollo - Audio &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="dig-into-apollo-audio-github">
+<h1>Dig into Apollo - Audio <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-audio-github" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>勤学如春起之苗，不见其增，日有所长。</p>
+</div></blockquote>
+<div class="section" id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><span class="xref myst">Audio模块介绍</span></p>
+<ul>
+<li><p><span class="xref myst">输入输出</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">目录结构</span></p>
+<ul>
+<li><p><span class="xref myst">模块入口</span></p></li>
+<li><p><span class="xref myst">消息处理（MessageProcess）</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">声音识别（SirenDetection）</span></p></li>
+<li><p><span class="xref myst">移动检测(MovingDetection)</span></p></li>
+<li><p><span class="xref myst">方向检测(DirectionDetection)</span></p></li>
+<li><p><span class="xref myst">工具（tools）</span></p></li>
+</ul>
+<a name="introduction" />
+</div>
+<div class="section" id="audio">
+<h2>Audio模块介绍<a class="headerlink" href="#audio" title="Permalink to this headline">¶</a></h2>
+<p>audio模块是Apollo 6.0新增加的模块，主要的用途是通过声音来识别紧急车辆（警车，救护车，消防车）。目前的功能还相对比较简单，只能识别单个紧急车辆，同时需要环境风速低于20mph。下面我们会详细分析这个模块的原理以及实现。</p>
+<a name="input_output" />
+<div class="section" id="id1">
+<h3>输入输出<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>audio模块的输入是<code class="docutils literal notranslate"><span class="pre">/apollo/sensor/microphone</span></code>，输入的消息来源于”drivers/microphone”，用到的硬件模块是”RESPEAKER”，目前有双通道和四通道，Apollo用到的硬件是四通道，关于硬件的相关介绍，会在”drivers/microphone”中进行说明。</p>
+<p>audio模块的输出是<code class="docutils literal notranslate"><span class="pre">/apollo/audio_detection</span></code>，输出的消息包括：是否检测到紧急车辆，检测到紧急车辆的移动类型（接近还是远离），位置以及角度。</p>
+<p>也就是说audio模块单纯的通过声音来识别有没有紧急车辆，以及紧急车辆的位置，为无人驾驶车的感知添加了新的维度。语音交互在车机智能里是非常好的交互方式，目前面临的主要难点是汽车里噪音的影响，这在通过声音进行感知的时候尤其重要。</p>
+<a name="content" />
+</div>
+</div>
+<div class="section" id="id2">
+<h2>目录结构<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>audio模块的目录结构如下，整体来说并不复杂，主要的逻辑在”inference”中。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── audio_component.cc
+├── audio_component.h   // 模块入口
+├── BUILD
+├── common
+├── conf
+├── dag
+├── data            // 模型文件
+├── inference       // 推理
+├── launch
+├── proto           // 消息格式
+├── README.md
+└── tools           // 工具
+</pre></div>
+</div>
+<p>Audio模块为事件驱动，当接受到驱动模块的声音输入的时候，就开始解析声音，并且输出结果，下面我们来详细分析具体的处理过程。
+audio模块的整体调用流程如图：
+<img alt="调用流程" src="../../_images/main.jpg" /></p>
+<a name="main_process" />
+<div class="section" id="id3">
+<h3>模块入口<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>audio模块通过”Init()”进行初始化，主要是读取录音机的外参，并且创建”audio_writer_”用于发布消息。初始化好之后，接着通过”Proc”来处理消息。处理的过程通过”OnMicrophone”来完成。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">AudioComponent::Proc</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">AudioData</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">audio_data</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// TODO(all) remove GetSignals() multiple calls</span>
+<span class="w">  </span><span class="n">AudioDetection</span><span class="w"> </span><span class="n">audio_detection</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">MessageProcess</span><span class="o">::</span><span class="n">OnMicrophone</span><span class="p">(</span><span class="o">*</span><span class="n">audio_data</span><span class="p">,</span><span class="w"> </span><span class="n">respeaker_extrinsics_file_</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="o">&amp;</span><span class="n">audio_info_</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">direction_detection_</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">moving_detection_</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="o">&amp;</span><span class="n">siren_detection_</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">audio_detection</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">FillHeader</span><span class="p">(</span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">audio_detection</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">audio_writer_</span><span class="o">-&gt;</span><span class="n">Write</span><span class="p">(</span><span class="n">audio_detection</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<a name="message_process" />
+</div>
+<div class="section" id="messageprocess">
+<h3>消息处理（MessageProcess）<a class="headerlink" href="#messageprocess" title="Permalink to this headline">¶</a></h3>
+<p>MessageProcess类实际上是推理模块的一个集合，具体的任务实际上还是在”inference”目录中完成的，主要有3个类，分别为</p>
+<ul class="simple">
+<li><p><strong>SirenDetection</strong> - 通过深度学习的方法，判断是否是紧急车辆声音。</p></li>
+<li><p><strong>MovingDetection</strong> - 通过声音强度信息和多普勒效应，来判断车辆是靠近还是远离。</p></li>
+<li><p><strong>DirectionDetection</strong> - 通过多个通道之间的差异，计算声音的方向。</p></li>
+</ul>
+<p>下面我们开始分别介绍这3个功能。</p>
+<a name="siren_detection" />
+</div>
+</div>
+<div class="section" id="sirendetection">
+<h2>声音识别（SirenDetection）<a class="headerlink" href="#sirendetection" title="Permalink to this headline">¶</a></h2>
+<p>声音识别SirenDetection类中只有2个函数, LoadModel进行模型的加载，模型文件在”audio/data”目录中。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SirenDetection</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">Evaluate</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;&amp;</span><span class="w"> </span><span class="n">signals</span><span class="p">);</span><span class="w"></span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="n">LoadModel</span><span class="p">();</span><span class="w"></span>
+</pre></div>
+</div>
+<p>Evaluate函数对多个通道声音进行处理，然后输入到模型，并且得出正向和反向的结果，当正向的分数大于反向的时候，则表示检测到了特殊车辆。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">SirenDetection::Evaluate</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;&amp;</span><span class="w"> </span><span class="n">signals</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 读取4个通道的数据，装入audio_tensor中</span>
+<span class="w">  </span><span class="n">torch</span><span class="o">::</span><span class="n">Tensor</span><span class="w"> </span><span class="n">audio_tensor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">torch</span><span class="o">::</span><span class="n">empty</span><span class="p">(</span><span class="mi">4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">72000</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">audio_tensor</span><span class="p">.</span><span class="n">data_ptr</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">channel</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">signals</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">channel</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="o">*</span><span class="n">data</span><span class="o">++</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">32767.0</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 转换声音为张量</span>
+<span class="w">  </span><span class="n">torch</span><span class="o">::</span><span class="n">Tensor</span><span class="w"> </span><span class="n">torch_input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">torch</span><span class="o">::</span><span class="n">from_blob</span><span class="p">(</span><span class="n">audio_tensor</span><span class="p">.</span><span class="n">data_ptr</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                                               </span><span class="p">{</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">72000</span><span class="p">});</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">torch</span><span class="o">::</span><span class="n">jit</span><span class="o">::</span><span class="n">IValue</span><span class="o">&gt;</span><span class="w"> </span><span class="n">torch_inputs</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">torch_inputs</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">torch_input</span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">device_</span><span class="p">));</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 3. 模型推理</span>
+<span class="w">  </span><span class="n">at</span><span class="o">::</span><span class="n">Tensor</span><span class="w"> </span><span class="n">torch_output_tensor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">torch_model_</span><span class="p">.</span><span class="n">forward</span><span class="p">(</span><span class="n">torch_inputs</span><span class="p">).</span><span class="n">toTensor</span><span class="p">()</span><span class="w"></span>
+<span class="w">                                               </span><span class="p">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">::</span><span class="n">kCPU</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">torch_output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">torch_output_tensor</span><span class="p">.</span><span class="n">accessor</span><span class="o">&lt;</span><span class="kt">float</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 4. 投票表决</span>
+<span class="w">  </span><span class="kt">float</span><span class="w"> </span><span class="n">neg_score</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">torch_output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">torch_output</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"></span>
+<span class="w">                    </span><span class="n">torch_output</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">torch_output</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">];</span><span class="w"></span>
+<span class="w">  </span><span class="kt">float</span><span class="w"> </span><span class="n">pos_score</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">torch_output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">torch_output</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"></span>
+<span class="w">                    </span><span class="n">torch_output</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">torch_output</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">1</span><span class="p">];</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">neg_score</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">pos_score</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<a name="moving_detection" />
+</div>
+<div class="section" id="movingdetection">
+<h2>移动检测(MovingDetection)<a class="headerlink" href="#movingdetection" title="Permalink to this headline">¶</a></h2>
+<p>移动检测在”MovingDetection”类中实现，通过检测最近3帧的声音强度和声音频率，来判断紧急车辆是接近还是远离。MovingDetection中主要有3个函数。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="c1">// 1. 快速傅里叶变换</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">fft1d</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">signals</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 移动检测</span>
+<span class="w">  </span><span class="n">MovingResult</span><span class="w"> </span><span class="nf">Detect</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;&amp;</span><span class="w"> </span><span class="n">signals</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 检测单个通道</span>
+<span class="w">  </span><span class="n">MovingResult</span><span class="w"> </span><span class="nf">DetectSingleChannel</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">channel_index</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">signal</span><span class="p">);</span><span class="w"></span>
+</pre></div>
+</div>
+<p>快速傅里叶变换在fft1d中完成，主要是把时域的东西转换到频域，在这里主要是为了得到声音的频率。</p>
+<p>接下来我们看”DetectSingleChannel”的实现。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">MovingResult</span><span class="w"> </span><span class="nf">MovingDetection::DetectSingleChannel</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">channel_index</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">signals</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">kStartFrequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">kFrameNumStored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">fft_results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fft1d</span><span class="p">(</span><span class="n">signals</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 获取声音信息</span>
+<span class="w">  </span><span class="n">SignalStat</span><span class="w"> </span><span class="n">signal_stat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetSignalStat</span><span class="p">(</span><span class="n">fft_results</span><span class="p">,</span><span class="w"> </span><span class="n">kStartFrequency</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">signal_stats_</span><span class="p">[</span><span class="n">channel_index</span><span class="p">].</span><span class="n">push_back</span><span class="p">(</span><span class="n">signal_stat</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">signal_stats_</span><span class="p">[</span><span class="n">channel_index</span><span class="p">].</span><span class="n">size</span><span class="p">())</span><span class="w"> </span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">         </span><span class="n">kFrameNumStored</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">signal_stats_</span><span class="p">[</span><span class="n">channel_index</span><span class="p">].</span><span class="n">pop_front</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 分析声音强度</span>
+<span class="w">  </span><span class="n">MovingResult</span><span class="w"> </span><span class="n">power_result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AnalyzePower</span><span class="p">(</span><span class="n">signal_stats_</span><span class="p">[</span><span class="n">channel_index</span><span class="p">]);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">power_result</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">UNKNOWN</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">power_result</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 分析声音频率</span>
+<span class="w">  </span><span class="n">MovingResult</span><span class="w"> </span><span class="n">top_frequency_result</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">AnalyzeTopFrequence</span><span class="p">(</span><span class="n">signal_stats_</span><span class="p">[</span><span class="n">channel_index</span><span class="p">]);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">top_frequency_result</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>可以看到单个通道先通过”GetSignalStat”获取声音信息，并且优先采用声音强度信息，然后采用声音频率。</p>
+<p>我们接着上一步骤看如何获取声音强度和声音频率。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">MovingDetection</span><span class="o">::</span><span class="n">SignalStat</span><span class="w"> </span><span class="nf">MovingDetection::GetSignalStat</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;&amp;</span><span class="w"> </span><span class="n">fft_results</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">start_frequency</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">total_power</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">top_frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">-1</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">max_power</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">-1.0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">start_frequency</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">fft_results</span><span class="p">.</span><span class="n">size</span><span class="p">());</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">power</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">abs</span><span class="p">(</span><span class="n">fft_results</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 1. 对一段时间的声音强度做累加</span>
+<span class="w">    </span><span class="n">total_power</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">power</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 2. 找出一段时间内声音强度最大的作为当时的频率</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">power</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">max_power</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">max_power</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">power</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">top_frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="n">total_power</span><span class="p">,</span><span class="w"> </span><span class="n">top_frequency</span><span class="p">};</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>“AnalyzePower”和”AnalyzeTopFrequence”的逻辑相对简单，就是判断过去的三帧，声音强度是否一直减少、增大，频率是否一直减少、增大。以此来判断汽车是远离还是靠近。</p>
+<p>最后”Detect”函数会综合4个通道的数据来进行投票表决，然后得到汽车是远离还是靠近，最后输出结果。</p>
+<a name="direction_detection" />
+</div>
+<div class="section" id="directiondetection">
+<h2>方向检测(DirectionDetection)<a class="headerlink" href="#directiondetection" title="Permalink to this headline">¶</a></h2>
+<p>在”DirectionDetection”类中对紧急车辆的方向进行估计，通过2个通道的差异和声音的速度，就可以得到车辆的大概位置。<br />
+DirectionDetection类的主要实现在”EstimateSoundSource”函数中，下面我们来分析下具体的实现。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">Point3D</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">DirectionDetection</span><span class="o">::</span><span class="n">EstimateSoundSource</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;&amp;&amp;</span><span class="w"> </span><span class="n">channels_vec</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">respeaker_extrinsic_file</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">sample_rate</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">mic_distance</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 加载外参</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">respeaker2imu_ptr_</span><span class="p">.</span><span class="n">get</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">respeaker2imu_ptr_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix4d</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">LoadExtrinsics</span><span class="p">(</span><span class="n">respeaker_extrinsic_file</span><span class="p">,</span><span class="w"> </span><span class="n">respeaker2imu_ptr_</span><span class="p">.</span><span class="n">get</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 计算方向角度</span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">degree</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">EstimateDirection</span><span class="p">(</span><span class="n">move</span><span class="p">(</span><span class="n">channels_vec</span><span class="p">),</span><span class="w"> </span><span class="n">sample_rate</span><span class="p">,</span><span class="w"> </span><span class="n">mic_distance</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 计算距离</span>
+<span class="w">  </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Vector4d</span><span class="w"> </span><span class="nf">source_position</span><span class="p">(</span><span class="n">kDistance</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="n">degree</span><span class="p">),</span><span class="w"></span>
+<span class="w">                                  </span><span class="n">kDistance</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="n">degree</span><span class="p">),</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">source_position</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">respeaker2imu_ptr_</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">source_position</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">Point3D</span><span class="w"> </span><span class="n">source_position_p3d</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">source_position_p3d</span><span class="p">.</span><span class="n">set_x</span><span class="p">(</span><span class="n">source_position</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span><span class="w"></span>
+<span class="w">  </span><span class="n">source_position_p3d</span><span class="p">.</span><span class="n">set_y</span><span class="p">(</span><span class="n">source_position</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span><span class="w"></span>
+<span class="w">  </span><span class="n">source_position_p3d</span><span class="p">.</span><span class="n">set_z</span><span class="p">(</span><span class="n">source_position</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span><span class="w"></span>
+<span class="w">  </span><span class="n">degree</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NormalizeAngle</span><span class="p">(</span><span class="n">degree</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="n">source_position_p3d</span><span class="p">,</span><span class="w"> </span><span class="n">degree</span><span class="p">};</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>那么如何计算方向角度呢？ 下面我们看下”EstimateDirection”的实现。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">double</span><span class="w"> </span><span class="nf">DirectionDetection::EstimateDirection</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;&amp;&amp;</span><span class="w"> </span><span class="n">channels_vec</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">sample_rate</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">mic_distance</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 把声音数据放入channels_ts</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">torch</span><span class="o">::</span><span class="n">Tensor</span><span class="o">&gt;</span><span class="w"> </span><span class="n">channels_ts</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">torch</span><span class="o">::</span><span class="n">TensorOptions</span><span class="p">().</span><span class="n">dtype</span><span class="p">(</span><span class="n">torch</span><span class="o">::</span><span class="n">kFloat64</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">channels_vec</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">size</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">signal</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">channels_vec</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">channels_ts</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">torch</span><span class="o">::</span><span class="n">from_blob</span><span class="p">(</span><span class="n">signal</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="p">{</span><span class="n">size</span><span class="p">},</span><span class="w"> </span><span class="n">options</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">tau0</span><span class="p">,</span><span class="w"> </span><span class="n">tau1</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">theta0</span><span class="p">,</span><span class="w"> </span><span class="n">theta1</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">max_tau</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mic_distance</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">kSoundSpeed</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 分别计算通道0和2,1和3的组合来得出角度</span>
+<span class="w">  </span><span class="n">tau0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GccPhat</span><span class="p">(</span><span class="n">channels_ts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">channels_ts</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="w"> </span><span class="n">sample_rate</span><span class="p">,</span><span class="w"> </span><span class="n">max_tau</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">theta0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">asin</span><span class="p">(</span><span class="n">tau0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">max_tau</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">180</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">M_PI</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">tau1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GccPhat</span><span class="p">(</span><span class="n">channels_ts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">channels_ts</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="w"> </span><span class="n">sample_rate</span><span class="p">,</span><span class="w"> </span><span class="n">max_tau</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">theta1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">asin</span><span class="p">(</span><span class="n">tau1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">max_tau</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">180</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">M_PI</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">best_guess</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 得到最优解</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">fabs</span><span class="p">(</span><span class="n">theta0</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">fabs</span><span class="p">(</span><span class="n">theta1</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">best_guess</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">theta1</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fmod</span><span class="p">(</span><span class="n">theta0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">360</span><span class="p">,</span><span class="w"> </span><span class="mi">360</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="mi">180</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">theta0</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">best_guess</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">theta0</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fmod</span><span class="p">(</span><span class="n">theta1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">360</span><span class="p">,</span><span class="w"> </span><span class="mi">360</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="mi">180</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">theta1</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">best_guess</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">best_guess</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">90</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">180</span><span class="p">)</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">360</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">best_guess</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="o">-</span><span class="n">best_guess</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">480</span><span class="p">)</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">360</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">best_guess</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">180</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">M_PI</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>计算2个通道，从而得到角度信息的实现如下。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">double</span><span class="w"> </span><span class="nf">DirectionDetection::GccPhat</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">torch</span><span class="o">::</span><span class="n">Tensor</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sig</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="k">const</span><span class="w"> </span><span class="n">torch</span><span class="o">::</span><span class="n">Tensor</span><span class="o">&amp;</span><span class="w"> </span><span class="n">refsig</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">fs</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="kt">double</span><span class="w"> </span><span class="n">max_tau</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">interp</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n_sig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sig</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"> </span><span class="n">n_refsig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">refsig</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"></span>
+<span class="w">            </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n_sig</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n_refsig</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">torch</span><span class="o">::</span><span class="n">Tensor</span><span class="w"> </span><span class="n">psig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">at</span><span class="o">::</span><span class="n">constant_pad_nd</span><span class="p">(</span><span class="n">sig</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">n_refsig</span><span class="p">},</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">torch</span><span class="o">::</span><span class="n">Tensor</span><span class="w"> </span><span class="n">prefsig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">at</span><span class="o">::</span><span class="n">constant_pad_nd</span><span class="p">(</span><span class="n">refsig</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">n_sig</span><span class="p">},</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">psig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">at</span><span class="o">::</span><span class="n">rfft</span><span class="p">(</span><span class="n">psig</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">prefsig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">at</span><span class="o">::</span><span class="n">rfft</span><span class="p">(</span><span class="n">prefsig</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">ConjugateTensor</span><span class="p">(</span><span class="o">&amp;</span><span class="n">prefsig</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 复数相乘</span>
+<span class="w">  </span><span class="n">torch</span><span class="o">::</span><span class="n">Tensor</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ComplexMultiply</span><span class="p">(</span><span class="n">psig</span><span class="p">,</span><span class="w"> </span><span class="n">prefsig</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 复数取绝对值</span>
+<span class="w">  </span><span class="n">torch</span><span class="o">::</span><span class="n">Tensor</span><span class="w"> </span><span class="n">cc</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">at</span><span class="o">::</span><span class="n">irfft</span><span class="p">(</span><span class="n">r</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">ComplexAbsolute</span><span class="p">(</span><span class="n">r</span><span class="p">),</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="n">interp</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="p">});</span><span class="w"></span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">max_shift</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">interp</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">max_tau</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="n">max_shift</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">interp</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">fs</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">max_tau</span><span class="p">),</span><span class="w"> </span><span class="n">max_shift</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cc</span><span class="p">.</span><span class="n">index</span><span class="p">({</span><span class="n">Slice</span><span class="p">(</span><span class="n">cc</span><span class="p">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">max_shift</span><span class="p">,</span><span class="w"> </span><span class="n">None</span><span class="p">)});</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cc</span><span class="p">.</span><span class="n">index</span><span class="p">({</span><span class="n">Slice</span><span class="p">(</span><span class="n">None</span><span class="p">,</span><span class="w"> </span><span class="n">max_shift</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)});</span><span class="w"></span>
+<span class="w">  </span><span class="n">cc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">at</span><span class="o">::</span><span class="n">cat</span><span class="p">({</span><span class="n">begin</span><span class="p">,</span><span class="w"> </span><span class="n">end</span><span class="p">});</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// find max cross correlation index</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">shift</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">at</span><span class="o">::</span><span class="n">argmax</span><span class="p">(</span><span class="n">at</span><span class="o">::</span><span class="n">abs</span><span class="p">(</span><span class="n">cc</span><span class="p">),</span><span class="w"> </span><span class="mi">0</span><span class="p">).</span><span class="n">item</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">max_shift</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">tau</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shift</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">interp</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">fs</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">tau</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>Todo:<br />
+关于上述过程的详细计算原理，之后需要做进一步的补充？？？</p>
+<a name="tools" />
+</div>
+<div class="section" id="tools">
+<h2>工具（tools）<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h2>
+<p>tools目录提供了一些录制和调试工具。</p>
+<ul class="simple">
+<li><p><strong>audiosaver.py</strong> - 录制声音并且保存。</p></li>
+<li><p><strong>audio_offline_processing.cc</strong> - 离线测试工具，提供audio模块的离线功能。</p></li>
+</ul>
+<p>至此，我们就得到了是否有紧急车辆，以及车辆的移动方式和方向。实际上audio模块的代码中还遗留有位置信息、感知的结果，估计后面会增加一些新的融合功能。</p>
+<p>整体上audio模块还是挺有意思的，当然声音的识别，以及在嘈杂环境如何获取到比较关注的声音，都是业界研究的热点方向，但主要还是集中在室内对人的声音的追踪，室外以及对车或者后续增加到人的场景，还有待发掘。</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/audio/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

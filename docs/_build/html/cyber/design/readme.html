@@ -1,0 +1,827 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dig into Apollo - Cyber &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="dig-into-apollo-cyber-github">
+<h1>Dig into Apollo - Cyber <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-cyber-github" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><span class="xref myst">How do you design cyber?</span></p></li>
+<li><p><span class="xref myst">需求分析</span></p></li>
+<li><p><span class="xref myst">系统设计</span></p>
+<ul>
+<li><p><span class="xref myst">随意的假设</span></p></li>
+<li><p><span class="xref myst">多节点</span></p></li>
+<li><p><span class="xref myst">通信方式</span></p></li>
+<li><p><span class="xref myst">资源调度</span></p>
+<ul>
+<li><p><span class="xref myst">linux进程调度</span></p></li>
+<li><p><span class="xref myst">无人驾驶线程调度</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">软件复用</span></p></li>
+<li><p><span class="xref myst">快速测试</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">其他</span></p>
+<ul>
+<li><p><span class="xref myst">云平台</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">Reference</span></p></li>
+</ul>
+<a name="how" />
+</div>
+<div class="section" id="how-do-you-design-cyber">
+<h2>How do you design cyber?<a class="headerlink" href="#how-do-you-design-cyber" title="Permalink to this headline">¶</a></h2>
+<p>无人驾驶车借鉴了很多机器人领域的技术，我们可以把无人车看做一个轮式机器人。Apollo的计算平台之前一直采用的是ROS，3.5版本用Cyber替换了这一架构，那么如果让我们来重新设计这一个框架，我们需要支持哪些特性呢，我们如何去实现它呢？</p>
+<ul class="simple">
+<li><p>我们需要一个什么样的系统？</p></li>
+<li><p>如何保证系统的稳定性和灵活性？</p></li>
+<li><p>如何来调试和维护这样复杂的系统？</p></li>
+</ul>
+<a name="requirements" />
+</div>
+<div class="section" id="id1">
+<h2>需求分析<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>我们先借鉴下ROS的思路：<br />
+<strong>分布式计算</strong> 现代机器人系统往往需要多个计算机同时运行多个进程，例如：</p>
+<ul class="simple">
+<li><p>一些机器人搭载多台计算机，每台计算机用于控制机器人的部分驱动器或传感器；</p></li>
+<li><p>即使只有一台计算机，通常仍将程序划分为独立运行且相互协作的小的模块来完成复杂的控制任务，这也是常见的做法；</p></li>
+<li><p>当多个机器人需要协同完成一个任务时，往往需要互相通信来支撑任务的完成；</p></li>
+</ul>
+<blockquote>
+<div><p>单计算机或者多计算机不同进程间的通信问题是上述例子中的主要挑战。ROS为实现上述通信提供两种相对简单、完备的机制。</p>
+</div></blockquote>
+<p><strong>软件复用</strong> 随着机器人研究的快速推进，诞生了一批应对导航、路径规划、建图等通用任务的算法。当然，任何一个算法实用的前提是其能够应用于新的领域，且不必重复实现。事实上，如何将现有算法快速移植到不同系统一直是一个挑战，ROS 通过以下两种方法解决这个问题。</p>
+<ul class="simple">
+<li><p>ROS 标准包（Standard Packages）提供稳定、可调式的各类重要机器人算法实现。</p></li>
+<li><p>ROS通信接口正在成为机器人软件互操作的事实标准，也就是说绝大部分最新的硬件驱动和最前沿的算法实现都可以在ROS中找到。例如，在ROS的官方网页上有着大量的开源软件库，这些软件使用ROS通用接口，从而避免为了集成它们而重新开发新的接口程序。</p></li>
+</ul>
+<blockquote>
+<div><p>综上所述，开发人员将更多的时间用于新思想和新算法的设计与实现，尽量避免重复实现已有的研究结果。</p>
+</div></blockquote>
+<p><strong>快速测试</strong> 为机器人开发软件比其他软件开发更具挑战性，主要是因为调试准备时间长，且调试过程复杂。况且，因为硬件维修、经费有限等因素，不一定随时有机器人可供使用。ROS提供两种策略来解决上述问题。</p>
+<ul class="simple">
+<li><p>精心设计的ROS系统框架将底层硬件控制模块和顶层数据处理与决策模块分离，从而可以使用模拟器替代底层硬件模块，独立测试顶层部分，提高测试效率。</p></li>
+<li><p>ROS 另外提供了一种简单的方法可以在调试过程中记录传感器数据及其他类型的消息数据，并在试验后按时间戳回放。通过这种方式，每次运行机器人可以获得更多的测试机会。例如，可以记录传感器的数据，并通过多次回放测试不同的数据处理算法。在 ROS 术语中，这类记录的数据叫作包（bag），一个被称为rosbag的工具可以用于记录和回放包数据。</p></li>
+<li><p>用户通常通过台式机、笔记本或者移动设备发送指令控制机器人，这种人机交互接口可以认为是机器人软件的一部分。</p></li>
+</ul>
+<blockquote>
+<div><p>采用上述方案的一个最大优势是实现代码的“无缝连接”，因为实体机器人、仿真器和回放的包可以提供同样（至少是非常类似）的接口，上层软件不需要修改就可以与它们进行交互，实际上甚至不需要知道操作的对象是不是实体机器人。</p>
+</div></blockquote>
+<p>参考上述实现，我们可以把需求细化为以下几个方面：<br />
+<img alt="requirements" src="../../_images/requirements.jpg" /></p>
+<blockquote>
+<div><p>实际上Apollo主要用到了ROS消息通信的功能，同时也用到了录制bag包等一些工具类。所以目前Cyber的首要设计就是替换ROS消息通信的功能。</p>
+</div></blockquote>
+<a name="design" />
+</div>
+<div class="section" id="id2">
+<h2>系统设计<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<a name="hypothesis" />
+<div class="section" id="id3">
+<h3>随意的假设<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>按照上述需求，我们可以随便假想，或者根据自己的理解先画出系统的草图，这里我们要实现一个分布式的系统：<br />
+<img alt="node" src="../../_images/node.jpg" /></p>
+<ol class="arabic simple">
+<li><p>上述的系统是一个分布式系统，每个节点作为一个Node。</p></li>
+<li><p>上述系统每个节点之间都可以相互通信，一个节点下线，不会导致到整个系统瘫痪。</p></li>
+<li><p>上述系统可以灵活的增加删除节点。</p></li>
+</ol>
+<p>那么我们再看下其他的设计方式：<br />
+<img alt="master_node" src="../../_images/master_node.jpg" /><br />
+上述系统采用了集中式的消息管理，每个节点之间通讯必须经过主节点来转发对应的消息，如果主节点下线，那么所有的节点都会通信失败，导致系统瘫痪。</p>
+<ol class="arabic simple">
+<li><p>上述系统是一个分布式系统，每个节点作为一个Node。</p></li>
+<li><p>上述系统每个节点通过主节点通信，主节点下线会导致系统奔溃。</p></li>
+<li><p>上述系统可以灵活的增加删除节点。
+对上述系统，一个补救措施就是在增加一个主节点，作为备份，当主节点下线时，启动备份主节点。</p></li>
+</ol>
+<blockquote>
+<div><p>这2种方式的主要区别就是通信方式的区别。</p>
+</div></blockquote>
+<p>当然集中式的消息管理是否有好处呢？集中式的消息处理天然支持管理节点的功能，而点对点的消息处理不支持。例如：</p>
+<ul class="simple">
+<li><p>当一个节点有10s没有发送消息，那么集中式的消息可以监控并且知道这个节点是否出故障了；</p></li>
+<li><p>集中式的消息可以知道哪些节点在线去找到这些节点，这在多机网络通信的时候很管用，节点只需要注册自己的IP地址，然后由管理节点告诉你去哪里拿到消息。</p></li>
+</ul>
+<p><img alt="center" src="../../_images/center.jpg" /></p>
+<p>上述只是一个初步的想法，那么基于上面的启发，我们针对上述的每项需求，完成我们的系统设计。<br />
+<img alt="design" src="../../_images/design.jpg" /></p>
+<p>我们接下来详细的分析每个需求：<br />
+<a name="multinode" /></p>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>多节点<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>节点管理</p></li>
+<li><p>节点依赖</p></li>
+</ol>
+<a name="communication" />
+</div>
+<div class="section" id="id5">
+<h2>通信方式<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>点对点</p></li>
+<li><p>采用共享内存的方式可以提高效率，需要注意并发访问时候的问题</p></li>
+</ol>
+<a name="schedule" />
+</div>
+<div class="section" id="id6">
+<h2>资源调度<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>进程调度算法改为实时算法</p></li>
+<li><p>进程有优先级</p></li>
+<li><p>支持并发</p></li>
+<li><p>能够限制系统的资源占用</p></li>
+</ol>
+<a name="linux_schedule" />
+<div class="section" id="linux">
+<h3>linux进程调度<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h3>
+<p>操作系统最基本的功能就是管理线程，linux的线程调度采用的是CFS(Completely Fair Scheduler)算法，我们先看下没有调度和有调度的情况下的差异。<br />
+<img alt="schedule_timeline" src="../../_images/schedule_timeline.jpg" /><br />
+上述是单个CPU核心的情况下，左边是没有CPU调度的情况，任务1在进行完计算之后，会读取内存或者IO的数据，这时候CPU会进入等待状态，CPU在等待的时候没有做任何事情。而右边采用了调度策略，在CPU等待的过程中，任务1主动让出CPU，这样下一个任务就可以在当前任务等待IO的过程中执行，可以看到对任务的调度合理的利用了CPU，使得CPU的利用率更高，从而使任务执行的更快。</p>
+<p>linux内核又分为可以抢占的和非抢占的，非抢占的内核禁止抢占，即在一个任务执行完成之前，除非他主动让出CPU或者执行完成，CPU会一直被这个任务占据，不能够被更高优先级的任务抢占。而抢占式的内核则支持在一个任务执行的过程中，如果有更高优先级的任务请求，那么内核会暂停现在运行的任务，转而运行优先级更高的任务，显然抢占式的内核的实时性更好。</p>
+<p>CPU把任务根据优先级划分，并且划分不同的时间片，通过时间片轮转，使CPU看起来在同一时间能够执行多个任务，就好像一个人同时交叉的做几件事情，看起来多个事情是一起完成的一样。每个进程会分配一段时间片，在当前进程的时间片用完的时候，如果没有其他任务，那么会继续执行；如果有其他任务，那么当前任务会暂停，切换到其他任务执行。这样带来一个问题就是如何判断进程的优先级。</p>
+<p>内核把任务做了区分，分为交互型和脚本型，如果是交互型的进程，对实时性的要求比较高，但是大部分情况下又不会一直运行，典型的情况是，键盘输入的情况，大部分情况下键盘可能没有输入，但是一旦用户输入了，又要求能够立刻响应，否则用户会觉得输入很卡顿。而脚本型因为一直在后台运行，对实时性的要求没那么高，所以不需要立刻响应。linux通过抢占式的方式，对任务的优先级进行排序，交互型进程的优先级要比脚本型进程的优先级要高。从而在交互性进程到来之前能够抢占CPU，优先运行。还有一类是实时进程，这类进程的优先级最高，实时进程必须要保证执行，因此会有限抢占其他进程。</p>
+<p>如果单纯的根据优先级，低优先级的任务可能很长一段时间都得不到执行，因此需要更加公平的算法，在一个进程等待时间太长的时候，会动态的提高它的优先级，如果一个进程执行很长的一段时间了，那么会动态降低它的优先级，这样带来的好处是，不会导致低优先级的长期得不到CPU，而高优先级的CPU长期霸占CPU，linux采用的就是CFS(Completely Fair Scheduler)算法，通过该算法可以保证进程能够相对公平的占用CPU。</p>
+<p>同时在多CPU和多核场景下，由于每个核心的进程调度队列都是单独的，那么会导致一个问题，如果任务都集中在某一个CPU核心，而其他的CPU核心的队列都是空闲状态，这样也会导致CPU的性能低下，在这种情况下，linux会把任务迁移到其他CPU核心，使得CPU之间的负载均衡，linux引入了Cgroups用来限制，控制与分离一个进程组群的资源（如CPU、内存、磁盘输入输出等）。当然，线程迁移会带来开销，有些时候我们会绑定任务到某一个核心，防止线程迁移。同时如果系统频繁的中断，CPU会频繁停下任务去处理中断，有些场景(网络设备）需要频繁处理网络中断的情况下，通常会绑定中断到某一个CPU核心，这样其他的核心就不会频繁中断，减少了进程切换的开销。</p>
+<a name="auto_schedule" />
+</div>
+<div class="section" id="id7">
+<h3>无人驾驶线程调度<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>参考linux的线程调度，我们也可以思考下无人驾驶线程调度的算法。<br />
+我们假设有如下线程：定位，感知，规划，控制，传感器读取，日志，地图（这只是对任务的抽象，当然系统的进程不可能只有这么几个）。假设目前的CPU只有2个核心，那么我们如何规划这些任务的优先级呢？</p>
+<ol class="arabic simple">
+<li><p>首先，我们假设定位，感知，规划和控制，传感器读取的优先级比日志和地图更高。这也很容易理解，打不打日志和地图读取的慢点对系统的影响不大，而上述的模块如果读取的很慢，则会导致系统故障。</p></li>
+<li><p>接下来我们再看优先级高的模块，因为目前我们只有2核心，所以不可能同时执行上述所有模块，只能通过时间片轮转来实现。这里就引入了一个问题，如果分配的时间片太长，会导致响应不及时，如果分配的时间片太短，又会导致线程切换开销，需要折中考虑。如果运行过程中感知和规划正在执行，并且分配的时间片还没有用完，那么控制模块不会抢占CPU，直到运行中的模块时间片用完。</p></li>
+<li><p>对这些模块的算法复杂度有要求，如果感知模块采用了复杂度较高的算法提高准确率，这样导致的结果是感知会占用更多的CPU时间，其他模块每次需要和感知模块竞争CPU，结果就是导致总体的执行时间会变长。比如，规定感知只需要在200ms的时候处理完任务就可以了，之前感知的算法实现是100ms，而控制模块的时间是100ms，CPU的时间片是50ms，那么感知需要2个时间片，控制需要2个时间片，总的需要时间是200ms，控制模块完成的时间由于时间片轮转，可能是150ms。但是如果感知为了提高效果，增加了算法的复杂度，运行时间改为200ms，感知模块照常能够完成自己的任务，因为只要200ms完成任务，感知模块就完成了任务，总的需要的时间可能是300ms，但是引入的另外的问题是由于竞争控制模块可能完成的时间是200ms，这样就会导致控制模块的时延达不到要求。其实这样的情况总的来说一是需要升级硬件，比如增加CPU的核数；另外的办法就是降低系统算法的复杂度，每个模块的任务要竟可能的高效。</p></li>
+<li><p>通过上面的要求也可以看到，系统进程的算法复杂度要尽可能的稳定，不能一下子是50ms，一下子是200ms，或者直接找不到最优解，这是最坏的情况，如果各个模块的算法都不太稳定，带来的影响就是当遇到极端情况，每个模块需要的时间都变多时候，系统的负载会一下子变高，导致模块的相应不及时，这对自动驾驶是很致命的问题。</p></li>
+<li><p>上述是理想情况下，那么我们会遇到哪些情况，系统的进程会奔溃或者一直占用CPU的情况呢？</p></li>
+</ol>
+<ul class="simple">
+<li><p>找不到最优解，死循环。大部分情况下程序没有响应是因为找不到最优解，或者死循环，这种状态可以通过代码和算法实现保证。</p></li>
+<li><p>堆栈溢出，内存泄露，空指针。这种情况是由于程序编写错误，也可以通过代码保证。</p></li>
+<li><p>硬件错误。极小概率的情况下，CPU的寄存器会出错，嵌入式(powerpc)的CPU都会有冗余校正，而家用或者服务器(intel)没有这种设计，这种情况下只能重启进程，或者硬件。</p></li>
+</ul>
+<p>我们根据上述的思路，可以得到如下图所示：<br />
+<img alt="schedule_main" src="../../_images/schedule_main.jpg" /></p>
+<ul class="simple">
+<li><p>把控制的优先级设置到最高，规划其次，感知和定位的优先级设置相对较低，因为控制和规划必须马上处理，感知如果当前帧处理不过来，大不了就丢掉，接着处理下一帧。当然这些线程都需要设置为实时进程。而地图，日志，定位等的优先级设置较低，在其他高优先级的进程到来时候会被抢占。</p></li>
+<li><p>Canbus等传感器数据，可以绑定到一个CPU核心上处理，这样中断不会影响到其他核心，导致频繁线程切换。</p></li>
+<li><p>对线程设置cgroups，可以控制资源使用，设置优先级等。</p></li>
+<li><p>测试算法的时间复杂度，是否稳定。</p></li>
+</ul>
+<a name="reuse" />
+</div>
+</div>
+<div class="section" id="id8">
+<h2>软件复用<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>包管理</p></li>
+<li><p>工具类</p></li>
+</ol>
+<a name="test" />
+</div>
+<div class="section" id="id9">
+<h2>快速测试<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>人机交互</p></li>
+<li><p>日志</p></li>
+<li><p>调试功能</p></li>
+<li><p>通信接口</p></li>
+</ol>
+<a name="other" />
+</div>
+<div class="section" id="id10">
+<h2>其他<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<a name="cloud" />
+<div class="section" id="id11">
+<h3>云平台<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p>如果需要监控线上无人车的状态，那么需要无人车提供连接到云的能力，即发送消息和接收消息的能力。Cyber需要支持能够发送消息给云端，并且接收来自云端消息的能力。</p>
+</div>
+</div>
+</div>
+<div class="section" id="cyber">
+<h1>cyber分析<a class="headerlink" href="#cyber" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id12">
+<h2>cyber入口<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
+<p>cyber的入口在”cyber/mainboard”目录，我们先看下目录结构：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
+├── mainboard.cc             // 入口
+├── module_argument.cc       // 模块参数
+├── module_argument.h
+├── module_controller.cc     // 模块控制
+└── module_controller.h
+</pre></div>
+</div>
+<p>根据文件名称也可以大概猜到cyber主目录的工作，cyber主函数通过模块的参数加载cyber中的所有模块，而cyber模块是有依赖顺序的，每个cyber模块都有一个DAG文件，这个文件声明了各个模块的依赖关系，而module_controller大概率就是控制模块的加载顺序。接下来我们通过看代码验证我们的猜想是否正确。<br />
+我们从”mainboard.cc”开始，阅读代码之前的头文件相当关键，头文件可以告诉我们文件之间的依赖关系，引用了哪些模块。我们可以看到主模块引用了”mainboard/module_argument.h”和”mainboard/module_controller.h”，所以我们先从”mainboard.cc”开始看，剩下的2个文件自然会在”mainboard.cc”中引用。还有一些其它的引用是状态和标志位，可以先略过。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;cyber/common/global_data.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;cyber/common/log.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;cyber/init.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;cyber/mainboard/module_argument.h&quot;</span><span class="c1">         // &quot;mainboard.cc&quot;引用</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;cyber/mainboard/module_controller.h&quot;</span><span class="c1">       // &quot;mainboard.cc&quot;引用</span><span class="cp"></span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;cyber/state.h&quot;</span><span class="cp"></span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;gflags/gflags.h&quot;</span><span class="cp"></span>
+</pre></div>
+</div>
+<p>接下来我们看下函数的主流程：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">**</span><span class="w"> </span><span class="n">argv</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">google</span><span class="o">::</span><span class="n">SetUsageMessage</span><span class="p">(</span><span class="s">&quot;we use this program to load dag and run user apps.&quot;</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 解析模块参数</span>
+<span class="w">  </span><span class="c1">// parse the argument</span>
+<span class="w">  </span><span class="n">ModuleArgument</span><span class="w"> </span><span class="n">module_args</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">module_args</span><span class="p">.</span><span class="n">ParseArgument</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 初始化cyber</span>
+<span class="w">  </span><span class="c1">// initialize cyber</span>
+<span class="w">  </span><span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">Init</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 启动模块</span>
+<span class="w">  </span><span class="c1">// start module</span>
+<span class="w">  </span><span class="n">ModuleController</span><span class="w"> </span><span class="n">controller</span><span class="p">(</span><span class="n">module_args</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">controller</span><span class="p">.</span><span class="n">Init</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">controller</span><span class="p">.</span><span class="n">Clear</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;module start error.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">-1</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 等待cyber关闭</span>
+<span class="w">  </span><span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">WaitForShutdown</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">controller</span><span class="p">.</span><span class="n">Clear</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;exit mainboard.&quot;</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>接下来我们详细的分析每个过程。</p>
+<ul class="simple">
+<li><p><strong>解析模块参数</strong> 解析模块参数在”module_argument.h”和”module_argument.cc”中的”ModuleArgument”类中，具体的实现如下</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">ModuleArgument::ParseArgument</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 解析输入参数</span>
+<span class="w">  </span><span class="n">GetOptions</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 设置执行组，类似linux的cgroups</span>
+<span class="w">  </span><span class="n">GlobalData</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">SetProcessGroup</span><span class="p">(</span><span class="n">process_group_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 设置调度器名称</span>
+<span class="w">  </span><span class="n">GlobalData</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">SetSchedName</span><span class="p">(</span><span class="n">sched_name_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 打印模块的信息：名称，组，DAG配置</span>
+<span class="w">  </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;binary_name_ is &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">binary_name_</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, process_group_ is &quot;</span><span class="w"></span>
+<span class="w">        </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">process_group_</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, has &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">dag_conf_list_</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; dag conf&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 打印所有模块的依赖关系</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">dag</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">dag_conf_list_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;dag_conf: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">dag</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>初始化cyber</strong> 初始化cyber就是cyber目录下的”init.h”和”init.cc”中，具体的实现如下：</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">binary_name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取锁，为了改变state状态而获取锁</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lg</span><span class="p">(</span><span class="n">g_mutex</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 如果已经初始化，则返回失败</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">GetState</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">STATE_UNINITIALIZED</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 初始化日志，并且把打印日志线程放入调度器</span>
+<span class="w">  </span><span class="n">InitLogger</span><span class="p">(</span><span class="n">binary_name</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="kr">thread</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">const_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">async_logger</span><span class="o">-&gt;</span><span class="n">LogThread</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="n">scheduler</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">SetInnerThreadAttr</span><span class="p">(</span><span class="s">&quot;async_log&quot;</span><span class="p">,</span><span class="w"> </span><span class="kr">thread</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">signal</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span><span class="w"> </span><span class="n">OnShutdown</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 注册退出句柄ExitHandle，调用Clear()函数执行</span>
+<span class="w">  </span><span class="c1">// Register exit handlers</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">g_atexit_registered</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">atexit</span><span class="p">(</span><span class="n">ExitHandle</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Register exit handle failed&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Register exit handle succ.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">g_atexit_registered</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 设置状态为已经初始化</span>
+<span class="w">  </span><span class="n">SetState</span><span class="p">(</span><span class="n">STATE_INITIALIZED</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><strong>启动模块</strong> 启动模块功能在”module_controller.h”和”module_controller.cc”中实现，具体的流程如下：</p></li>
+</ul>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// 1. 构造ModuleController</span>
+
+<span class="c1">// 2. ModuleController控制器初始化</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="classloader">
+<h2>classloader(类动态加载)<a class="headerlink" href="#classloader" title="Permalink to this headline">¶</a></h2>
+<p>首先我们需要搞清楚classloader的作用，classloader动态的加载”.so”文件，从而实现动态的加载和卸载模块。说的直白一点就是cyber通过classloader动态的加载定位，感知，规划，控制等模块。这样的好处是当一个模块奔溃时候，只需要动态的从新加载这个模块就可以了，而不需要从新加载其他模块。<br />
+我先看下整体的结构，ClassLoaderManager管理着ClassLoader，而ClassLoader调用utility来实现具体的功能，实际上utility是通过c++的PocoFoundation库来实现加载动态库的。<br />
+<img alt="classloader" src="../../_images/classloader.jpg" /></p>
+<div class="section" id="id13">
+<h3>ClassLoader<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<p>首先我们来看一下”ClassLoader”类：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="c1">// 动态库是否已经加载</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsLibraryLoaded</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 加载动态库</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">LoadLibrary</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 卸载动态库</span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="nf">UnloadLibrary</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取动态库路径</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">GetLibraryPath</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取有效的类名称 </span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">GetValidClassNames</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 创建对象</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="w"> </span><span class="n">CreateClassObj</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">class_name</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 类是否有效</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsClassValid</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">class_name</span><span class="p">);</span><span class="w"></span>
+</pre></div>
+</div>
+<p>也就是说classloader提供了一系列的方法来实现类的加载和卸载。下面我们来逐个分析classloader的工作原理：</p>
+<p>todo: 获取classloader中加载的类的集合？？？</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">Base</span><span class="o">&gt;</span><span class="w"></span>
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ClassLoader</span><span class="o">::</span><span class="n">GetValidClassNames</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">utility</span><span class="o">::</span><span class="n">GetValidClassNames</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="p">(</span><span class="k">this</span><span class="p">));</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>todo: 查找类是否加载？</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">template</span> <span class="o">&lt;</span><span class="n">typename</span> <span class="n">Base</span><span class="o">&gt;</span>
+<span class="nb">bool</span> <span class="n">ClassLoader</span><span class="p">::</span><span class="n">IsClassValid</span><span class="p">(</span><span class="n">const</span> <span class="n">std</span><span class="p">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">class_name</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">valid_classes</span> <span class="o">=</span> <span class="n">GetValidClassNames</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="p">();</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">std</span><span class="p">::</span><span class="n">find</span><span class="p">(</span><span class="n">valid_classes</span><span class="o">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">valid_classes</span><span class="o">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">class_name</span><span class="p">)</span> <span class="o">!=</span>
+          <span class="n">valid_classes</span><span class="o">.</span><span class="n">end</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>todo: 根据类名称创建对象，并且返回对象指针，注意创建对象的过程中classobj_ref_count_加1，释放对象之后减1，通过计数器表明类加载器是否还存在引用关系，而不会释放掉。关于只能指针指定删除器可以<a class="reference external" href="https://zh.cppreference.com/w/cpp/memory/shared_ptr/shared_ptr">参考</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>template &lt;typename Base&gt;
+std::shared_ptr&lt;Base&gt; ClassLoader::CreateClassObj(
+    const std::string&amp; class_name) {
+  if (!IsLibraryLoaded()) {
+    // 加载动态库    
+    LoadLibrary();
+  }
+
+  // 创建对象
+  Base* class_object = utility::CreateClassObj&lt;Base&gt;(class_name, this);
+  if (class_object == nullptr) {
+    AWARN &lt;&lt; &quot;CreateClassObj failed, ensure class has been registered. &quot;
+          &lt;&lt; &quot;classname: &quot; &lt;&lt; class_name &lt;&lt; &quot;,lib: &quot; &lt;&lt; GetLibraryPath();
+    return std::shared_ptr&lt;Base&gt;();
+  }
+
+  std::lock_guard&lt;std::mutex&gt; lck(classobj_ref_count_mutex_);
+  classobj_ref_count_ = classobj_ref_count_ + 1;
+
+  // 构造智能指针，并且指定删除器 
+  std::shared_ptr&lt;Base&gt; classObjSharePtr(
+      class_object, std::bind(&amp;ClassLoader::OnClassObjDeleter&lt;Base&gt;, this,
+                              std::placeholders::_1));
+  return classObjSharePtr;
+}
+
+template &lt;typename Base&gt;
+void ClassLoader::OnClassObjDeleter(Base* obj) {
+  if (nullptr == obj) {
+    return;
+  }
+
+  std::lock_guard&lt;std::mutex&gt; lck(classobj_ref_count_mutex_);
+  delete obj;
+  --classobj_ref_count_;
+}
+</pre></div>
+</div>
+<p>接着看下”class_loader.cc”中的构造函数，可以看到一个ClassLoader需要指定动态库路径，初始化引用次数，然后加载对应的动态库。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ClassLoader</span><span class="o">::</span><span class="n">ClassLoader</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">library_path</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="n">library_path_</span><span class="p">(</span><span class="n">library_path</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">loadlib_ref_count_</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">classobj_ref_count_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">LoadLibrary</span><span class="p">();</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>动态库是否已经加载</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">bool</span> <span class="n">ClassLoader</span><span class="p">::</span><span class="n">IsLibraryLoaded</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">utility</span><span class="p">::</span><span class="n">IsLibraryLoaded</span><span class="p">(</span><span class="n">library_path_</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>加载动态库，每次加载动态库的引用计数加1</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">bool</span> <span class="n">ClassLoader</span><span class="p">::</span><span class="n">LoadLibrary</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">std</span><span class="p">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">mutex</span><span class="o">&gt;</span> <span class="n">lck</span><span class="p">(</span><span class="n">loadlib_ref_count_mutex_</span><span class="p">);</span>
+  <span class="o">++</span><span class="n">loadlib_ref_count_</span><span class="p">;</span>
+  <span class="n">AINFO</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;Begin LoadLibrary: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">library_path_</span><span class="p">;</span>
+  <span class="k">return</span> <span class="n">utility</span><span class="p">::</span><span class="n">LoadLibrary</span><span class="p">(</span><span class="n">library_path_</span><span class="p">,</span> <span class="n">this</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>卸载动态库，在”classobj_ref_count_ &gt; 0”的时候证明类还有引用，这时候不能卸载，而”loadlib_ref_count_==0”的时候才会卸载动态库，返回的loadlib_ref_count_表示当前的加载动态库的计数，加锁是为了多线程访问。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">ClassLoader::UnloadLibrary</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lckLib</span><span class="p">(</span><span class="n">loadlib_ref_count_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lckObj</span><span class="p">(</span><span class="n">classobj_ref_count_mutex_</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">classobj_ref_count_</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;There are still classobjs have not been deleted, &quot;</span><span class="w"></span>
+<span class="w">             </span><span class="s">&quot;classobj_ref_count_: &quot;</span><span class="w"></span>
+<span class="w">          </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">classobj_ref_count_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="o">--</span><span class="n">loadlib_ref_count_</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 卸载动态库</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">loadlib_ref_count_</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">utility</span><span class="o">::</span><span class="n">UnloadLibrary</span><span class="p">(</span><span class="n">library_path_</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">loadlib_ref_count_</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">loadlib_ref_count_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">loadlib_ref_count_</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>从上述过程可以看到”ClassLoader”类主要实现了类的加载，卸载，创建对象，而具体的实现主要通过”utility”来实现。</p>
+</div>
+<div class="section" id="utility">
+<h3>utility<a class="headerlink" href="#utility" title="Permalink to this headline">¶</a></h3>
+<p>utility通过调用c++的PocoFoundation库来实现加载动态库，下面我们来具体看下：</p>
+</div>
+</div>
+<div class="section" id="id14">
+<h2>Cyber通信方式<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<p>cyber的通信方式有以下几种:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="n">OptionalMode</span><span class="o">::</span><span class="n">INTRA</span><span class="o">:</span><span class="w"></span>
+<span class="w">      </span><span class="n">transmitter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">IntraTransmitter</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="k">break</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="n">OptionalMode</span><span class="o">::</span><span class="n">SHM</span><span class="o">:</span><span class="w"></span>
+<span class="w">      </span><span class="n">transmitter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">ShmTransmitter</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="k">break</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="n">OptionalMode</span><span class="o">::</span><span class="n">RTPS</span><span class="o">:</span><span class="w"></span>
+<span class="w">      </span><span class="n">transmitter</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">RtpsTransmitter</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">,</span><span class="w"> </span><span class="n">participant</span><span class="p">());</span><span class="w"></span>
+<span class="w">      </span><span class="k">break</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">default</span><span class="o">:</span><span class="w"></span>
+<span class="w">      </span><span class="n">transmitter</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">HybridTransmitter</span><span class="o">&lt;</span><span class="n">M</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">modified_attr</span><span class="p">,</span><span class="w"> </span><span class="n">participant</span><span class="p">());</span><span class="w"></span>
+<span class="w">      </span><span class="k">break</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>我们先看下是根据什么配置来决定通信方式的？</p>
+<p>SHM (shared-memory queues)
+SHM模式的配置可以指定IP和Port</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">message</span><span class="w"> </span><span class="n">ShmMulticastLocator</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">optional</span><span class="w"> </span><span class="n">string</span><span class="w"> </span><span class="n">ip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">optional</span><span class="w"> </span><span class="n">uint32</span><span class="w"> </span><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
+
+<span class="n">message</span><span class="w"> </span><span class="n">ShmConf</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">optional</span><span class="w"> </span><span class="n">string</span><span class="w"> </span><span class="n">notifier_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">optional</span><span class="w"> </span><span class="n">ShmMulticastLocator</span><span class="w"> </span><span class="n">shm_locator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
+</pre></div>
+</div>
+<p>cyber的ip地址:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">CYBER_IP</span><span class="o">=</span><span class="m">127</span>.0.0.1
+</pre></div>
+</div>
+<p>RTPS (Real-Time Publish Subscribe)
+实时发布订阅
+https://tools.ietf.org/html/draft-thiebaut-rtps-wps-00</p>
+<p>RTPS协议是针对视频流新推出的网络协议，增加了控制信息。</p>
+<p>Simple Discovery Protocol (SDP). It is divided in the Simple Participant Discovery Protocol (SPDP) and the Endpoint Discovery Protocol (SEDP).</p>
+<p>https://en.wikipedia.org/wiki/Simple_Service_Discovery_Protocol</p>
+<p>https://community.rti.com/static/documentation/connext-dds/5.2.3/doc/manuals/connext_dds/html_files/RTI_ConnextDDS_CoreLibraries_UsersManual/Content/UsersManual/Ports_Used_for_Discovery.htm<br />
+https://zh.wikipedia.org/wiki/%E7%AE%80%E5%8D%95%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E5%8D%8F%E8%AE%AE</p>
+<ol class="arabic simple">
+<li><p>首先注册Participant，设置配置，比如广播地址，端口</p></li>
+<li><p>然后通过创建发布和订阅者来实现服务注册</p></li>
+</ol>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// 1. </span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">Participant::CreateFastRtpsParticipant</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">send_port</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">eprosima</span><span class="o">::</span><span class="n">fastrtps</span><span class="o">::</span><span class="n">ParticipantListener</span><span class="o">*</span><span class="w"> </span><span class="n">listener</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">domain_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">80</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">getenv</span><span class="p">(</span><span class="s">&quot;CYBER_DOMAIN_ID&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">val</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">domain_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">stoi</span><span class="p">(</span><span class="n">val</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">exception</span><span class="o">&amp;</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;convert domain_id error &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">what</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">part_attr_conf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">proto</span><span class="o">::</span><span class="n">RtpsParticipantAttr</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">global_conf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">GlobalData</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Config</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">global_conf</span><span class="p">.</span><span class="n">has_transport_conf</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">      </span><span class="n">global_conf</span><span class="p">.</span><span class="n">transport_conf</span><span class="p">().</span><span class="n">has_participant_attr</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">part_attr_conf</span><span class="o">-&gt;</span><span class="n">CopyFrom</span><span class="p">(</span><span class="n">global_conf</span><span class="p">.</span><span class="n">transport_conf</span><span class="p">().</span><span class="n">participant_attr</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">eprosima</span><span class="o">::</span><span class="n">fastrtps</span><span class="o">::</span><span class="n">ParticipantAttributes</span><span class="w"> </span><span class="n">attr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">defaultSendPort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">send_port</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">port</span><span class="p">.</span><span class="n">domainIDGain</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">uint16_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">part_attr_conf</span><span class="o">-&gt;</span><span class="n">domain_id_gain</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">port</span><span class="p">.</span><span class="n">portBase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">uint16_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">part_attr_conf</span><span class="o">-&gt;</span><span class="n">port_base</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">use_IP6_to_send</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">builtin</span><span class="p">.</span><span class="n">use_SIMPLE_RTPSParticipantDiscoveryProtocol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">builtin</span><span class="p">.</span><span class="n">use_SIMPLE_EndpointDiscoveryProtocol</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">builtin</span><span class="p">.</span><span class="n">m_simpleEDP</span><span class="p">.</span><span class="n">use_PublicationReaderANDSubscriptionWriter</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">builtin</span><span class="p">.</span><span class="n">m_simpleEDP</span><span class="p">.</span><span class="n">use_PublicationWriterANDSubscriptionReader</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">builtin</span><span class="p">.</span><span class="n">domainId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">domain_id</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">builtin</span><span class="p">.</span><span class="n">leaseDuration</span><span class="p">.</span><span class="n">seconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">part_attr_conf</span><span class="o">-&gt;</span><span class="n">lease_duration</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">builtin</span><span class="p">.</span><span class="n">leaseDuration_announcementperiod</span><span class="p">.</span><span class="n">seconds</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">part_attr_conf</span><span class="o">-&gt;</span><span class="n">announcement_period</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">setName</span><span class="p">(</span><span class="n">name</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">ip_env</span><span class="p">(</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">ip_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">::</span><span class="n">getenv</span><span class="p">(</span><span class="s">&quot;CYBER_IP&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ip_val</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">ip_env</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ip_val</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ip_env</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;invalid CYBER_IP (an empty string)&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;cyber ip: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">ip_env</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">eprosima</span><span class="o">::</span><span class="n">fastrtps</span><span class="o">::</span><span class="n">rtps</span><span class="o">::</span><span class="n">Locator_t</span><span class="w"> </span><span class="n">locator</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">locator</span><span class="p">.</span><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">RETURN_IF</span><span class="p">(</span><span class="o">!</span><span class="n">locator</span><span class="p">.</span><span class="n">set_IP4_address</span><span class="p">(</span><span class="n">ip_env</span><span class="p">));</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">locator</span><span class="p">.</span><span class="n">kind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LOCATOR_KIND_UDPv4</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">defaultUnicastLocatorList</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">locator</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">defaultOutLocatorList</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">locator</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">builtin</span><span class="p">.</span><span class="n">metatrafficUnicastLocatorList</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">locator</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">locator</span><span class="p">.</span><span class="n">set_IP4_address</span><span class="p">(</span><span class="mi">239</span><span class="p">,</span><span class="w"> </span><span class="mi">255</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">rtps</span><span class="p">.</span><span class="n">builtin</span><span class="p">.</span><span class="n">metatrafficMulticastLocatorList</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">locator</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">fastrtps_participant_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">eprosima</span><span class="o">::</span><span class="n">fastrtps</span><span class="o">::</span><span class="n">Domain</span><span class="o">::</span><span class="n">createParticipant</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span><span class="w"> </span><span class="n">listener</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">RETURN_IF_NULL</span><span class="p">(</span><span class="n">fastrtps_participant_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">eprosima</span><span class="o">::</span><span class="n">fastrtps</span><span class="o">::</span><span class="n">Domain</span><span class="o">::</span><span class="n">registerType</span><span class="p">(</span><span class="n">fastrtps_participant_</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">type_</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+
+<span class="c1">// 2.</span>
+
+<span class="kt">bool</span><span class="w"> </span><span class="nf">Manager::StartDiscovery</span><span class="p">(</span><span class="n">RtpsParticipant</span><span class="o">*</span><span class="w"> </span><span class="n">participant</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">participant</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_discovery_started_</span><span class="p">.</span><span class="n">exchange</span><span class="p">(</span><span class="nb">true</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">CreatePublisher</span><span class="p">(</span><span class="n">participant</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="n">CreateSubscriber</span><span class="p">(</span><span class="n">participant</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;create publisher or subscriber failed.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">StopDiscovery</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>fast-RTPS</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ParticipantImpl</span><span class="o">::</span><span class="n">createPublisher</span><span class="w"></span>
+</pre></div>
+</div>
+<p>PDPSimple.cpp
+普通查找服务</p>
+<p>IntraTransmitter
+不确定是不是以下内容
+https://www.developershome.com/sms/intraInterInternationalSMS.asp</p>
+<div class="section" id="id15">
+<h3>广播<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<p>multicast_notifier.cc
+广播</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">notify_fd_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="n">SOCK_DGRAM</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="kt">ssize_t</span><span class="w"> </span><span class="n">nbytes</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">sendto</span><span class="p">(</span><span class="n">notify_fd_</span><span class="p">,</span><span class="w"> </span><span class="n">info_str</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span><span class="w"> </span><span class="n">info_str</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"></span>
+<span class="w">             </span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">notify_addr_</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">notify_addr_</span><span class="p">));</span><span class="w">  </span>
+</pre></div>
+</div>
+<p>监听</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">listen_fd_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="w"> </span><span class="n">SOCK_DGRAM</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">bind</span><span class="p">(</span><span class="n">listen_fd_</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="k">struct</span><span class="w"> </span><span class="nc">sockaddr</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">listen_addr_</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">listen_addr_</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="kt">ssize_t</span><span class="w"> </span><span class="n">nbytes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">recvfrom</span><span class="p">(</span><span class="n">listen_fd_</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">nullptr</span><span class="p">,</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="node">
+<h3>node属性<a class="headerlink" href="#node" title="Permalink to this headline">¶</a></h3>
+<p>RoleAttributes</p>
+</div>
+<div class="section" id="module">
+<h3>module初始化<a class="headerlink" href="#module" title="Permalink to this headline">¶</a></h3>
+<p>如果一个module只是需要传输一些节点，而不需要传递其他任何信息？module的工作流程是如何的？module和node的关系如何？</p>
+</div>
+<div class="section" id="id16">
+<h3>cyber<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<p>设置日志等级在”cyber/setup.bash”中设置</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># for DEBUG log</span>
+<span class="c1">#export GLOG_minloglevel=-1</span>
+<span class="c1">#export GLOG_v=4</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id17">
+<h2>cyber创建进程<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h2>
+<p>cyber通过类std::thread表示单个执行线程。</p>
+</div>
+<div class="section" id="scheduler">
+<h2>scheduler<a class="headerlink" href="#scheduler" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://senlinzhan.github.io/2017/12/04/cpp-memory-order/">c++内存模型</a><br />
+我们来看下如何切换堆栈，下面这段是汇编代码，实现的功能是保存cpu寄存器的值，并且压入堆栈，然后回复croutine的寄存器和堆栈：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">.</span><span class="n">globl</span> <span class="n">ctx_swap</span>
+<span class="o">.</span><span class="n">type</span>  <span class="n">ctx_swap</span><span class="p">,</span> <span class="nd">@function</span>
+<span class="n">ctx_swap</span><span class="p">:</span>
+      <span class="n">pushq</span> <span class="o">%</span><span class="n">rdi</span>         <span class="o">//</span> <span class="n">rdi寄存器压入堆栈</span>
+      <span class="n">pushq</span> <span class="o">%</span><span class="n">r12</span>         <span class="o">//</span> <span class="n">r12压入堆栈</span>
+      <span class="n">pushq</span> <span class="o">%</span><span class="n">r13</span>
+      <span class="n">pushq</span> <span class="o">%</span><span class="n">r14</span>
+      <span class="n">pushq</span> <span class="o">%</span><span class="n">r15</span>
+      <span class="n">pushq</span> <span class="o">%</span><span class="n">rbx</span>         <span class="o">//</span> <span class="n">rbx寄存器</span>
+      <span class="n">pushq</span> <span class="o">%</span><span class="n">rbp</span>         <span class="o">//</span> <span class="n">堆栈底部</span>
+      <span class="n">movq</span> <span class="o">%</span><span class="n">rsp</span><span class="p">,</span> <span class="p">(</span><span class="o">%</span><span class="n">rdi</span><span class="p">)</span>  <span class="o">//</span> <span class="n">rsp的值赋值给rdi</span>
+
+      <span class="n">movq</span> <span class="p">(</span><span class="o">%</span><span class="n">rsi</span><span class="p">),</span> <span class="o">%</span><span class="n">rsp</span>  <span class="o">//</span> <span class="n">出栈</span>
+      <span class="n">popq</span> <span class="o">%</span><span class="n">rbp</span>
+      <span class="n">popq</span> <span class="o">%</span><span class="n">rbx</span>
+      <span class="n">popq</span> <span class="o">%</span><span class="n">r15</span>
+      <span class="n">popq</span> <span class="o">%</span><span class="n">r14</span>
+      <span class="n">popq</span> <span class="o">%</span><span class="n">r13</span>
+      <span class="n">popq</span> <span class="o">%</span><span class="n">r12</span>
+      <span class="n">popq</span> <span class="o">%</span><span class="n">rdi</span>
+      <span class="n">ret</span>
+</pre></div>
+</div>
+<p>加入有几千个croutine，当主线程要切换到对应的croutine的时候如何知道对应的堆栈地址，如何跳转？？？原来swap的参数是传入的？？？也就是说地址是通过函数传入的。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">inline</span> <span class="n">void</span> <span class="n">SwapContext</span><span class="p">(</span><span class="n">char</span><span class="o">**</span> <span class="n">src_sp</span><span class="p">,</span> <span class="n">char</span><span class="o">**</span> <span class="n">dest_sp</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">ctx_swap</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">void</span><span class="o">**&gt;</span><span class="p">(</span><span class="n">src_sp</span><span class="p">),</span> <span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">void</span><span class="o">**&gt;</span><span class="p">(</span><span class="n">dest_sp</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="sche">
+<h2>sche<a class="headerlink" href="#sche" title="Permalink to this headline">¶</a></h2>
+<p>sche中的task又是什么概念？？？ 如何去唤醒现在的croutine？？？</p>
+<p>SetUpdateFlag</p>
+<p>NotifyProcessor</p>
+<p>在update中实现croutine状态的转换：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>inline RoutineState CRoutine::UpdateState() {
+  // Synchronous Event Mechanism
+  if (state_ == RoutineState::SLEEP &amp;&amp;
+      std::chrono::steady_clock::now() &gt; wake_time_) {
+    state_ = RoutineState::READY;
+    return state_;
+  }
+
+  // Asynchronous Event Mechanism
+  if (!updated_.test_and_set(std::memory_order_release)) {
+    if (state_ == RoutineState::DATA_WAIT || state_ == RoutineState::IO_WAIT) {
+      state_ = RoutineState::READY;
+    }
+  }
+  return state_;
+}
+</pre></div>
+</div>
+<p>其中只需要释放该锁就可以实现”state_”状态由”DATA_WAIT/IO_WAIT”变为”READY”，因此通过设置”SetUpdateFlag”来实现在事件触发时候调用croutine。</p>
+<a name="reference" />
+</div>
+<div class="section" id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://www.cse.sc.edu/~jokane/agitr/%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%EF%BC%88ROS%EF%BC%89%E6%B5%85%E6%9E%90.pdf">机器人操作系统（ROS）浅析</a><br />
+<a class="reference external" href="https://segmentfault.com/a/1190000008732448">线程与进程的区别及其通信方式</a><br />
+<a class="reference external" href="https://zh.wikipedia.org/wiki/Cgroups">cgroups</a><br />
+<a class="reference external" href="https://en.wikipedia.org/wiki/Scheduling_(computing)">Scheduling (computing)</a><br />
+<a class="reference external" href="http://www.math.nsc.ru/LBRT/k5/Scheduling/BruckerSchedulingAlgorithms_Full.pdf">Scheduling Algorithms</a></p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/cyber/design/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

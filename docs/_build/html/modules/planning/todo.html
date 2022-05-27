@@ -1,0 +1,240 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frame &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="frame">
+<h1>Frame<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h1>
+<p>Frame代表了规划模块中的一帧，包括了多种信息。</p>
+<div class="section" id="finddrivereferencelineinfo">
+<h2>FindDriveReferenceLineInfo<a class="headerlink" href="#finddrivereferencelineinfo" title="Permalink to this headline">¶</a></h2>
+<p>找到代价最小并且可以行驶的参考线，然后返回结果。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="nf">Frame::FindDriveReferenceLineInfo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">min_cost</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;::</span><span class="n">infinity</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">drive_reference_line_info_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 遍历找到最小代价，并且可以行驶的reference line</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_line_info</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">reference_line_info_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reference_line_info</span><span class="p">.</span><span class="n">IsDrivable</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">        </span><span class="n">reference_line_info</span><span class="p">.</span><span class="n">Cost</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">min_cost</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">drive_reference_line_info_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_line_info</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">min_cost</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_line_info</span><span class="p">.</span><span class="n">Cost</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">drive_reference_line_info_</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="findtargetreferencelineinfo">
+<h2>FindTargetReferenceLineInfo<a class="headerlink" href="#findtargetreferencelineinfo" title="Permalink to this headline">¶</a></h2>
+<p>返回第一个变道类型的参考线，如果没有找到，则返回最后一个参考线。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="nf">Frame::FindTargetReferenceLineInfo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="n">target_reference_line_info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_line_info</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">reference_line_info_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reference_line_info</span><span class="p">.</span><span class="n">IsChangeLanePath</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_line_info</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">target_reference_line_info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_line_info</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">target_reference_line_info</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="findfailedreferencelineinfo">
+<h2>FindFailedReferenceLineInfo<a class="headerlink" href="#findfailedreferencelineinfo" title="Permalink to this headline">¶</a></h2>
+<p>找到是变道类型并且不能行驶的参考线，如果没有找到则返回空。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="nf">Frame::FindFailedReferenceLineInfo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_line_info</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">reference_line_info_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// Find the unsuccessful lane-change path</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">reference_line_info</span><span class="p">.</span><span class="n">IsDrivable</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">        </span><span class="n">reference_line_info</span><span class="p">.</span><span class="n">IsChangeLanePath</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_line_info</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="drivereferencelineinfo">
+<h2>DriveReferenceLineInfo<a class="headerlink" href="#drivereferencelineinfo" title="Permalink to this headline">¶</a></h2>
+<p>返回FindDriveReferenceLineInfo中找到的参考线。即代价最小并且可以行驶的参考线。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="nf">Frame::DriveReferenceLineInfo</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">drive_reference_line_info_</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="updatereferencelinepriority">
+<h2>UpdateReferenceLinePriority<a class="headerlink" href="#updatereferencelinepriority" title="Permalink to this headline">¶</a></h2>
+<p>更新参考线的优先级，其中key为lane的id，value为优先级。(todo)这里的lanes是<code class="docutils literal notranslate"><span class="pre">hdmap::RouteSegments</span></code>类型，为什么id只有一个？</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Frame::UpdateReferenceLinePriority</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">id_to_priority</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">pair</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">id_to_priority</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pair</span><span class="p">.</span><span class="n">first</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">priority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pair</span><span class="p">.</span><span class="n">second</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">ref_line_info_itr</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">find_if</span><span class="p">(</span><span class="n">reference_line_info_</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">reference_line_info_</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                     </span><span class="p">[</span><span class="o">&amp;</span><span class="n">id</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ref_line_info</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                       </span><span class="k">return</span><span class="w"> </span><span class="n">ref_line_info</span><span class="p">.</span><span class="n">Lanes</span><span class="p">().</span><span class="n">Id</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">id</span><span class="p">;</span><span class="w"></span>
+<span class="w">                     </span><span class="p">});</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ref_line_info_itr</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">reference_line_info_</span><span class="p">.</span><span class="n">end</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">ref_line_info_itr</span><span class="o">-&gt;</span><span class="n">SetPriority</span><span class="p">(</span><span class="n">priority</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="createreferencelineinfo">
+<h2>CreateReferenceLineInfo<a class="headerlink" href="#createreferencelineinfo" title="Permalink to this headline">¶</a></h2>
+<p>根据reference_lines创建reference_line_info_（也是一个数组），并且添加障碍物到数组。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">Frame::CreateReferenceLineInfo</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">ReferenceLine</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_lines</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">RouteSegments</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">segments</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">reference_line_info_</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">ref_line_iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_lines</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">segments_iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">segments</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. reference_line_info_添加成员，(todo)这里ref_line_iter和segments_iter是一一对应的吗？</span>
+<span class="w">  </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">ref_line_iter</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">reference_lines</span><span class="p">.</span><span class="n">end</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">segments_iter</span><span class="o">-&gt;</span><span class="n">StopForDestination</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">is_near_destination_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">reference_line_info_</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">vehicle_state_</span><span class="p">,</span><span class="w"> </span><span class="n">planning_start_point_</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                      </span><span class="o">*</span><span class="n">ref_line_iter</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">segments_iter</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="o">++</span><span class="n">ref_line_iter</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="o">++</span><span class="n">segments_iter</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 如果reference_line_info_大小为2</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reference_line_info_</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Vec2d</span><span class="w"> </span><span class="n">xy_point</span><span class="p">(</span><span class="n">vehicle_state_</span><span class="p">.</span><span class="n">x</span><span class="p">(),</span><span class="w"> </span><span class="n">vehicle_state_</span><span class="p">.</span><span class="n">y</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="w"> </span><span class="n">first_sl</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">reference_line_info_</span><span class="p">.</span><span class="n">front</span><span class="p">().</span><span class="n">reference_line</span><span class="p">().</span><span class="n">XYToSL</span><span class="p">(</span><span class="n">xy_point</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                                              </span><span class="o">&amp;</span><span class="n">first_sl</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="w"> </span><span class="n">second_sl</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">reference_line_info_</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">reference_line</span><span class="p">().</span><span class="n">XYToSL</span><span class="p">(</span><span class="n">xy_point</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                                             </span><span class="o">&amp;</span><span class="n">second_sl</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 2.1 根据车当前的位置求出到起点的距离</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">offset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">first_sl</span><span class="p">.</span><span class="n">l</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">second_sl</span><span class="p">.</span><span class="n">l</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">reference_line_info_</span><span class="p">.</span><span class="n">front</span><span class="p">().</span><span class="n">SetOffsetToOtherReferenceLine</span><span class="p">(</span><span class="n">offset</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">reference_line_info_</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">SetOffsetToOtherReferenceLine</span><span class="p">(</span><span class="o">-</span><span class="n">offset</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">has_valid_reference_line</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 初始化障碍物，如果有一个成功则表示有合理的参考线</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ref_info</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">reference_line_info_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">ref_info</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">obstacles</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init reference line&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">has_valid_reference_line</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">has_valid_reference_line</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/planning/todo.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

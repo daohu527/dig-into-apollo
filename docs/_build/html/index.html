@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Introduction &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Dig into Apollo - Introduction" href="what_is_apollo/readme.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>Dig into Apollo is mainly to help learning Apollo autopilot system. We first introduce the functions of each module in detail, and then analyzed the code of each module. If you like autonomous driving and want to learn it, let’s start this project and discuss anything you want to know!</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>If “git clone” on github is too slow, pls try apollo mirror.</p></li>
+<li><p>If you have any questions, please feel free to ask in git issue.</p></li>
+<li><p>If you need to add new documents or give suggestions, welcome to participate in git discussion.</p></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="what_is_apollo/readme.html">Dig into Apollo - Introduction </a><ul>
+<li class="toctree-l2"><a class="reference internal" href="what_is_apollo/readme.html#table-of-contents">Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="what_is_apollo/readme.html#id1">简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="what_is_apollo/readme.html#id2">目录结构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="what_is_apollo/readme.html#id3">编译</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cyber/readme.html">Dig into Apollo - Cyber </a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cyber/readme.html#table-of-contents">Table of Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="docker/readme.html">Dig into Apollo - Docker </a><ul>
+<li class="toctree-l2"><a class="reference internal" href="docker/readme.html#table-of-contents">Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="docker/readme.html#docker">docker编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="docker/readme.html#id1">docker脚本</a></li>
+<li class="toctree-l2"><a class="reference internal" href="docker/readme.html#id2">设置主机</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="library/readme.html">Dig into Apollo - Library </a><ul>
+<li class="toctree-l2"><a class="reference internal" href="library/readme.html#table-of-contents">Table of Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="papers/readme.html">Dig into Apollo - Papers </a><ul>
+<li class="toctree-l2"><a class="reference internal" href="papers/readme.html#table-of-contents">Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="papers/readme.html#localization-papers">Localization papers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="papers/readme.html#perception-papers">Perception papers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="papers/readme.html#prediction-papers">Prediction papers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="papers/readme.html#planning-papers">Planning papers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="papers/readme.html#control-papers">Control papers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="papers/readme.html#simulation-papers">Simulation papers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="performance/readme.html">Dig into Apollo - Performance </a><ul>
+<li class="toctree-l2"><a class="reference internal" href="performance/readme.html#table-of-contents">Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance/readme.html#id1">线程调度</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance/readme.html#cgroups">Cgroups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance/readme.html#cpu">CPU亲和性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance/readme.html#id2">中断绑定</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance/readme.html#linux">linux性能优化</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance/readme.html#reference">Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="questions/readme.html">Dig into Apollo - Questions </a><ul>
+<li class="toctree-l2"><a class="reference internal" href="questions/readme.html#id1">目录</a></li>
+<li class="toctree-l2"><a class="reference internal" href="questions/readme.html#build">build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="questions/readme.html#map">map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="questions/readme.html#simulation">simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="questions/readme.html#planning">Planning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="questions/readme.html#misc">misc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="simulation/readme.html">Dig into Apollo - Simulation </a><ul>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id1">目录</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id2">为什么需要仿真</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id3">如何仿真</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id7">如何使用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id12">如何构建自动驾驶仿真系统？</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id13">地图</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id14">真实场景地图生成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id17">虚拟场景地图生成</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id18">车</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id19">行为</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#api">API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id22">部署</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id23">总结</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation/readme.html#id24">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_build/readme.html">Dig into Apollo - Build </a><ul>
+<li class="toctree-l2"><a class="reference internal" href="how_to_build/readme.html#table-of-contents">Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how_to_build/readme.html#id1">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="how_to_build/readme.html#id2">常见问题</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>If you are like me before and don’t know how to start the Apollo project.
+Here are some suggestions.
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>First understand the basic module functions. If you are not clear about the</p></li>
+</ul>
+<p>general function of the module, it’s difficult for you to understand what’s
+the code doing. Here is an beginner level tutorial.</p>
+<ul class="simple">
+<li><p>Then you need to understand the specific methods according to the module,</p></li>
+</ul>
+<p>which will be documented in this tutorial. We will analyze the code in depth
+next. You can learn step by step according to our tutorial.I know it will be
+a painful process, especially when you are first learning Apollo. If you
+persist in asking questions and studying, it will become easier in 1-2 months.</p>
+<ul class="simple">
+<li><p>Last but not least, the method in Apollo is almost perfect, but there will</p></li>
+</ul>
+<p>be some problems. Try to implement and improve it, find papers, try the latest
+methods, and hone your skills. I believe you will enjoy this process.</p>
+</div>
+<div class="section" id="how-to-learn">
+<h1>How to learn?<a class="headerlink" href="#how-to-learn" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Basic learning</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Watching some introductory tutorials will help you understand the Apollo autopilot system more quickly. I highly recommend tutorial
+Try to ask some questions, read some blogs, papers, or go to github to add some issues.
+If you don’t have a self-driving car, you can try to deploy a simulation environment, I highly recommend lgsvl. Its community is very friendly!
+If there are any problems with the simulation environment, such as map creation, or some other problems, welcome to participate in this project Flycars. We will help as much as possible!
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Code learning</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>First of all, you must understand c++. If you are not very familiar with it, I recommend the book &quot;c++ primer&quot;. This book is very good, but a bit thick. If you just want to start quickly, then try to find some simple tutorial, here I recommend teacher Hou Jie
+After understanding C++, it is best to have some basic understanding of the modules, which will help you to read the code. This has been explained many times.
+Use code reading tools to help you read the code. I highly recommend vscode. It supports both Windows and Linux, and has a wealth of plug-ins, which can help you track codes, search and find call relationships.
+Of course, there are many professional knowledge and professional libraries. I can’t repeat the best tutorials one by one here, but I can try to recommend some. Hongyi Li&#39;s deep learning, even a math tutorial 3Blue1Brown&#39;s math
+Do some experiments with the simulator. We say &quot;Make your hands dirty&quot;. You can&#39;t just watch, you need to try to modify some configurations and see if it takes effect, if possible, you can also try to answer some questions.
+Remember that autonomous driving is still far from mature. Read some papers, I read a lot of papers, it help me a lot.
+</pre></div>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Hope you have fun!</p>
+</div>
+</div>
+<div class="section" id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h1>
+<p>This project welcomes contributions and suggestions. Please see our contribution guidelines.</p>
+</div>
+<div class="section" id="references-resources">
+<h1>References &amp; resources<a class="headerlink" href="#references-resources" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
+<li class="toctree-l1"><a class="reference internal" href="cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="docker/readme.html">Dig into Apollo - Docker </a></li>
+<li class="toctree-l1"><a class="reference internal" href="library/readme.html">Dig into Apollo - Library </a></li>
+<li class="toctree-l1"><a class="reference internal" href="papers/readme.html">Dig into Apollo - Papers </a></li>
+<li class="toctree-l1"><a class="reference internal" href="performance/readme.html">Dig into Apollo - Performance </a></li>
+<li class="toctree-l1"><a class="reference internal" href="questions/readme.html">Dig into Apollo - Questions </a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation/readme.html">Dig into Apollo - Simulation </a></li>
+<li class="toctree-l1"><a class="reference internal" href="how_to_build/readme.html">Dig into Apollo - Build </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="what_is_apollo/readme.html" title="next chapter">Dig into Apollo - Introduction </a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,356 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Table of Contents &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="table-of-contents">
+<h1>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><span class="xref myst">Caffe2环境准备</span></p></li>
+<li><p><span class="xref myst">安装显卡驱动</span></p></li>
+<li><p><span class="xref myst">安装CUDA</span></p>
+<ul>
+<li><p><span class="xref myst">选择CUDA版本</span></p></li>
+<li><p><span class="xref myst">安装CUDA</span></p></li>
+<li><p><span class="xref myst">设置环境变量</span></p></li>
+<li><p><span class="xref myst">检验安装</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">安装cuDNN</span></p></li>
+<li><p><span class="xref myst">安装Caffe2</span></p></li>
+<li><p><span class="xref myst">参考</span></p></li>
+</ul>
+<a name="env" />
+<p>因为Apollo中的深度学习框架采用的是Caffe2框架，我们需要安装好Caffe2的环境才能进一步学习，下面主要介绍了如何安装Caffe2。安装完成之后，就可以训练深度学习模型了。</p>
+</div>
+<div class="section" id="caffe2">
+<h1>Caffe2环境准备<a class="headerlink" href="#caffe2" title="Permalink to this headline">¶</a></h1>
+<p>我们以有显卡的情况为例，来安装caffe2环境，安装caffe2之前需要先安装英伟达的显卡驱动，之后还要安装cuda toolkit和cuDNN，最后安装Caffe2。<br />
+我们先把<strong>需要安装的软件</strong>列出来，再告诉如何选择对应的版本：</p>
+<ul class="simple">
+<li><p>操作系统: Ubuntu 16.04.5 LTS</p></li>
+<li><p>显卡驱动版本: 384.130</p></li>
+<li><p>CUDA Toolkit版本: CUDA Toolkit 9.0</p></li>
+<li><p>cuDNN 版本: cuDNN v7.6.0</p></li>
+<li><p>pytorch 版本: pytorch-nightly-1.2.0</p></li>
+</ul>
+<a name="drivers" />
+</div>
+<div class="section" id="id1">
+<h1>安装显卡驱动<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>ubuntu 16.04可以在设置”System Settings - Software &amp; Updates”中选择Using NVIDIA驱动。<br />
+<img alt="nvidia_drivers" src="../../../_images/nvidia_drivers.png" /><br />
+安装好驱动后可以通过下面的命令来验证驱动是否安装成功：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>root@root:~/cuda/$ nvidia-smi
+Wed May 29 12:05:01 2019       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 384.130                Driver Version: 384.130                   |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|===============================+======================+======================|
+|   0  GeForce MX130       Off  | 00000000:02:00.0 Off |                  N/A |
+| N/A   73C    P0    N/A /  N/A |   1240MiB /  2002MiB |     67%      Default |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                       GPU Memory |
+|  GPU       PID   Type   Process name                             Usage      |
+|=============================================================================|
+|    0      1682      G   /usr/lib/xorg/Xorg                           445MiB |
+|    0      2744      G   compiz                                       192MiB |
+|    0      3101      G   ...quest-channel-token=7501548652516259525   599MiB |
++-----------------------------------------------------------------------------+
+</pre></div>
+</div>
+<a name="cuda" />
+</div>
+<div class="section" id="cuda">
+<h1>安装CUDA<a class="headerlink" href="#cuda" title="Permalink to this headline">¶</a></h1>
+<a name="cuda_version" />
+<div class="section" id="id2">
+<h2>选择CUDA版本<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>安装好显卡驱动后，就可以安装CUDA了，那么我们如何选择CUDA版本呢？首先查看显卡驱动版本，就是上面”nvidia-smi”显示的”Driver Version: 384.130”，然后查看下表，<a class="reference external" href="https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html">官网地址</a>：<br />
+<img alt="cuda_version" src="../../../_images/cuda_version.png" /><br />
+可以看到驱动版本”&gt;= 390.46”选择CUDA 9.0，当然还需要查看下内核，GCC,GLIBC版本是否支持，参照下表，<a class="reference external" href="https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html">官网地址</a>：<br />
+<img alt="cuda_version2" src="../../../_images/cuda_version2.png" /></p>
+<p>查看linux内核版本:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>root:~/cuda$ cat /proc/version
+Linux version 4.15.0-50-generic (buildd@lgw01-amd64-029) (gcc version 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.10)) #54~16.04.1-Ubuntu SMP Wed May 8 15:55:19 UTC 2019
+
+</pre></div>
+</div>
+<p>这里提供的是支持CUDA10.1需要的配置，我目前的ubuntu 16.04已经都支持了，所以9.0肯定没有问题。</p>
+<a name="cuda_install" />
+</div>
+<div class="section" id="id3">
+<h2>安装CUDA<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>选择好版本后，就可以下载安装CUDA了，CUDA官方的<a class="reference external" href="https://developer.nvidia.com/cuda-toolkit-archive">下载地址</a>，选择对应的版本，下载之后运行：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">sh</span> <span class="n">cuda_9</span><span class="mf">.0.176_384.81</span><span class="n">_linux</span><span class="o">.</span><span class="n">run</span>
+</pre></div>
+</div>
+<p><strong>记住前面已经安装了驱动，所以安装CUDA的时候第一步需要跳过安装驱动，只安装CUDA Toolkit</strong>，接着按照提示安装就可以了。</p>
+<a name="cuda_env" />
+</div>
+<div class="section" id="id4">
+<h2>设置环境变量<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>安装完成之后，我们需要设置CUDA环境变量才能运行:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">vi</span> <span class="o">~/.</span><span class="n">bashrc</span>
+</pre></div>
+</div>
+<p>在文件最后增加2行：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">LD_LIBRARY_PATH</span><span class="o">=</span><span class="s2">&quot;$LD_LIBRARY_PATH:/usr/local/cuda-9.0/lib64:/usr/local/cuda-9.0/extras/CUPTI/lib64&quot;</span>
+<span class="n">export</span> <span class="n">CUDA_HOME</span><span class="o">=/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="n">cuda</span><span class="o">-</span><span class="mf">9.0</span>
+</pre></div>
+</div>
+<p>将环境变量生效:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">~/.</span><span class="n">bashrc</span>
+</pre></div>
+</div>
+<a name="cuda_check" />
+</div>
+<div class="section" id="id5">
+<h2>检验安装<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>我们可以通过samples的deviceQuery来检验CUDA是否安装成功。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="n">cuda</span><span class="o">/</span><span class="n">samples</span><span class="o">/</span><span class="mi">1</span><span class="n">_Utilities</span><span class="o">/</span><span class="n">deviceQuery</span> 
+<span class="n">sudo</span> <span class="n">make</span>
+<span class="o">./</span><span class="n">deviceQuery</span>
+</pre></div>
+</div>
+<p>如果提示”Result = PASS”，则表示安装成功，如果提示”Result = FAIL”，则表示安装失败：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./deviceQuery 
+./deviceQuery Starting...
+
+ CUDA Device Query (Runtime API) version (CUDART static linking)
+
+Detected 1 CUDA Capable device(s)
+
+Device 0: &quot;GeForce MX130&quot;
+  CUDA Driver Version / Runtime Version          9.0 / 9.0
+  CUDA Capability Major/Minor version number:    5.0
+  Total amount of global memory:                 2003 MBytes (2100232192 bytes)
+  ( 3) Multiprocessors, (128) CUDA Cores/MP:     384 CUDA Cores
+  GPU Max Clock rate:                            1189 MHz (1.19 GHz)
+  Memory Clock rate:                             2505 Mhz
+  Memory Bus Width:                              64-bit
+  L2 Cache Size:                                 1048576 bytes
+  Maximum Texture Dimension Size (x,y,z)         1D=(65536), 2D=(65536, 65536), 3D=(4096, 4096, 4096)
+  Maximum Layered 1D Texture Size, (num) layers  1D=(16384), 2048 layers
+  Maximum Layered 2D Texture Size, (num) layers  2D=(16384, 16384), 2048 layers
+  Total amount of constant memory:               65536 bytes
+  Total amount of shared memory per block:       49152 bytes
+  Total number of registers available per block: 65536
+  Warp size:                                     32
+  Maximum number of threads per multiprocessor:  2048
+  Maximum number of threads per block:           1024
+  Max dimension size of a thread block (x,y,z): (1024, 1024, 64)
+  Max dimension size of a grid size    (x,y,z): (2147483647, 65535, 65535)
+  Maximum memory pitch:                          2147483647 bytes
+  Texture alignment:                             512 bytes
+  Concurrent copy and kernel execution:          Yes with 1 copy engine(s)
+  Run time limit on kernels:                     Yes
+  Integrated GPU sharing Host Memory:            No
+  Support host page-locked memory mapping:       Yes
+  Alignment requirement for Surfaces:            Yes
+  Device has ECC support:                        Disabled
+  Device supports Unified Addressing (UVA):      Yes
+  Supports Cooperative Kernel Launch:            No
+  Supports MultiDevice Co-op Kernel Launch:      No
+  Device PCI Domain ID / Bus ID / location ID:   0 / 2 / 0
+  Compute Mode:
+     &lt; Default (multiple host threads can use ::cudaSetDevice() with device simultaneously) &gt;
+
+deviceQuery, CUDA Driver = CUDART, CUDA Driver Version = 9.0, CUDA Runtime Version = 9.0, NumDevs = 1
+Result = PASS
+</pre></div>
+</div>
+<a name="cudnn" />
+</div>
+</div>
+<div class="section" id="cudnn">
+<h1>安装cuDNN<a class="headerlink" href="#cudnn" title="Permalink to this headline">¶</a></h1>
+<p>我们安装好了CUDA之后，如果希望深度学习训练的时候能够加速，则需要安装”cuDNN”，这一步很简单，只需要根据CUDA的版本选择对应的cuDNN版本就可以了。<br />
+可以在<a class="reference external" href="https://developer.nvidia.com/rdp/cudnn-download">官网</a>下载，CUDA 9.0对应的cuDNN版本为v7.6.0，下载选择linux版本。<br />
+下载完成之后解压文件：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tar</span> <span class="o">-</span><span class="n">xzvf</span> <span class="n">cudnn</span><span class="o">-</span><span class="mf">9.0</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">x64</span><span class="o">-</span><span class="n">v7</span><span class="mf">.6.0.64</span><span class="o">.</span><span class="n">tgz</span>
+</pre></div>
+</div>
+<p>解压之后的文件如下:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├──cuda
+│   ├── include
+│   │   └── cudnn.h
+│   ├── lib64
+│   │   ├── libcudnn.so -&gt; libcudnn.so.7
+│   │   ├── libcudnn.so.7 -&gt; libcudnn.so.7.6.0
+│   │   ├── libcudnn.so.7.6.0
+│   │   └── libcudnn_static.a
+│   └── NVIDIA_SLA_cuDNN_Support.txt
+</pre></div>
+</div>
+<p>然后把文件拷贝到CUDA的目录下就可以了：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">cp</span> <span class="n">cuda</span><span class="o">/</span><span class="n">include</span><span class="o">/</span><span class="n">cudnn</span><span class="o">.</span><span class="n">h</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="n">cuda</span><span class="o">-</span><span class="mf">9.0</span><span class="o">/</span><span class="n">include</span>
+<span class="n">sudo</span> <span class="n">cp</span> <span class="n">cuda</span><span class="o">/</span><span class="n">lib64</span><span class="o">/</span><span class="n">libcudnn</span><span class="o">*</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="n">cuda</span><span class="o">-</span><span class="mf">9.0</span><span class="o">/</span><span class="n">lib64</span>
+</pre></div>
+</div>
+<p>经过上面的步骤，我们就安装好了整个CUDA环境，主要是确认好CUDA版本，如果版本不对，对应的检测就不通过。需要仔细确认系统支持的CUDA版本。</p>
+<a name="caffe2" />
+</div>
+<div class="section" id="id6">
+<h1>安装Caffe2<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id7">
+<h2>直接安装（二进制文件安装）<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<p>caffe2选择直接用anaconda安装，因为anaconda集成了大部分的工具，安装起来也很简单：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="n">pytorch</span><span class="o">-</span><span class="n">nightly</span> <span class="o">-</span><span class="n">c</span> <span class="n">pytorch</span>
+</pre></div>
+</div>
+<p>这是官网的<a class="reference external" href="https://caffe2.ai/docs/getting-started.html?platform=ubuntu&amp;configuration=prebuilt">安装说明</a></p>
+<p>至此所有的安装就已经完成了，可以开始深度学习的尝试了。</p>
+</div>
+<div class="section" id="id8">
+<h2>源码安装<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<p>上面的方法是直接安装编译好的caffe2，而有些选项默认为关闭，想要打开这些选项（例如USE_LMDB），就需要从源码安装caffe2。</p>
+<p>从源码安装caffe2可以参考<a class="reference external" href="https://github.com/pytorch/pytorch#from-source">官网教程</a>。</p>
+<ol class="arabic simple">
+<li><p>安装依赖</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="n">numpy</span> <span class="n">ninja</span> <span class="n">pyyaml</span> <span class="n">mkl</span> <span class="n">mkl</span><span class="o">-</span><span class="n">include</span> <span class="n">setuptools</span> <span class="n">cmake</span> <span class="n">cffi</span> <span class="n">typing</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>安装magma</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add LAPACK support for the GPU if needed</span>
+<span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">pytorch</span> <span class="n">magma</span><span class="o">-</span><span class="n">cuda90</span> <span class="c1"># or [magma-cuda92 | magma-cuda100 ] depending on your cuda version</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>下载PyTorch</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="o">--</span><span class="n">recursive</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">pytorch</span><span class="o">/</span><span class="n">pytorch</span>
+<span class="n">cd</span> <span class="n">pytorch</span>
+<span class="c1"># if you are updating an existing checkout</span>
+<span class="n">git</span> <span class="n">submodule</span> <span class="n">sync</span>
+<span class="n">git</span> <span class="n">submodule</span> <span class="n">update</span> <span class="o">--</span><span class="n">init</span> <span class="o">--</span><span class="n">recursive</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>安装PyTorch</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-&quot;$(dirname $(which conda))/../&quot;}
+python setup.py install
+</pre></div>
+</div>
+<p>如果需要运行MNIST.ipynb的例子，需要同时安装LMDB，参考<a class="reference external" href="https://github.com/pytorch/pytorch/issues/21117">issue</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.</span> <span class="n">install</span> <span class="n">lmdb</span>
+<span class="n">conda</span> <span class="n">install</span> <span class="n">lmdb</span> <span class="n">leveldb</span>
+
+<span class="mf">2.</span> <span class="n">rebuild</span> <span class="n">caffe2</span> <span class="kn">from</span> <span class="nn">source</span>
+<span class="n">USE_LMDB</span><span class="o">=</span><span class="n">ON</span> <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">cmake</span>
+</pre></div>
+</div>
+<p>这之后整个安装过程就结束了，现在你可以试一试在jupyter-notebook中运行MNIST.ipynb，开始学习caffe2！</p>
+<a name="reference" />
+</div>
+</div>
+<div class="section" id="id9">
+<h1>参考<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="https://zhuanlan.zhihu.com/p/37569310">Ubuntu16.04+Ananconda3+CUDA+CUDNN+Tensorflow-gpu配置教程</a><br />
+<a class="reference external" href="https://blog.csdn.net/u014595019/article/details/53732015">ubuntu16.04下安装CUDA，cuDNN及tensorflow-gpu版本过程</a></p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/modules/perception/caffe2/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

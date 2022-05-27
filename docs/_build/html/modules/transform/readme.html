@@ -1,0 +1,611 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dig into Apollo - Transform &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="dig-into-apollo-transform-github">
+<h1>Dig into Apollo - Transform <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-transform-github" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>三人行，必有我师。</p>
+</div></blockquote>
+<div class="section" id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><span class="xref myst">Transform模块简介</span></p></li>
+<li><p><span class="xref myst">Transform(静态变换)</span></p></li>
+<li><p><span class="xref myst">transform_broadcaster（广播）</span></p></li>
+<li><p><span class="xref myst">Buffer（接收缓存）</span></p>
+<ul>
+<li><p><span class="xref myst">缓存接口</span></p></li>
+<li><p><span class="xref myst">缓存实现</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">总结</span></p></li>
+<li><p><span class="xref myst">Reference</span></p></li>
+</ul>
+<a name="introduction" />
+</div>
+<div class="section" id="transform">
+<h2>Transform模块简介<a class="headerlink" href="#transform" title="Permalink to this headline">¶</a></h2>
+<p>关于transform模块开始一直不知道是干啥的，一直看到一个”/tf”的TOPIC，还以为是tensorflow的缩写，想着是不是和神经网络有关系，后来才知道tf是transform的缩写，主要的用途是进行坐标转换，原型即是大名鼎鼎的”ros/tf2”库。那么为什么要进行坐标转换呢？<br />
+<img alt="tf2" src="../../_images/frames2.png" /><br />
+在机器人系统中，经常需要用到坐标转换，比如一个机器人的手臂要去拿一个运动的物体，控制的时候我们需要手臂的当前坐标，同时还需要知道手臂和身体的坐标，这个时候就需要用到坐标转换，把手臂的坐标转换为身体的坐标系，这样控制起来就方便一点。当然这里是动态的情况，也存在静态的情况，比如机器人头顶的摄像头，转换到身体的坐标系，那么位置关系是相对固定的，所以可以一开始就写到固定的位置。这里就引入了以下几个问题：</p>
+<ol class="arabic simple">
+<li><p>有固定转换关系的文件放在哪里？如果都是集中放在一个地方，那么这个地方损坏会导致所有的转换关系失效，一个比较好的方法是各个节点自己广播自己的转换关系。而其实静态的转换关系只需要发送一次就可以了，因为不会变化。</p></li>
+<li><p>有动态转换关系的节点，需要实时动态发布自己的转换关系，这样会涉及到时间戳，以及过时。</p></li>
+<li><p>转换关系的拓扑结构如何确定？是树型还是网络型的，这涉及到转换关系传递的问题。</p></li>
+</ol>
+<a name="static_transform" />
+</div>
+<div class="section" id="id1">
+<h2>Transform(静态变换)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>TransformComponent模块的入口在”static_transform_component.cc”和”static_transform_component.h”中。实现了”StaticTransformComponent”类，我们接下来看下它的实现。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">StaticTransformComponent</span><span class="w"> </span><span class="k">final</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">Component</span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="n">StaticTransformComponent</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">;</span><span class="w">  </span><span class="c1">// 构造函数</span>
+<span class="w">  </span><span class="o">~</span><span class="n">StaticTransformComponent</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">;</span><span class="w"> </span><span class="c1">// 析构函数</span>
+
+<span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">Init</span><span class="p">()</span><span class="w"> </span><span class="k">override</span><span class="p">;</span><span class="w">  </span><span class="c1">// 初始化函数</span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="n">SendTransforms</span><span class="p">();</span><span class="w">  </span><span class="c1">// 发送变换</span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">SendTransform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TransformStamped</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">msgtf</span><span class="p">);</span><span class="w">  </span><span class="c1">//发送变换，参数为数组</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">ParseFromYaml</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">file_path</span><span class="p">,</span><span class="w"> </span><span class="n">TransformStamped</span><span class="o">*</span><span class="w"> </span><span class="n">transform</span><span class="p">);</span><span class="w">  </span><span class="c1">// 从yaml中解析</span>
+
+<span class="w">  </span><span class="n">apollo</span><span class="o">::</span><span class="n">static_transform</span><span class="o">::</span><span class="n">Conf</span><span class="w"> </span><span class="n">conf_</span><span class="p">;</span><span class="w">  </span><span class="c1">// 配置文件</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Writer</span><span class="o">&lt;</span><span class="n">TransformStampeds</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">writer_</span><span class="p">;</span><span class="w">  </span><span class="c1">// cyber node写句柄</span>
+<span class="w">  </span><span class="n">TransformStampeds</span><span class="w"> </span><span class="n">transform_stampeds_</span><span class="p">;</span><span class="w">  </span><span class="c1">// 变换关系，在proto中定义</span>
+<span class="p">};</span><span class="w"></span>
+</pre></div>
+</div>
+<p>下面我们来分析StaticTransformComponent类具体的实现，首先是Init函数，Init函数做了2件事情，一是读取conf配置，二是发布”/tf_static”消息。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">StaticTransformComponent::Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 读取配置</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">GetProtoConfig</span><span class="p">(</span><span class="o">&amp;</span><span class="n">conf_</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Parse conf file failed, &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">ConfigFilePath</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 发布消息</span>
+<span class="w">  </span><span class="n">cyber</span><span class="o">::</span><span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="w"> </span><span class="n">attr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">set_channel_name</span><span class="p">(</span><span class="s">&quot;/tf_static&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">mutable_qos_profile</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">CopyFrom</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">cyber</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">QosProfileConf</span><span class="o">::</span><span class="n">QOS_PROFILE_TF_STATIC</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 注意这里的node_继承至apollo::cyber::Component</span>
+<span class="w">  </span><span class="n">writer_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">TransformStampeds</span><span class="o">&gt;</span><span class="p">(</span><span class="n">attr</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">SendTransforms</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>接着看SendTransforms()函数，主要就是遍历conf文件，判断extrinsic_file(实际上对应各种传感器的外参)是否使能，如果使能则根据提供的文件路径解析对应的转换关系”ParseFromYaml”，把转换关系添加到数组”tranform_stamped_vec”中，然后发送。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">StaticTransformComponent::SendTransforms</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TransformStamped</span><span class="o">&gt;</span><span class="w"> </span><span class="n">tranform_stamped_vec</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 遍历对应的文件，实际上对应各种传感器的外参</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">extrinsic_file</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">conf_</span><span class="p">.</span><span class="n">extrinsic_file</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 是否使能</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">extrinsic_file</span><span class="p">.</span><span class="n">enable</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Broadcast static transform, frame id [&quot;</span><span class="w"></span>
+<span class="w">            </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">extrinsic_file</span><span class="p">.</span><span class="n">frame_id</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;], child frame id [&quot;</span><span class="w"></span>
+<span class="w">            </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">extrinsic_file</span><span class="p">.</span><span class="n">child_frame_id</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;]&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">TransformStamped</span><span class="w"> </span><span class="n">transform</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// 解析yaml文件，获取转换，并且添加到数组中</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ParseFromYaml</span><span class="p">(</span><span class="n">extrinsic_file</span><span class="p">.</span><span class="n">file_path</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">transform</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">tranform_stamped_vec</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="n">transform</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 发送对应的转换</span>
+<span class="w">  </span><span class="n">SendTransform</span><span class="p">(</span><span class="n">tranform_stamped_vec</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>解析yaml需要注意的地方，在conf中的frame_id和child_id实际上没有使用，最后还是以yaml文件中的为准。其中yaml文件的格式为</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">child_frame_id</span><span class="p">:</span> <span class="n">novatel</span>
+<span class="n">transform</span><span class="p">:</span>
+  <span class="n">translation</span><span class="p">:</span>
+    <span class="n">x</span><span class="p">:</span> <span class="mf">0.0</span>
+    <span class="n">y</span><span class="p">:</span> <span class="mf">0.0</span>
+    <span class="n">z</span><span class="p">:</span> <span class="mf">0.0</span>
+  <span class="n">rotation</span><span class="p">:</span>
+    <span class="n">x</span><span class="p">:</span> <span class="mf">0.0</span>
+    <span class="n">y</span><span class="p">:</span> <span class="mf">0.0</span>
+    <span class="n">z</span><span class="p">:</span> <span class="mf">0.0</span>
+    <span class="n">w</span><span class="p">:</span> <span class="mf">1.0</span>
+<span class="n">header</span><span class="p">:</span>
+  <span class="n">frame_id</span><span class="p">:</span> <span class="n">localization</span>
+</pre></div>
+</div>
+<p>我们在看下如何解析yaml文件：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">StaticTransformComponent::ParseFromYaml</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">file_path</span><span class="p">,</span><span class="w"> </span><span class="n">TransformStamped</span><span class="o">*</span><span class="w"> </span><span class="n">transform_stamped</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span><span class="n">YAML</span><span class="o">::</span><span class="n">Node</span><span class="w"> </span><span class="n">tf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">YAML</span><span class="o">::</span><span class="n">LoadFile</span><span class="p">(</span><span class="n">file_path</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 读取yaml文件中的frame_id和child_frame_id</span>
+<span class="w">    </span><span class="n">transform_stamped</span><span class="o">-&gt;</span><span class="n">mutable_header</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_frame_id</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">tf</span><span class="p">[</span><span class="s">&quot;header&quot;</span><span class="p">][</span><span class="s">&quot;frame_id&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">transform_stamped</span><span class="o">-&gt;</span><span class="n">set_child_frame_id</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">tf</span><span class="p">[</span><span class="s">&quot;child_frame_id&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// translation 位置</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">translation</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">transform_stamped</span><span class="o">-&gt;</span><span class="n">mutable_transform</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">mutable_translation</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">translation</span><span class="o">-&gt;</span><span class="n">set_x</span><span class="p">(</span><span class="n">tf</span><span class="p">[</span><span class="s">&quot;transform&quot;</span><span class="p">][</span><span class="s">&quot;translation&quot;</span><span class="p">][</span><span class="s">&quot;x&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">translation</span><span class="o">-&gt;</span><span class="n">set_y</span><span class="p">(</span><span class="n">tf</span><span class="p">[</span><span class="s">&quot;transform&quot;</span><span class="p">][</span><span class="s">&quot;translation&quot;</span><span class="p">][</span><span class="s">&quot;y&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">translation</span><span class="o">-&gt;</span><span class="n">set_z</span><span class="p">(</span><span class="n">tf</span><span class="p">[</span><span class="s">&quot;transform&quot;</span><span class="p">][</span><span class="s">&quot;translation&quot;</span><span class="p">][</span><span class="s">&quot;z&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// rotation 角度</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">rotation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform_stamped</span><span class="o">-&gt;</span><span class="n">mutable_transform</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">mutable_rotation</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">rotation</span><span class="o">-&gt;</span><span class="n">set_qx</span><span class="p">(</span><span class="n">tf</span><span class="p">[</span><span class="s">&quot;transform&quot;</span><span class="p">][</span><span class="s">&quot;rotation&quot;</span><span class="p">][</span><span class="s">&quot;x&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">rotation</span><span class="o">-&gt;</span><span class="n">set_qy</span><span class="p">(</span><span class="n">tf</span><span class="p">[</span><span class="s">&quot;transform&quot;</span><span class="p">][</span><span class="s">&quot;rotation&quot;</span><span class="p">][</span><span class="s">&quot;y&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">rotation</span><span class="o">-&gt;</span><span class="n">set_qz</span><span class="p">(</span><span class="n">tf</span><span class="p">[</span><span class="s">&quot;transform&quot;</span><span class="p">][</span><span class="s">&quot;rotation&quot;</span><span class="p">][</span><span class="s">&quot;z&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">rotation</span><span class="o">-&gt;</span><span class="n">set_qw</span><span class="p">(</span><span class="n">tf</span><span class="p">[</span><span class="s">&quot;transform&quot;</span><span class="p">][</span><span class="s">&quot;rotation&quot;</span><span class="p">][</span><span class="s">&quot;w&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Extrinsic yaml file parse failed: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">file_path</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>最后我们再看下如何发送转换关系：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">StaticTransformComponent::SendTransform</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TransformStamped</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">msgtf</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">it_in</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">msgtf</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"> </span><span class="n">it_in</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">msgtf</span><span class="p">.</span><span class="n">end</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">it_in</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">match_found</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform_stampeds_</span><span class="p">.</span><span class="n">transforms_size</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">    </span><span class="c1">// 如果child_frame_id重复，那么则覆盖对应的配置</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">size</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">it_in</span><span class="o">-&gt;</span><span class="n">child_frame_id</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"></span>
+<span class="w">          </span><span class="n">transform_stampeds_</span><span class="p">.</span><span class="n">mutable_transforms</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">child_frame_id</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">it_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform_stampeds_</span><span class="p">.</span><span class="n">mutable_transforms</span><span class="p">(</span><span class="n">i</span><span class="p">);</span><span class="w"></span>
+<span class="w">        </span><span class="o">*</span><span class="n">it_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">it_in</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="n">match_found</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="k">break</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">match_found</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// 获取增加的指针地址，并且赋值</span>
+<span class="w">      </span><span class="k">auto</span><span class="w"> </span><span class="n">ts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform_stampeds_</span><span class="p">.</span><span class="n">add_transforms</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="o">*</span><span class="n">ts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">it_in</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">writer_</span><span class="o">-&gt;</span><span class="n">Write</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">TransformStampeds</span><span class="o">&gt;</span><span class="p">(</span><span class="n">transform_stampeds_</span><span class="p">));</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>所以这里需要注意<strong>child_frame_id的值一定不要一样，否则会覆盖之前的配置</strong>。</p>
+<p>按照流程总结一下就如下图所示，首先遍历conf，获取传感器的外参数文件路径，然后解析对应的yaml文件，并且发布到”/tf_static”。
+<img alt="transform流程" src="../../_images/transform.jpg" /></p>
+<a name="no_static_transform" />
+</div>
+<div class="section" id="transform-broadcaster">
+<h2>transform_broadcaster（广播）<a class="headerlink" href="#transform-broadcaster" title="Permalink to this headline">¶</a></h2>
+<p><strong>各个模块通过广播的方式来发布动态变换，实际上就是各个模块通过调用transform_broadcaster的库函数来实现广播转换消息</strong>，我们接下来看下transform_broadcaster是如何实现的，transform_broadcaster做为一个lib库，入口在”transform_broadcaster.h”和”transform_broadcaster.cc”中。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TransformBroadcaster</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 这里注意构造的时候需要传入node</span>
+<span class="w">  </span><span class="k">explicit</span><span class="w"> </span><span class="n">TransformBroadcaster</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Node</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">node</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 发送单个转换关系</span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">SendTransform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TransformStamped</span><span class="o">&amp;</span><span class="w"> </span><span class="n">transform</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 发送一组转换关系</span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">SendTransform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TransformStamped</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">transforms</span><span class="p">);</span><span class="w"></span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Node</span><span class="o">&gt;</span><span class="w"> </span><span class="n">node_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Writer</span><span class="o">&lt;</span><span class="n">TransformStampeds</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">writer_</span><span class="p">;</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
+</pre></div>
+</div>
+<p>从上面的分析可以看出，构造TransformBroadcaster的时候需要传入node。为什么需要传入node呢，因为cyber的一个module不能同时创建2个node，所以这里谁调用，就用谁的node创建reader和writer。如果是自己创建node，那么其他模块自己的node和引用该模块创建的node就打破了cyber上述的限制，这里的node是否可以理解为一个进程？
+下面我们分析具体的实现，首先是TransformBroadcaster构造函数：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">TransformBroadcaster</span><span class="o">::</span><span class="n">TransformBroadcaster</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Node</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">node</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="n">node_</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">cyber</span><span class="o">::</span><span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="w"> </span><span class="n">attr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 发布的topic为&quot;/tf&quot;</span>
+<span class="w">  </span><span class="n">attr</span><span class="p">.</span><span class="n">set_channel_name</span><span class="p">(</span><span class="s">&quot;/tf&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">writer_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">TransformStampeds</span><span class="o">&gt;</span><span class="p">(</span><span class="n">attr</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>创建writer并且往”/tf”发消息。这里可以看到，这里存在多个节点往一个topic发消息的情况。<br />
+发送消息比较简单，直接写对应的消息：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">TransformBroadcaster::SendTransform</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TransformStamped</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">transforms</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">TransformStampeds</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="o">*</span><span class="n">message</span><span class="o">-&gt;</span><span class="n">mutable_transforms</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">transforms</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">transforms</span><span class="p">.</span><span class="n">end</span><span class="p">()};</span><span class="w"></span>
+<span class="w">  </span><span class="n">writer_</span><span class="o">-&gt;</span><span class="n">Write</span><span class="p">(</span><span class="n">message</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<a name="buffer" />
+</div>
+<div class="section" id="buffer">
+<h2>Buffer（接收缓存）<a class="headerlink" href="#buffer" title="Permalink to this headline">¶</a></h2>
+<p>Buffer实际上提供了一个工具类给其它模块，它的主要作用是接收”/tf”和”/tf_static”的消息，并且保持在buffer中，提供给其它节点进行查找和转换到对应的坐标系，我们先看BufferInterface的实现：</p>
+<a name="buffer_interface" />
+<div class="section" id="id2">
+<h3>缓存接口<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>BufferInterface类定义了缓存需要实现的接口：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BufferInterface</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 根据frame_id获取2帧的转换关系</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStamped</span><span class="w"> </span><span class="n">lookupTransform</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout_second</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01f</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 根据frame_id获取2帧的转换关系，假设固定帧？？？</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStamped</span><span class="w"> </span><span class="nf">lookupTransform</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_frame</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_time</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">fixed_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout_second</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01f</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 测试转换是否可行</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">canTransform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">time</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout_second</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01f</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span><span class="w"> </span><span class="n">errstr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 测试转换是否可行</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">canTransform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_time</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">fixed_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout_second</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01f</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span><span class="w"> </span><span class="n">errstr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// Transform, simple api, with pre-allocation</span>
+<span class="w">  </span><span class="c1">// 预分配内存</span>
+<span class="w">  </span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">  </span><span class="n">T</span><span class="o">&amp;</span><span class="w"> </span><span class="n">transform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="o">&amp;</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="o">&amp;</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w">  </span><span class="c1">// NOLINT</span>
+<span class="w">               </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// do the transform</span>
+<span class="w">    </span><span class="n">tf2</span><span class="o">::</span><span class="n">doTransform</span><span class="p">(</span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">lookupTransform</span><span class="p">(</span><span class="n">target_frame</span><span class="p">,</span><span class="w"> </span><span class="n">tf2</span><span class="o">::</span><span class="n">getFrameId</span><span class="p">(</span><span class="n">in</span><span class="p">),</span><span class="w"></span>
+<span class="w">                                              </span><span class="n">tf2</span><span class="o">::</span><span class="n">getTimestamp</span><span class="p">(</span><span class="n">in</span><span class="p">),</span><span class="w"> </span><span class="n">timeout</span><span class="p">));</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// transform, simple api, no pre-allocation</span>
+<span class="w">  </span><span class="c1">// 没有预分配内存</span>
+<span class="w">  </span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">  </span><span class="n">T</span><span class="w"> </span><span class="n">transform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="o">&amp;</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">              </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">T</span><span class="w"> </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">transform</span><span class="p">(</span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"> </span><span class="n">timeout</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// transform, simple api, different types, pre-allocation</span>
+<span class="w">  </span><span class="c1">// 不同的类型</span>
+<span class="w">  </span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">A</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">B</span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">  </span><span class="n">B</span><span class="o">&amp;</span><span class="w"> </span><span class="n">transform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">A</span><span class="o">&amp;</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="o">&amp;</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w">  </span><span class="c1">// NOLINT</span>
+<span class="w">               </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">A</span><span class="w"> </span><span class="n">copy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform</span><span class="p">(</span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"> </span><span class="n">timeout</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">tf2</span><span class="o">::</span><span class="n">convert</span><span class="p">(</span><span class="n">copy</span><span class="p">,</span><span class="w"> </span><span class="n">out</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// Transform, advanced api, with pre-allocation</span>
+<span class="w">  </span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">  </span><span class="n">T</span><span class="o">&amp;</span><span class="w"> </span><span class="n">transform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="o">&amp;</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="o">&amp;</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w">  </span><span class="c1">// NOLINT</span>
+<span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">fixed_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">               </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// do the transform</span>
+<span class="w">    </span><span class="n">tf2</span><span class="o">::</span><span class="n">doTransform</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">lookupTransform</span><span class="p">(</span><span class="n">target_frame</span><span class="p">,</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"> </span><span class="n">tf2</span><span class="o">::</span><span class="n">getFrameId</span><span class="p">(</span><span class="n">in</span><span class="p">),</span><span class="w"></span>
+<span class="w">                                 </span><span class="n">tf2</span><span class="o">::</span><span class="n">getTimestamp</span><span class="p">(</span><span class="n">in</span><span class="p">),</span><span class="w"> </span><span class="n">fixed_frame</span><span class="p">,</span><span class="w"> </span><span class="n">timeout</span><span class="p">));</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// transform, advanced api, no pre-allocation</span>
+<span class="w">  </span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">  </span><span class="n">T</span><span class="w"> </span><span class="n">transform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="o">&amp;</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">              </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">fixed_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">              </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">T</span><span class="w"> </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">transform</span><span class="p">(</span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"> </span><span class="n">fixed_frame</span><span class="p">,</span><span class="w"> </span><span class="n">timeout</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// Transform, advanced api, different types, with pre-allocation</span>
+<span class="w">  </span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">A</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">B</span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">  </span><span class="n">B</span><span class="o">&amp;</span><span class="w"> </span><span class="n">transform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">A</span><span class="o">&amp;</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">B</span><span class="o">&amp;</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w">  </span><span class="c1">// NOLINT</span>
+<span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">fixed_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">               </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// do the transform</span>
+<span class="w">    </span><span class="n">A</span><span class="w"> </span><span class="n">copy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform</span><span class="p">(</span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"> </span><span class="n">fixed_frame</span><span class="p">,</span><span class="w"> </span><span class="n">timeout</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">tf2</span><span class="o">::</span><span class="n">convert</span><span class="p">(</span><span class="n">copy</span><span class="p">,</span><span class="w"> </span><span class="n">out</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">out</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
+</pre></div>
+</div>
+<p>BufferInterface实现的功能主要是查找转换关系，以及查看转换关系是否存在，以及做最后的转换。</p>
+<a name="buffer_class" />
+</div>
+<div class="section" id="id3">
+<h3>缓存实现<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>下面我们接着看buffer类的实现，可以看到buffer类继承了”BufferInterface”和”tf2::BufferCore”，其中”tf2::BufferCore”就是大名鼎鼎的ROS中的tf2库。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Buffer</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">BufferInterface</span><span class="p">,</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">tf2</span><span class="o">::</span><span class="n">BufferCore</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="k">using</span><span class="w"> </span><span class="n">tf2</span><span class="o">::</span><span class="n">BufferCore</span><span class="o">::</span><span class="n">canTransform</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">using</span><span class="w"> </span><span class="n">tf2</span><span class="o">::</span><span class="n">BufferCore</span><span class="o">::</span><span class="n">lookupTransform</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 构造buffer object</span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="nf">Init</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 根据frame_id获取2帧的转换关系，继承至BufferInterface</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStamped</span><span class="w"> </span><span class="nf">lookupTransform</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout_second</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01f</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 继承至BufferInterface</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStamped</span><span class="w"> </span><span class="nf">lookupTransform</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_frame</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_time</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">fixed_frame</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout_second</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01f</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 继承至BufferInterface</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">canTransform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout_second</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01f</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span><span class="w"> </span><span class="n">errstr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 继承至BufferInterface</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">canTransform</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">target_time</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">&amp;</span><span class="w"> </span><span class="n">source_time</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">fixed_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">timeout_second</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.01f</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span><span class="w"> </span><span class="n">errstr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+
+<span class="w"> </span><span class="k">private</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 转换回调？？？</span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="n">SubscriptionCallback</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;&amp;</span><span class="w"></span>
+<span class="w">          </span><span class="n">transform</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">StaticSubscriptionCallback</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;&amp;</span><span class="w"></span>
+<span class="w">          </span><span class="n">transform</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">SubscriptionCallbackImpl</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;&amp;</span><span class="w"></span>
+<span class="w">          </span><span class="n">transform</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="kt">bool</span><span class="w"> </span><span class="n">is_static</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">AsyncSubscriptionCallbackImpl</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;&amp;</span><span class="w"></span>
+<span class="w">          </span><span class="n">transform</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="kt">bool</span><span class="w"> </span><span class="n">is_static</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 转换tf2消息为cyber protobuf格式</span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">TF2MsgToCyber</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">geometry_msgs</span><span class="o">::</span><span class="n">TransformStamped</span><span class="o">&amp;</span><span class="w"> </span><span class="n">tf2_trans_stamped</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStamped</span><span class="o">&amp;</span><span class="w"> </span><span class="n">trans_stamped</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w">  </span><span class="c1">// NOLINT</span>
+
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Node</span><span class="o">&gt;</span><span class="w"> </span><span class="n">node_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;&gt;</span><span class="w"></span>
+<span class="w">      </span><span class="n">message_subscriber_tf_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;&gt;</span><span class="w"></span>
+<span class="w">      </span><span class="n">message_subscriber_tf_static_</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="w"> </span><span class="n">last_update_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">geometry_msgs</span><span class="o">::</span><span class="n">TransformStamped</span><span class="o">&gt;</span><span class="w"> </span><span class="n">static_msgs_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 单例</span>
+<span class="w">  </span><span class="n">DECLARE_SINGLETON</span><span class="p">(</span><span class="n">Buffer</span><span class="p">)</span><span class="w"></span>
+<span class="p">};</span><span class="w">  </span><span class="c1">// class</span>
+</pre></div>
+</div>
+<p>这里注意buffer为单例模式，即接收转换消息，并且放到buffer中保存。其他模块需要用到转换的时候，则从buffer中查找是否存在转换关系，并且进行对应的转换。</p>
+<p>下面我们看buffer类的具体实现，buffer类的初始化在Init函数中：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">Buffer::Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">node_name</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="s">&quot;transform_listener_&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">::</span><span class="n">Now</span><span class="p">().</span><span class="n">ToNanosecond</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 创建node节点</span>
+<span class="w">  </span><span class="n">node_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">CreateNode</span><span class="p">(</span><span class="n">node_name</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">cyber</span><span class="o">::</span><span class="n">ReaderConfig</span><span class="w"> </span><span class="n">tf_reader_config</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 读取&quot;/tf&quot;消息</span>
+<span class="w">  </span><span class="n">tf_reader_config</span><span class="p">.</span><span class="n">channel_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;/tf&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">tf_reader_config</span><span class="p">.</span><span class="n">pending_queue_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">message_subscriber_tf_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">          </span><span class="n">tf_reader_config</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;&amp;</span><span class="w"></span>
+<span class="w">                  </span><span class="n">msg_evt</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SubscriptionCallbackImpl</span><span class="p">(</span><span class="n">msg_evt</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">);</span><span class="w"> </span><span class="p">});</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 读取&quot;/tf_static&quot;消息</span>
+<span class="w">  </span><span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">proto</span><span class="o">::</span><span class="n">RoleAttributes</span><span class="w"> </span><span class="n">attr_static</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr_static</span><span class="p">.</span><span class="n">set_channel_name</span><span class="p">(</span><span class="s">&quot;/tf_static&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">attr_static</span><span class="p">.</span><span class="n">mutable_qos_profile</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">CopyFrom</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">QosProfileConf</span><span class="o">::</span><span class="n">QOS_PROFILE_TF_STATIC</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">message_subscriber_tf_static_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">          </span><span class="n">attr_static</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;&amp;</span><span class="w"></span>
+<span class="w">                  </span><span class="n">msg_evt</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SubscriptionCallbackImpl</span><span class="p">(</span><span class="n">msg_evt</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span><span class="w"> </span><span class="p">});</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">SUCC</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>可以看到在Init函数中主要实现的功能是创建节点，并且订阅”/tf”和”/tf_static”消息，由于Buffer为单例，在cyber初始化的时候创建的node，不是在模块内部创建的node（关于这块，后面有时间在详细论述下，cyber可以存在多个node，而启动的模块则不能，是不是因为cyber做为调度器，为了方便控制）。</p>
+<p>回调函数都是SubscriptionCallbackImpl，我们看下它是如何缓存消息的？</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Buffer::SubscriptionCallbackImpl</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">transform</span><span class="o">::</span><span class="n">TransformStampeds</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">msg_evt</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">is_static</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="w"> </span><span class="n">now</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Time</span><span class="o">::</span><span class="n">Now</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// authority的用途？？？</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">authority</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="s">&quot;cyber_tf&quot;</span><span class="p">;</span><span class="w">  </span><span class="c1">// msg_evt.getPublisherName(); // lookup the authority</span>
+
+<span class="w">  </span><span class="c1">// 看起来不可能进入这个条件，除非多线程？？？</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">now</span><span class="p">.</span><span class="n">ToNanosecond</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">last_update_</span><span class="p">.</span><span class="n">ToNanosecond</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Detected jump back in time. Clearing TF buffer.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">clear</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// cache static transform stamped again.</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">msg</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">static_msgs_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">setTransform</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span><span class="w"> </span><span class="n">authority</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">last_update_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">now</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">msg_evt</span><span class="o">-&gt;</span><span class="n">transforms_size</span><span class="p">();</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// 封装消息</span>
+<span class="w">      </span><span class="n">geometry_msgs</span><span class="o">::</span><span class="n">TransformStamped</span><span class="w"> </span><span class="n">trans_stamped</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">      </span><span class="c1">// header</span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">header</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">msg_evt</span><span class="o">-&gt;</span><span class="n">transforms</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="n">header</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">header</span><span class="p">.</span><span class="n">stamp</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">          </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">uint64_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">header</span><span class="p">.</span><span class="n">timestamp_sec</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">kSecondToNanoFactor</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">header</span><span class="p">.</span><span class="n">frame_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">header</span><span class="p">.</span><span class="n">frame_id</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">header</span><span class="p">.</span><span class="n">seq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">header</span><span class="p">.</span><span class="n">sequence_num</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">      </span><span class="c1">// child_frame_id</span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">child_frame_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">msg_evt</span><span class="o">-&gt;</span><span class="n">transforms</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="n">child_frame_id</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">      </span><span class="c1">// translation</span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">transform</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">msg_evt</span><span class="o">-&gt;</span><span class="n">transforms</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="n">transform</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">transform</span><span class="p">.</span><span class="n">translation</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform</span><span class="p">.</span><span class="n">translation</span><span class="p">().</span><span class="n">x</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">transform</span><span class="p">.</span><span class="n">translation</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform</span><span class="p">.</span><span class="n">translation</span><span class="p">().</span><span class="n">y</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">transform</span><span class="p">.</span><span class="n">translation</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform</span><span class="p">.</span><span class="n">translation</span><span class="p">().</span><span class="n">z</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">      </span><span class="c1">// rotation</span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">transform</span><span class="p">.</span><span class="n">rotation</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform</span><span class="p">.</span><span class="n">rotation</span><span class="p">().</span><span class="n">qx</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">transform</span><span class="p">.</span><span class="n">rotation</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform</span><span class="p">.</span><span class="n">rotation</span><span class="p">().</span><span class="n">qy</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">transform</span><span class="p">.</span><span class="n">rotation</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform</span><span class="p">.</span><span class="n">rotation</span><span class="p">().</span><span class="n">qz</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">trans_stamped</span><span class="p">.</span><span class="n">transform</span><span class="p">.</span><span class="n">rotation</span><span class="p">.</span><span class="n">w</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">transform</span><span class="p">.</span><span class="n">rotation</span><span class="p">().</span><span class="n">qw</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">      </span><span class="c1">// 保存静态转换，用于上面判断条件的时候，重新设置静态转换</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_static</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">static_msgs_</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">trans_stamped</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// 调用tf2的函数，保存转换到cache，区分静态和动态的转换</span>
+<span class="w">      </span><span class="n">setTransform</span><span class="p">(</span><span class="n">trans_stamped</span><span class="p">,</span><span class="w"> </span><span class="n">authority</span><span class="p">,</span><span class="w"> </span><span class="n">is_static</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">tf2</span><span class="o">::</span><span class="n">TransformException</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ex</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">temp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ex</span><span class="p">.</span><span class="n">what</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failure to set recieved transform:&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">temp</span><span class="p">.</span><span class="n">c_str</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>接着是lookupTransform和canTransform分别调用tf2的库函数，实现查找转换和判断是否能够转换的实现，由于函数功能比较简单这里就不介绍了。<br />
+可以看到主要的缓存实现都是在tf2的库函数中，后面有时间再分析下tf2具体的实现。</p>
+<a name="summary" />
+</div>
+</div>
+<div class="section" id="id4">
+<h2>总结<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>接下来我们用一张图来总结Apollo中的坐标变换关系，即静态坐标转换由”StaticTransform”模块提供，而动态转换由需要发布的模块自行发布如”NDTLocalization”,”RTKLocalization”和””Gnss，可以看到动态变换主要是世界坐标到本地坐标的转换，而静态转换主要是各个传感器之间的转换。最后转换关系统一由Buffer模块接收，并且提供查询。<br />
+<img alt="all" src="../../_images/all.jpg" /></p>
+<a name="reference" />
+</div>
+<div class="section" id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://wiki.ros.org/tf2">tf2</a></p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/transform/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

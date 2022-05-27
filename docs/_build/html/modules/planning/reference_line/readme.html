@@ -1,0 +1,957 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dig into Apollo - Reference line &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="dig-into-apollo-reference-line-github">
+<h1>Dig into Apollo - Reference line <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-reference-line-github" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>尽吾志也而不能至者，可以无悔矣</p>
+</div></blockquote>
+<div class="section" id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><span class="xref myst">介绍</span></p></li>
+<li><p><span class="xref myst">参考线</span></p></li>
+<li><p><span class="xref myst">平滑器</span></p></li>
+<li><p><span class="xref myst">参考线提供者</span></p></li>
+</ul>
+<a name="introduction" />
+</div>
+<div class="section" id="reference-line">
+<h2>参考线介绍(Reference line)<a class="headerlink" href="#reference-line" title="Permalink to this headline">¶</a></h2>
+<p>参考线是根据routing规划的路线，生成一系列参考轨迹，提供给规划算法做为参考，从而生成最终的规划轨迹。
+为什么要提供参考呢？因为道路是结构化道路，在没有参考的情况下，需要通过搜索算法来查找路线，这种场景在机器人路径规划中比较普遍，机器人在一个开放空间只要没有障碍物它就可以行走，而车不一样，车是在道路上行驶的，在提供参考的情况下，节省了查找的时间和复杂度，降低了算法的难度，这也就是参考线的意义。</p>
+<ol class="arabic simple">
+<li><p>ReferenceLine和ReferenceLineInfo的关系
+ReferenceLine提供的是轨迹信息，而ReferenceLineInfo在ReferenceLine的基础上新添加了决策信息。</p></li>
+</ol>
+<a name="rf_line" />
+</div>
+<div class="section" id="referencelineinfo">
+<h2>参考线(ReferenceLineInfo)<a class="headerlink" href="#referencelineinfo" title="Permalink to this headline">¶</a></h2>
+<p>参考线信息，在参考线的基础添加了决策信息，ST图等。</p>
+<div class="section" id="referencepoint">
+<h3>参考线中的点(ReferencePoint)<a class="headerlink" href="#referencepoint" title="Permalink to this headline">¶</a></h3>
+<p>参考线中的点继承至<code class="docutils literal notranslate"><span class="pre">hdmap::MapPathPoint</span></code>，而<code class="docutils literal notranslate"><span class="pre">hdmap::MapPathPoint</span></code>又继承至<code class="docutils literal notranslate"><span class="pre">common::math::Vec2d</span></code>，也就是说参考线中的点实际上包含了路径点的信息，它有原来路径点中的朝向和坐标信息，同时还新增加了曲率信息，通过下图我们可以清楚的看出上述关系。<br />
+<img alt="ReferencePoint" src="../../../_images/rf_line_point.jpg" /></p>
+</div>
+<div class="section" id="referenceline">
+<h3>参考线(ReferenceLine)<a class="headerlink" href="#referenceline" title="Permalink to this headline">¶</a></h3>
+<p>理解了参考线中的点之后，我们再看参考线的数据结构。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">SpeedLimit</span><span class="o">&gt;</span><span class="w"> </span><span class="n">speed_limit_</span><span class="p">;</span><span class="w">  </span><span class="c1">// 速度限制</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ReferencePoint</span><span class="o">&gt;</span><span class="w"> </span><span class="n">reference_points_</span><span class="p">;</span><span class="w">  </span><span class="c1">// 参考线的点</span>
+<span class="w">  </span><span class="n">hdmap</span><span class="o">::</span><span class="n">Path</span><span class="w"> </span><span class="n">map_path_</span><span class="p">;</span><span class="w">  </span><span class="c1">// 路径</span>
+<span class="w">  </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">priority_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w">  </span><span class="c1">// 优先级</span>
+</pre></div>
+</div>
+<p>其中速度限制主要标明参考线中哪些段有速度限制，因为是一个数组，因此一个参考线中可以有多段不同的限速。优先级则表示了当前参考线的优先级，用于后面有多个参考线的时候进行挑选。<br />
+参考线中的点也是一个数组，也就是说参考线是由参考点组成的，而<code class="docutils literal notranslate"><span class="pre">map_path_</span></code>则是最不好理解的，实际上<code class="docutils literal notranslate"><span class="pre">map_path_</span></code>就是地图中参考线，把参考线中的点转换到地图中，因此<code class="docutils literal notranslate"><span class="pre">map_path_</span></code>中的点和参考点数组的大小是一致的。</p>
+<p>除此之外，参考线还提供了一些方法，通过这些方法我们可以拼接参考线，也可以判断参考线所在位置的路的宽度，以及是否在路上等信息。我们先分析这些方法的功能实现，然后再介绍哪些场景需要用到这些功能。</p>
+</div>
+<div class="section" id="id1">
+<h3>构造函数<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>我们可以看到有2种方式来生成ReferenceLine，可以通过一组参考点来生成，也可以通过地图路径来生成，这2者实际上是等价的，下面我们开始分析。</p>
+<ol class="arabic simple">
+<li><p>通过一组参考点生成，<code class="docutils literal notranslate"><span class="pre">reference_points_</span></code>直接拷贝赋值了，然后再用<code class="docutils literal notranslate"><span class="pre">reference_points</span></code>生成<code class="docutils literal notranslate"><span class="pre">hdmap::MapPathPoint</span></code>，最后保存到<code class="docutils literal notranslate"><span class="pre">map_path_</span></code>。</p></li>
+</ol>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ReferenceLine</span><span class="o">::</span><span class="n">ReferenceLine</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ReferencePoint</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">reference_points</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="n">reference_points_</span><span class="p">(</span><span class="n">reference_points</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">map_path_</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">MapPathPoint</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">          </span><span class="n">reference_points</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">reference_points</span><span class="p">.</span><span class="n">end</span><span class="p">())))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="p">...</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>通过地图路径生成参考线。遍历路径中的点，然后取<code class="docutils literal notranslate"><span class="pre">lane_waypoints</span></code>中的第一个点，保存到参考点的数组中。</p></li>
+</ol>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ReferenceLine</span><span class="o">::</span><span class="n">ReferenceLine</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">MapPath</span><span class="o">&amp;</span><span class="w"> </span><span class="n">hdmap_path</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="n">map_path_</span><span class="p">(</span><span class="n">hdmap_path</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">point</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">hdmap_path</span><span class="p">.</span><span class="n">path_points</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">lane_waypoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">point</span><span class="p">.</span><span class="n">lane_waypoints</span><span class="p">()[</span><span class="mi">0</span><span class="p">];</span><span class="w"></span>
+<span class="w">    </span><span class="n">reference_points_</span><span class="p">.</span><span class="n">emplace_back</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">hdmap</span><span class="o">::</span><span class="n">MapPathPoint</span><span class="p">(</span><span class="n">point</span><span class="p">,</span><span class="w"> </span><span class="n">point</span><span class="p">.</span><span class="n">heading</span><span class="p">(),</span><span class="w"> </span><span class="n">lane_waypoint</span><span class="p">),</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="stitch">
+<h3>缝合参考线(Stitch)<a class="headerlink" href="#stitch" title="Permalink to this headline">¶</a></h3>
+<p>缝合参考线是把2段参考线连接起来，代码中也给出了下面2种情况。并且每次拼接的时候，会尽可能多的采用自身的参考线。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">Example</span><span class="w"> </span><span class="mi">1</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="k">this</span><span class="o">:</span><span class="w">   </span><span class="o">|--------</span><span class="n">A</span><span class="o">-----</span><span class="n">x</span><span class="o">-----</span><span class="n">B</span><span class="o">------|</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">other</span><span class="o">:</span><span class="w">                 </span><span class="o">|-----</span><span class="n">C</span><span class="o">------</span><span class="n">x</span><span class="o">--------</span><span class="n">D</span><span class="o">-------|</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">Result</span><span class="o">:</span><span class="w"> </span><span class="o">|------</span><span class="n">A</span><span class="o">-----</span><span class="n">x</span><span class="o">-----</span><span class="n">B</span><span class="o">------</span><span class="n">x</span><span class="o">--------</span><span class="n">D</span><span class="o">-------|</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">In</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">above</span><span class="w"> </span><span class="n">example</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="o">-</span><span class="n">B</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="n">reference</span><span class="w"> </span><span class="n">line</span><span class="p">,</span><span class="w"> </span><span class="n">and</span><span class="w"> </span><span class="n">C</span><span class="o">-</span><span class="n">D</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">other</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">reference</span><span class="w"> </span><span class="n">line</span><span class="p">.</span><span class="w"> </span><span class="n">If</span><span class="w"> </span><span class="n">part</span><span class="w"> </span><span class="n">B</span><span class="w"> </span><span class="n">and</span><span class="w"> </span><span class="n">part</span><span class="w"> </span><span class="n">C</span><span class="w"> </span><span class="n">matches</span><span class="p">,</span><span class="w"> </span><span class="n">we</span><span class="w"> </span><span class="n">update</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="n">reference</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">line</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">A</span><span class="o">-</span><span class="n">B</span><span class="o">-</span><span class="n">D</span><span class="p">.</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">Example</span><span class="w"> </span><span class="mi">2</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="k">this</span><span class="o">:</span><span class="w">                  </span><span class="o">|-----</span><span class="n">A</span><span class="o">------</span><span class="n">x</span><span class="o">--------</span><span class="n">B</span><span class="o">-------|</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">other</span><span class="o">:</span><span class="w">  </span><span class="o">|--------</span><span class="n">C</span><span class="o">-----</span><span class="n">x</span><span class="o">-----</span><span class="n">D</span><span class="o">------|</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">Result</span><span class="o">:</span><span class="w"> </span><span class="o">|--------</span><span class="n">C</span><span class="o">-----</span><span class="n">x</span><span class="o">-----</span><span class="n">A</span><span class="o">------</span><span class="n">x</span><span class="o">--------</span><span class="n">B</span><span class="o">-------|</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">In</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">above</span><span class="w"> </span><span class="n">example</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="o">-</span><span class="n">B</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="n">reference</span><span class="w"> </span><span class="n">line</span><span class="p">,</span><span class="w"> </span><span class="n">and</span><span class="w"> </span><span class="n">C</span><span class="o">-</span><span class="n">D</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">other</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">reference</span><span class="w"> </span><span class="n">line</span><span class="p">.</span><span class="w"> </span><span class="n">If</span><span class="w"> </span><span class="n">part</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="n">and</span><span class="w"> </span><span class="n">part</span><span class="w"> </span><span class="n">D</span><span class="w"> </span><span class="n">matches</span><span class="p">,</span><span class="w"> </span><span class="n">we</span><span class="w"> </span><span class="n">update</span><span class="w"> </span><span class="n">current</span><span class="w"> </span><span class="n">reference</span><span class="w"></span>
+<span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="n">line</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">C</span><span class="o">-</span><span class="n">A</span><span class="o">-</span><span class="n">B</span><span class="p">.</span><span class="w"></span>
+</pre></div>
+</div>
+<p>接下来我们分析下代码。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ReferenceLine::Stitch</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLine</span><span class="o">&amp;</span><span class="w"> </span><span class="n">other</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 找到起点的交点</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">first_point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_points_</span><span class="p">.</span><span class="n">front</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="w"> </span><span class="n">first_sl</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">other</span><span class="p">.</span><span class="n">XYToSL</span><span class="p">(</span><span class="n">first_point</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">first_sl</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to project the first point to the other reference line.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">first_join</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">first_sl</span><span class="p">.</span><span class="n">s</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">first_sl</span><span class="p">.</span><span class="n">s</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">other</span><span class="p">.</span><span class="n">Length</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 找到终点的交点</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">last_point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_points_</span><span class="p">.</span><span class="n">back</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="w"> </span><span class="n">last_sl</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">other</span><span class="p">.</span><span class="n">XYToSL</span><span class="p">(</span><span class="n">last_point</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">last_sl</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to project the last point to the other reference line.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">last_join</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">last_sl</span><span class="p">.</span><span class="n">s</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">last_sl</span><span class="p">.</span><span class="n">s</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">other</span><span class="p">.</span><span class="n">Length</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 如果起点和终点都没有交点，则退出</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">first_join</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">last_join</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;These reference lines are not connected.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 累积s值</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">accumulated_s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">other</span><span class="p">.</span><span class="n">map_path</span><span class="p">().</span><span class="n">accumulated_s</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 参考点</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">other_points</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">other</span><span class="p">.</span><span class="n">reference_points</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">lower</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">kStitchingError</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1e-1</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">first_join</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 4. 如果横向偏移大于0.1m，则退出</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">first_sl</span><span class="p">.</span><span class="n">l</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">kStitchingError</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;lateral stitching error on first join of reference line too &quot;</span><span class="w"></span>
+<span class="w">                </span><span class="s">&quot;big, stitching fails&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">lower</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">lower_bound</span><span class="p">(</span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                             </span><span class="n">first_sl</span><span class="p">.</span><span class="n">s</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 4.1 因为this的起点在other之后，插入other的起点到this的起点</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">start_i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">distance</span><span class="p">(</span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">lower</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">reference_points_</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">reference_points_</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">other_points</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                             </span><span class="n">other_points</span><span class="p">.</span><span class="n">begin</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">start_i</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">last_join</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 5.1 如果横向偏移大于0.1m，则退出</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">last_sl</span><span class="p">.</span><span class="n">l</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">kStitchingError</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;lateral stitching error on first join of reference line too &quot;</span><span class="w"></span>
+<span class="w">                </span><span class="s">&quot;big, stitching fails&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 5.2 因为this的终点小于other的终点，把other终点拼接到参考线的终点</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">upper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">upper_bound</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span><span class="w"> </span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="n">last_sl</span><span class="p">.</span><span class="n">s</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">end_i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">distance</span><span class="p">(</span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">upper</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">reference_points_</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">reference_points_</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                             </span><span class="n">other_points</span><span class="p">.</span><span class="n">begin</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">end_i</span><span class="p">,</span><span class="w"> </span><span class="n">other_points</span><span class="p">.</span><span class="n">end</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">map_path_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MapPath</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">MapPathPoint</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">reference_points_</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">reference_points_</span><span class="p">.</span><span class="n">end</span><span class="p">())));</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="segment">
+<h3>分割参考线(Segment)<a class="headerlink" href="#segment" title="Permalink to this headline">¶</a></h3>
+<p>分割参考线的方法是根据起点s，向前和向后的查看距离把参考线进行分割。 有2个方法，我们只看其中一个就可以了。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ReferenceLine::Segment</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">look_backward</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">look_forward</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">accumulated_s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">map_path_</span><span class="p">.</span><span class="n">accumulated_s</span><span class="p">();</span><span class="w"></span>
+
+
+<span class="w">  </span><span class="c1">// 1. 查找向后的索引(look_backward)</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">start_index</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">distance</span><span class="p">(</span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                    </span><span class="n">std</span><span class="o">::</span><span class="n">lower_bound</span><span class="p">(</span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                                     </span><span class="n">s</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">look_backward</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 查找向前的索引(look_forward)</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">end_index</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">distance</span><span class="p">(</span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                    </span><span class="n">std</span><span class="o">::</span><span class="n">upper_bound</span><span class="p">(</span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">accumulated_s</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                                     </span><span class="n">s</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">look_forward</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 如果只有一个点</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">end_index</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_index</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Too few reference points after shrinking.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 4. 更新当前的参考线，并且返回成功</span>
+<span class="w">  </span><span class="n">reference_points_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ReferencePoint</span><span class="o">&gt;</span><span class="p">(</span><span class="n">reference_points_</span><span class="p">.</span><span class="n">begin</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">start_index</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="n">reference_points_</span><span class="p">.</span><span class="n">begin</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">end_index</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">map_path_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MapPath</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">MapPathPoint</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">reference_points_</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">reference_points_</span><span class="p">.</span><span class="n">end</span><span class="p">()));</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>其它方法介绍<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>这里把其它一些方法的功能进行介绍，具体的代码就不展开分析了。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="c1">// 根据s值获取参考点（会根据s进行插值）</span>
+<span class="w">  </span><span class="n">ReferencePoint</span><span class="w"> </span><span class="nf">GetReferencePoint</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w">  </span>
+<span class="w">  </span><span class="c1">// 根据x,y找到最近的点，并且进行插值</span>
+<span class="w">  </span><span class="n">ReferencePoint</span><span class="w"> </span><span class="nf">GetReferencePoint</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w">  </span>
+
+<span class="w">  </span><span class="c1">// PathPoint转换为FrenetFramePoint</span>
+<span class="w">  </span><span class="n">common</span><span class="o">::</span><span class="n">FrenetFramePoint</span><span class="w"> </span><span class="nf">GetFrenetPoint</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">PathPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">path_point</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// </span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">ToFrenetFrame</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">TrajectoryPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">traj_point</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 查找起点和终点分别为start_s和end_s的参考点</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ReferencePoint</span><span class="o">&gt;</span><span class="w"> </span><span class="n">GetReferencePoints</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">start_s</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                               </span><span class="kt">double</span><span class="w"> </span><span class="n">end_s</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取离s最近的索引</span>
+<span class="w">  </span><span class="kt">size_t</span><span class="w"> </span><span class="nf">GetNearestReferenceIndex</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w">  </span>
+
+<span class="w">  </span><span class="c1">// 离s最近的ReferencePoint</span>
+<span class="w">  </span><span class="n">ReferencePoint</span><span class="w"> </span><span class="nf">GetNearestReferencePoint</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Vec2d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">xy</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ReferencePoint</span><span class="w"> </span><span class="nf">GetNearestReferencePoint</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w">    </span>
+
+<span class="w">  </span><span class="c1">// 根据起点s和终点s获取LaneSegment</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">LaneSegment</span><span class="o">&gt;</span><span class="w"> </span><span class="n">GetLaneSegments</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">start_s</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                                  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">end_s</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取box在参考线上的投影框</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">GetApproximateSLBoundary</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Box2d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">box</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">start_s</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">end_s</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                </span><span class="n">SLBoundary</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">sl_boundary</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">GetSLBoundary</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Box2d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">box</span><span class="p">,</span><span class="w"></span>
+<span class="w">                     </span><span class="n">SLBoundary</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">sl_boundary</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">GetSLBoundary</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">hdmap</span><span class="o">::</span><span class="n">Polygon</span><span class="o">&amp;</span><span class="w"> </span><span class="n">polygon</span><span class="p">,</span><span class="w"></span>
+<span class="w">                     </span><span class="n">SLBoundary</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">sl_boundary</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// SL坐标到XY坐标相互转换</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">SLToXY</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sl_point</span><span class="p">,</span><span class="w"></span>
+<span class="w">              </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Vec2d</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">xy_point</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">XYToSL</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Vec2d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">xy_point</span><span class="p">,</span><span class="w"></span>
+<span class="w">              </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">sl_point</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取s距离处路的宽度</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">GetLaneWidth</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">lane_left_width</span><span class="p">,</span><span class="w"></span>
+<span class="w">                    </span><span class="kt">double</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">lane_right_width</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取s距离处的偏移</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">GetOffsetToMap</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="o">*</span><span class="w"> </span><span class="n">l_offset</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取s距离处路的宽度</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">GetRoadWidth</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">road_left_width</span><span class="p">,</span><span class="w"></span>
+<span class="w">                    </span><span class="kt">double</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">road_right_width</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取s距离处路的类型</span>
+<span class="w">  </span><span class="n">hdmap</span><span class="o">::</span><span class="n">Road</span><span class="o">::</span><span class="n">Type</span><span class="w"> </span><span class="nf">GetRoadType</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取s距离处道路</span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">GetLaneFromS</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"></span>
+<span class="w">                    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">LaneInfoConstPtr</span><span class="o">&gt;*</span><span class="w"> </span><span class="n">lanes</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取乘车宽度</span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="nf">GetDrivingWidth</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">SLBoundary</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sl_boundary</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 是否在路上</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsOnLane</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sl_point</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsOnLane</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Vec2d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">vec2d_point</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">XYPoint</span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsOnLane</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">XYPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">xy</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">IsOnLane</span><span class="p">(</span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Vec2d</span><span class="p">(</span><span class="n">xy</span><span class="p">.</span><span class="n">x</span><span class="p">(),</span><span class="w"> </span><span class="n">xy</span><span class="p">.</span><span class="n">y</span><span class="p">()));</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsOnLane</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">SLBoundary</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sl_boundary</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w">   </span>
+
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsOnRoad</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sl_point</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsOnRoad</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Vec2d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">vec2d_point</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsOnRoad</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">SLBoundary</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sl_boundary</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 是否堵路了</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsBlockRoad</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Box2d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">box2d</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">gap</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 是否有重叠</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">HasOverlap</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">Box2d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">box</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 查找s处的速度限制</span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="nf">GetSpeedLimitFromS</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 添加start_s到end_s处的速度限制，并且进行排序</span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">AddSpeedLimit</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">start_s</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">end_s</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">speed_limit</span><span class="p">);</span><span class="w">                   </span>
+</pre></div>
+</div>
+<a name="rf_smoother" />
+</div>
+</div>
+<div class="section" id="referencelinesmoother">
+<h2>平滑器(ReferenceLineSmoother)<a class="headerlink" href="#referencelinesmoother" title="Permalink to this headline">¶</a></h2>
+<p>平滑器的主要作用是对参考线做平滑，一共有3种类型的平滑器。</p>
+<ul class="simple">
+<li><p>DiscretePointsReferenceLineSmoother</p></li>
+<li><p>QpSplineReferenceLineSmoother</p></li>
+<li><p>SpiralReferenceLineSmoother</p></li>
+</ul>
+<p>它们都继承至<code class="docutils literal notranslate"><span class="pre">ReferenceLineSmoother</span></code>，需要提供设置锚点<code class="docutils literal notranslate"><span class="pre">SetAnchorPoints</span></code>和<code class="docutils literal notranslate"><span class="pre">Smooth</span></code>2个接口。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">AnchorPoint</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">common</span><span class="o">::</span><span class="n">PathPoint</span><span class="w"> </span><span class="n">path_point</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">lateral_bound</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">longitudinal_bound</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// enforce smoother to strictly follow this reference point</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">enforced</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReferenceLineSmoother</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="k">explicit</span><span class="w"> </span><span class="n">ReferenceLineSmoother</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineSmootherConfig</span><span class="o">&amp;</span><span class="w"> </span><span class="n">config</span><span class="p">)</span><span class="w"></span>
+<span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="n">config_</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 虚函数，设置锚点</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">SetAnchorPoints</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">AnchorPoint</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">achor_points</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 虚函数，平滑参考线</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Smooth</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLine</span><span class="o">&amp;</span><span class="p">,</span><span class="w"> </span><span class="n">ReferenceLine</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="o">~</span><span class="n">ReferenceLineSmoother</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">;</span><span class="w"></span>
+<span class="w"> </span><span class="k">protected</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="n">ReferenceLineSmootherConfig</span><span class="w"> </span><span class="n">config_</span><span class="p">;</span><span class="w"></span>
+<span class="p">};</span><span class="w"></span>
+</pre></div>
+</div>
+<div class="section" id="discretepointsreferencelinesmoother">
+<h3>DiscretePointsReferenceLineSmoother<a class="headerlink" href="#discretepointsreferencelinesmoother" title="Permalink to this headline">¶</a></h3>
+<p>todo</p>
+</div>
+<div class="section" id="qpsplinereferencelinesmoother">
+<h3>QpSplineReferenceLineSmoother<a class="headerlink" href="#qpsplinereferencelinesmoother" title="Permalink to this headline">¶</a></h3>
+<p>todo</p>
+</div>
+<div class="section" id="spiralreferencelinesmoother">
+<h3>SpiralReferenceLineSmoother<a class="headerlink" href="#spiralreferencelinesmoother" title="Permalink to this headline">¶</a></h3>
+<p>todo</p>
+<a name="rf_provider" />
+</div>
+</div>
+<div class="section" id="referencelineprovider">
+<h2>参考线提供者(ReferenceLineProvider)<a class="headerlink" href="#referencelineprovider" title="Permalink to this headline">¶</a></h2>
+<p>planning模块中分为2个任务，一个线程单独的执行ReferenceLineProvider，另外一个线程根据生成好的参考线进行路径规划。而参考线提供者根据车辆的位置，pnc地图来生成参考线，并且进行平滑之后输出给planning模块做后续的路径规划。
+<img alt="reference_line" src="../../../_images/reference_line.jpg" />
+我们带着以下几个问题来阅读代码。</p>
+<ol class="arabic simple">
+<li><p>整个流程的过程是怎样的？</p></li>
+<li><p>如何生成的参考线，输入是什么？输出是什么？</p></li>
+<li><p>参考线用图来形象的表示？</p></li>
+</ol>
+<div class="section" id="id3">
+<h3>构造函数<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>从参考线提供者的构造函数中就可以看出，<strong>它的输入是车辆状态和地图，输出是参考线</strong>。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ReferenceLineProvider</span><span class="o">::</span><span class="n">ReferenceLineProvider</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">VehicleStateProvider</span><span class="w"> </span><span class="o">*</span><span class="n">vehicle_state_provider</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">hdmap</span><span class="o">::</span><span class="n">HDMap</span><span class="w"> </span><span class="o">*</span><span class="n">base_map</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">relative_map</span><span class="o">::</span><span class="n">MapMsg</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">relative_map</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 初始化车辆状态提供者</span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="n">vehicle_state_provider_</span><span class="p">(</span><span class="n">vehicle_state_provider</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 如果是导航模式则启动相对地图，如果不是则启动pnc_map</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">FLAGS_use_navigation_mode</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">pnc_map_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">PncMap</span><span class="o">&gt;</span><span class="p">(</span><span class="n">base_map</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">relative_map_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">pnc_map_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">relative_map_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">relative_map</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 初始化平滑器</span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">cyber</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">GetProtoFromFile</span><span class="p">(</span><span class="n">FLAGS_smoother_config_filename</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                         </span><span class="o">&amp;</span><span class="n">smoother_config_</span><span class="p">))</span><span class="w"></span>
+<span class="w">      </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to load smoother config file &quot;</span><span class="w"></span>
+<span class="w">      </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">FLAGS_smoother_config_filename</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">smoother_config_</span><span class="p">.</span><span class="n">has_qp_spline</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">smoother_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">QpSplineReferenceLineSmoother</span><span class="p">(</span><span class="n">smoother_config_</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">smoother_config_</span><span class="p">.</span><span class="n">has_spiral</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">smoother_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">SpiralReferenceLineSmoother</span><span class="p">(</span><span class="n">smoother_config_</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">smoother_config_</span><span class="p">.</span><span class="n">has_discrete_points</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">smoother_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">DiscretePointsReferenceLineSmoother</span><span class="p">(</span><span class="n">smoother_config_</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="nb">false</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;unknown smoother config &quot;</span><span class="w"></span>
+<span class="w">                  </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">smoother_config_</span><span class="p">.</span><span class="n">DebugString</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">is_initialized_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h3>开始线程<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>ReferenceLineProvider通过<code class="docutils literal notranslate"><span class="pre">Start()</span></code>方法开始启动新的线程并且执行，通过<code class="docutils literal notranslate"><span class="pre">Stop()</span></code>方法停止。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ReferenceLineProvider::Start</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_use_navigation_mode</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">is_initialized_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;ReferenceLineProvider has NOT been initiated.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 启动异步任务运行GenerateThread</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_enable_reference_line_provider_thread</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">task_future_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Async</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ReferenceLineProvider</span><span class="o">::</span><span class="n">GenerateThread</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>然后通过以下2个方法，刷新routing请求和车辆状态。也就是说参考线通过实时的routing请求和车辆状态来生成参考线。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">UpdateRoutingResponse</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">routing</span><span class="o">::</span><span class="n">RoutingResponse</span><span class="o">&amp;</span><span class="w"> </span><span class="n">routing</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">UpdateVehicleState</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">VehicleState</span><span class="o">&amp;</span><span class="w"> </span><span class="n">vehicle_state</span><span class="p">);</span><span class="w"></span>
+</pre></div>
+</div>
+<p>通过<code class="docutils literal notranslate"><span class="pre">GetReferenceLines</span></code>来获取参考线。实际上并发模式和不是并发模式执行的函数都是一样，只不过并发模式下另外的线程已经计算好了，因此可以直接赋值。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ReferenceLineProvider::GetReferenceLines</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">ReferenceLine</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">reference_lines</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">RouteSegments</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">segments</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 如果有单独的线程，则直接赋值 </span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_enable_reference_line_provider_thread</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">reference_lines_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">reference_lines_</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">reference_lines</span><span class="o">-&gt;</span><span class="n">assign</span><span class="p">(</span><span class="n">reference_lines_</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">reference_lines_</span><span class="p">.</span><span class="n">end</span><span class="p">());</span><span class="w"></span>
+<span class="w">      </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">assign</span><span class="p">(</span><span class="n">route_segments_</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">route_segments_</span><span class="p">.</span><span class="n">end</span><span class="p">());</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">start_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Clock</span><span class="o">::</span><span class="n">NowInSeconds</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 2. 否则，创建并且更新参考线</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">CreateReferenceLine</span><span class="p">(</span><span class="n">reference_lines</span><span class="p">,</span><span class="w"> </span><span class="n">segments</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">UpdateReferenceLine</span><span class="p">(</span><span class="o">*</span><span class="n">reference_lines</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">segments</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="kt">double</span><span class="w"> </span><span class="n">end_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Clock</span><span class="o">::</span><span class="n">NowInSeconds</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">last_calculation_time_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">end_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Reference line is NOT ready.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reference_line_history_</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to use reference line latest history&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 如果失败，则采用上一次的规划轨迹</span>
+<span class="w">  </span><span class="n">reference_lines</span><span class="o">-&gt;</span><span class="n">assign</span><span class="p">(</span><span class="n">reference_line_history_</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">begin</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                          </span><span class="n">reference_line_history_</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">end</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">assign</span><span class="p">(</span><span class="n">route_segments_history_</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">begin</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                   </span><span class="n">route_segments_history_</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">end</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Use reference line from history!&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>从上面代码可以得出，参考线的生成主要集中在2个函数中<code class="docutils literal notranslate"><span class="pre">CreateReferenceLine</span></code>和<code class="docutils literal notranslate"><span class="pre">UpdateReferenceLine</span></code>。</p>
+</div>
+<div class="section" id="createreferenceline">
+<h3>CreateReferenceLine<a class="headerlink" href="#createreferenceline" title="Permalink to this headline">¶</a></h3>
+<p>创建参考线</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ReferenceLineProvider::CreateReferenceLine</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">ReferenceLine</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">reference_lines</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">RouteSegments</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">segments</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 1. 获取车辆状态</span>
+<span class="w">  </span><span class="n">common</span><span class="o">::</span><span class="n">VehicleState</span><span class="w"> </span><span class="n">vehicle_state</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">vehicle_state_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">vehicle_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vehicle_state_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 获取routing</span>
+<span class="w">  </span><span class="n">routing</span><span class="o">::</span><span class="n">RoutingResponse</span><span class="w"> </span><span class="n">routing</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">routing_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">routing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">routing_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">is_new_routing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 2.1 如果是新routing，那么更新routing</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">pnc_map_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pnc_map_</span><span class="o">-&gt;</span><span class="n">IsNewRouting</span><span class="p">(</span><span class="n">routing</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">is_new_routing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">pnc_map_</span><span class="o">-&gt;</span><span class="n">UpdateRoutingResponse</span><span class="p">(</span><span class="n">routing</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to update routing in pnc map&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 3. 创建routing segment</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">CreateRouteSegments</span><span class="p">(</span><span class="n">vehicle_state</span><span class="p">,</span><span class="w"> </span><span class="n">segments</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to create reference line from routing&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_new_routing</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="n">FLAGS_enable_reference_line_stitching</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">begin</span><span class="p">();</span><span class="w"> </span><span class="n">iter</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">end</span><span class="p">();)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">reference_lines</span><span class="o">-&gt;</span><span class="n">emplace_back</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// 4.1.1 平滑routing segment</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">SmoothRouteSegment</span><span class="p">(</span><span class="o">*</span><span class="n">iter</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_lines</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to create reference line from route segments&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="n">reference_lines</span><span class="o">-&gt;</span><span class="n">pop_back</span><span class="p">();</span><span class="w"></span>
+<span class="w">        </span><span class="n">iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">erase</span><span class="p">(</span><span class="n">iter</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="w"> </span><span class="n">sl</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">reference_lines</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">XYToSL</span><span class="p">(</span><span class="n">vehicle_state</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">sl</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">          </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to project point: {&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">vehicle_state</span><span class="p">.</span><span class="n">x</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;,&quot;</span><span class="w"></span>
+<span class="w">                </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">vehicle_state</span><span class="p">.</span><span class="n">y</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;} to stitched reference line&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="c1">// 4.1.2 收缩参考线</span>
+<span class="w">        </span><span class="n">Shrink</span><span class="p">(</span><span class="n">sl</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_lines</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="p">(</span><span class="o">*</span><span class="n">iter</span><span class="p">));</span><span class="w"></span>
+<span class="w">        </span><span class="o">++</span><span class="n">iter</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="c1">// stitching reference line</span>
+<span class="w">    </span><span class="c1">// 4.2 根据routing segment扩展参考线</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">begin</span><span class="p">();</span><span class="w"> </span><span class="n">iter</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">end</span><span class="p">();)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">reference_lines</span><span class="o">-&gt;</span><span class="n">emplace_back</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">ExtendReferenceLine</span><span class="p">(</span><span class="n">vehicle_state</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="p">(</span><span class="o">*</span><span class="n">iter</span><span class="p">),</span><span class="w"></span>
+<span class="w">                               </span><span class="o">&amp;</span><span class="n">reference_lines</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to extend reference line&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="n">reference_lines</span><span class="o">-&gt;</span><span class="n">pop_back</span><span class="p">();</span><span class="w"></span>
+<span class="w">        </span><span class="n">iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">erase</span><span class="p">(</span><span class="n">iter</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="o">++</span><span class="n">iter</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>创建参考线的过程如下，首先获取routing的消息，然后生成routingsegment，之后结合车辆状态，扩展和分割参考线。
+<img alt="create_ref_line" src="../../../_images/create_ref_line.jpg" /></p>
+<p>接下来我们分别分析没有发送新routing和发送了新routing的生成参考线的流程。</p>
+</div>
+</div>
+<div class="section" id="routing">
+<h2>旧routing生成参考线<a class="headerlink" href="#routing" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h3>创建routing路段<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>根据车辆当前状态，从Pnc地图中获取routing路段，最后判断是否要提高变道的优先级。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ReferenceLineProvider::CreateRouteSegments</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">VehicleState</span><span class="w"> </span><span class="o">&amp;</span><span class="n">vehicle_state</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">RouteSegments</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">segments</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="p">{</span><span class="w"></span>
+<span class="w">     </span><span class="c1">// 1. pnc_map获取RouteSegments</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">pnc_map_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">pnc_map_</span><span class="o">-&gt;</span><span class="n">GetRouteSegments</span><span class="p">(</span><span class="n">vehicle_state</span><span class="p">,</span><span class="w"> </span><span class="n">segments</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to extract segments from routing&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 是否提高变道的优先级</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_prioritize_change_lane</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">PrioritzeChangeLane</span><span class="p">(</span><span class="n">segments</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="o">!</span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">empty</span><span class="p">();</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="getroutesegments">
+<h3>GetRouteSegments<a class="headerlink" href="#getroutesegments" title="Permalink to this headline">¶</a></h3>
+<p>pnc地图中获取RouteSegments的过程实际上是根据车辆当前的速度查看前面一小段和后面一小段的路径。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">PncMap::GetRouteSegments</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">VehicleState</span><span class="w"> </span><span class="o">&amp;</span><span class="n">vehicle_state</span><span class="p">,</span><span class="w"></span>
+<span class="w">                              </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">RouteSegments</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">route_segments</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 前看距离</span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">look_forward_distance</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">LookForwardDistance</span><span class="p">(</span><span class="n">vehicle_state</span><span class="p">.</span><span class="n">linear_velocity</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 后看距离</span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">look_backward_distance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FLAGS_look_backward_distance</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">GetRouteSegments</span><span class="p">(</span><span class="n">vehicle_state</span><span class="p">,</span><span class="w"> </span><span class="n">look_backward_distance</span><span class="p">,</span><span class="w"></span>
+<span class="w">                          </span><span class="n">look_forward_distance</span><span class="p">,</span><span class="w"> </span><span class="n">route_segments</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>接着我们继续看GetRouteSegments</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">PncMap::GetRouteSegments</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">VehicleState</span><span class="w"> </span><span class="o">&amp;</span><span class="n">vehicle_state</span><span class="p">,</span><span class="w"></span>
+<span class="w">                              </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">backward_length</span><span class="p">,</span><span class="w"></span>
+<span class="w">                              </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">forward_length</span><span class="p">,</span><span class="w"></span>
+<span class="w">                              </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">RouteSegments</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">route_segments</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 更新车辆状态</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">UpdateVehicleState</span><span class="p">(</span><span class="n">vehicle_state</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to update vehicle state in pnc_map.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 车辆是否在路上</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">adc_waypoint_</span><span class="p">.</span><span class="n">lane</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">adc_route_index_</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"></span>
+<span class="w">      </span><span class="n">adc_route_index_</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">route_indices_</span><span class="p">.</span><span class="n">size</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Invalid vehicle state in pnc_map, update vehicle state first.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">route_index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">route_indices_</span><span class="p">[</span><span class="n">adc_route_index_</span><span class="p">].</span><span class="n">index</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">road_index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">route_index</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">passage_index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">route_index</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">road</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">routing_</span><span class="p">.</span><span class="n">road</span><span class="p">(</span><span class="n">road_index</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 找到相邻的所有passage id</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">drive_passages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetNeighborPassages</span><span class="p">(</span><span class="n">road</span><span class="p">,</span><span class="w"> </span><span class="n">passage_index</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">drive_passages</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">passage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">road</span><span class="p">.</span><span class="n">passage</span><span class="p">(</span><span class="n">index</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">RouteSegments</span><span class="w"> </span><span class="n">segments</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 3.1 转换passage到segments</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">PassageToSegments</span><span class="p">(</span><span class="n">passage</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">segments</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to convert passage to lane segments.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">PointENU</span><span class="w"> </span><span class="n">nearest_point</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">index</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">passage_index</span><span class="w"></span>
+<span class="w">            </span><span class="o">?</span><span class="w"> </span><span class="n">adc_waypoint_</span><span class="p">.</span><span class="n">lane</span><span class="o">-&gt;</span><span class="n">GetSmoothPoint</span><span class="p">(</span><span class="n">adc_waypoint_</span><span class="p">.</span><span class="n">s</span><span class="p">)</span><span class="w"></span>
+<span class="w">            </span><span class="o">:</span><span class="w"> </span><span class="n">PointFactory</span><span class="o">::</span><span class="n">ToPointENU</span><span class="p">(</span><span class="n">adc_state_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="w"> </span><span class="n">sl</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">LaneWaypoint</span><span class="w"> </span><span class="n">segment_waypoint</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 3.2 获取车辆到segments的投影</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">segments</span><span class="p">.</span><span class="n">GetProjection</span><span class="p">(</span><span class="n">nearest_point</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">sl</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">segment_waypoint</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to get projection from point: &quot;</span><span class="w"></span>
+<span class="w">             </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">nearest_point</span><span class="p">.</span><span class="n">ShortDebugString</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">index</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">passage_index</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">segments</span><span class="p">.</span><span class="n">CanDriveFrom</span><span class="p">(</span><span class="n">adc_waypoint_</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;You cannot drive from current waypoint to passage: &quot;</span><span class="w"></span>
+<span class="w">               </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">index</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">emplace_back</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">last_waypoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">segments</span><span class="p">.</span><span class="n">LastWaypoint</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 4. 根据车辆的当前位置前后一段距离，填充segments</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">ExtendSegments</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span><span class="w"> </span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">backward_length</span><span class="p">,</span><span class="w"></span>
+<span class="w">                        </span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">forward_length</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to extend segments with s=&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">()</span><span class="w"></span>
+<span class="w">             </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, backward: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">backward_length</span><span class="w"></span>
+<span class="w">             </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, forward: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">forward_length</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 5. 根据passage设置route_segments的属性</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">IsWaypointOnSegment</span><span class="p">(</span><span class="n">last_waypoint</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">SetRouteEndWaypoint</span><span class="p">(</span><span class="n">last_waypoint</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">SetCanExit</span><span class="p">(</span><span class="n">passage</span><span class="p">.</span><span class="n">can_exit</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">SetNextAction</span><span class="p">(</span><span class="n">passage</span><span class="p">.</span><span class="n">change_lane_type</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">route_segment_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">absl</span><span class="o">::</span><span class="n">StrCat</span><span class="p">(</span><span class="n">road_index</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;_&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">index</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">SetId</span><span class="p">(</span><span class="n">route_segment_id</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">SetStopForDestination</span><span class="p">(</span><span class="n">stop_for_destination_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">index</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">passage_index</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">SetIsOnSegment</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">SetPreviousAction</span><span class="p">(</span><span class="n">routing</span><span class="o">::</span><span class="n">FORWARD</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">sl</span><span class="p">.</span><span class="n">l</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">SetPreviousAction</span><span class="p">(</span><span class="n">routing</span><span class="o">::</span><span class="n">RIGHT</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">back</span><span class="p">().</span><span class="n">SetPreviousAction</span><span class="p">(</span><span class="n">routing</span><span class="o">::</span><span class="n">LEFT</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="o">!</span><span class="n">route_segments</span><span class="o">-&gt;</span><span class="n">empty</span><span class="p">();</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="extendreferenceline">
+<h3>扩展参考线(ExtendReferenceLine)<a class="headerlink" href="#extendreferenceline" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ReferenceLineProvider::ExtendReferenceLine</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">VehicleState</span><span class="w"> </span><span class="o">&amp;</span><span class="n">state</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                                </span><span class="n">RouteSegments</span><span class="w"> </span><span class="o">*</span><span class="n">segments</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                                </span><span class="n">ReferenceLine</span><span class="w"> </span><span class="o">*</span><span class="n">reference_line</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">RouteSegments</span><span class="w"> </span><span class="n">segment_properties</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">segment_properties</span><span class="p">.</span><span class="n">SetProperties</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">prev_segment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">route_segments_</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">prev_ref</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_lines_</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 查找和segments连接的segment</span>
+<span class="w">  </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">prev_segment</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">route_segments_</span><span class="p">.</span><span class="n">end</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">prev_segment</span><span class="o">-&gt;</span><span class="n">IsConnectedSegment</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">break</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="o">++</span><span class="n">prev_segment</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="o">++</span><span class="n">prev_ref</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">prev_segment</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">route_segments_</span><span class="p">.</span><span class="n">end</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">route_segments_</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">IsOnSegment</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Current route segment is not connected with previous route &quot;</span><span class="w"></span>
+<span class="w">               </span><span class="s">&quot;segment&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">SmoothRouteSegment</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">,</span><span class="w"> </span><span class="n">reference_line</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="w"> </span><span class="n">sl_point</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">Vec2d</span><span class="w"> </span><span class="n">vec2d</span><span class="p">(</span><span class="n">state</span><span class="p">.</span><span class="n">x</span><span class="p">(),</span><span class="w"> </span><span class="n">state</span><span class="p">.</span><span class="n">y</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="n">LaneWaypoint</span><span class="w"> </span><span class="n">waypoint</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 获取车辆到segment的投影</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">prev_segment</span><span class="o">-&gt;</span><span class="n">GetProjection</span><span class="p">(</span><span class="n">vec2d</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">sl_point</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">waypoint</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Vehicle current point: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">vec2d</span><span class="p">.</span><span class="n">DebugString</span><span class="p">()</span><span class="w"></span>
+<span class="w">          </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; not on previous reference line&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">SmoothRouteSegment</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">,</span><span class="w"> </span><span class="n">reference_line</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">prev_segment_length</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RouteSegments</span><span class="o">::</span><span class="n">Length</span><span class="p">(</span><span class="o">*</span><span class="n">prev_segment</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">remain_s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">prev_segment_length</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">sl_point</span><span class="p">.</span><span class="n">s</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">look_forward_required_distance</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">PncMap</span><span class="o">::</span><span class="n">LookForwardDistance</span><span class="p">(</span><span class="n">state</span><span class="p">.</span><span class="n">linear_velocity</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 如果remain_s大于look_forward_required_distance，则返回当前segment</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">remain_s</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">look_forward_required_distance</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="o">*</span><span class="n">segments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">prev_segment</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">SetProperties</span><span class="p">(</span><span class="n">segment_properties</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="o">*</span><span class="n">reference_line</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">prev_ref</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Reference line remain &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">remain_s</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, which is more than required &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">look_forward_required_distance</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; and no need to extend&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 4. 如果小于，则需要补充下一个segment</span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">future_start_s</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">sl_point</span><span class="p">.</span><span class="n">s</span><span class="p">(),</span><span class="w"> </span><span class="n">prev_segment_length</span><span class="w"> </span><span class="o">-</span><span class="w"></span>
+<span class="w">                                 </span><span class="n">FLAGS_reference_line_stitch_overlap_distance</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">future_end_s</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">prev_segment_length</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">FLAGS_look_forward_extend_distance</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">RouteSegments</span><span class="w"> </span><span class="n">shifted_segments</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">pnc_map_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">pnc_map_</span><span class="o">-&gt;</span><span class="n">ExtendSegments</span><span class="p">(</span><span class="o">*</span><span class="n">prev_segment</span><span class="p">,</span><span class="w"> </span><span class="n">future_start_s</span><span class="p">,</span><span class="w"> </span><span class="n">future_end_s</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                </span><span class="o">&amp;</span><span class="n">shifted_segments</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">lock</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to shift route segments forward&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">SmoothRouteSegment</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">,</span><span class="w"> </span><span class="n">reference_line</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">lock</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">prev_segment</span><span class="o">-&gt;</span><span class="n">IsWaypointOnSegment</span><span class="p">(</span><span class="n">shifted_segments</span><span class="p">.</span><span class="n">LastWaypoint</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="o">*</span><span class="n">segments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">prev_segment</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">SetProperties</span><span class="p">(</span><span class="n">segment_properties</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="o">*</span><span class="n">reference_line</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">prev_ref</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Could not further extend reference line&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">hdmap</span><span class="o">::</span><span class="n">Path</span><span class="w"> </span><span class="n">path</span><span class="p">(</span><span class="n">shifted_segments</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">ReferenceLine</span><span class="w"> </span><span class="n">new_ref</span><span class="p">(</span><span class="n">path</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">SmoothPrefixedReferenceLine</span><span class="p">(</span><span class="o">*</span><span class="n">prev_ref</span><span class="p">,</span><span class="w"> </span><span class="n">new_ref</span><span class="p">,</span><span class="w"> </span><span class="n">reference_line</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to smooth forward shifted reference line&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">SmoothRouteSegment</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">,</span><span class="w"> </span><span class="n">reference_line</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">reference_line</span><span class="o">-&gt;</span><span class="n">Stitch</span><span class="p">(</span><span class="o">*</span><span class="n">prev_ref</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to stitch reference line&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">SmoothRouteSegment</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">,</span><span class="w"> </span><span class="n">reference_line</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">shifted_segments</span><span class="p">.</span><span class="n">Stitch</span><span class="p">(</span><span class="o">*</span><span class="n">prev_segment</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to stitch route segments&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">SmoothRouteSegment</span><span class="p">(</span><span class="o">*</span><span class="n">segments</span><span class="p">,</span><span class="w"> </span><span class="n">reference_line</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="o">*</span><span class="n">segments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shifted_segments</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">SetProperties</span><span class="p">(</span><span class="n">segment_properties</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="w"> </span><span class="n">sl</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">reference_line</span><span class="o">-&gt;</span><span class="n">XYToSL</span><span class="p">(</span><span class="n">vec2d</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">sl</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to project point: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">vec2d</span><span class="p">.</span><span class="n">DebugString</span><span class="p">()</span><span class="w"></span>
+<span class="w">          </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; to stitched reference line&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">Shrink</span><span class="p">(</span><span class="n">sl</span><span class="p">,</span><span class="w"> </span><span class="n">reference_line</span><span class="p">,</span><span class="w"> </span><span class="n">segments</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="shrink">
+<h3>Shrink<a class="headerlink" href="#shrink" title="Permalink to this headline">¶</a></h3>
+<p>根据本车位置裁剪参考线和RouteSegments</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ReferenceLineProvider::Shrink</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="w"> </span><span class="o">&amp;</span><span class="n">sl</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="n">ReferenceLine</span><span class="w"> </span><span class="o">*</span><span class="n">reference_line</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="n">RouteSegments</span><span class="w"> </span><span class="o">*</span><span class="n">segments</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">kMaxHeadingDiff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">M_PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">5.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">6.0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 确定前后查看的距离</span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">new_backward_distance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">new_forward_distance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_line</span><span class="o">-&gt;</span><span class="n">Length</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">need_shrink</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">FLAGS_look_backward_distance</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1.5</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;reference line back side is &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">()</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, shrink reference line: origin length: &quot;</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">reference_line</span><span class="o">-&gt;</span><span class="n">Length</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">new_backward_distance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FLAGS_look_backward_distance</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">need_shrink</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 角度差小于kMaxHeadingDiff</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_line</span><span class="o">-&gt;</span><span class="n">GetNearestReferenceIndex</span><span class="p">(</span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ref_points</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_line</span><span class="o">-&gt;</span><span class="n">reference_points</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">cur_heading</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ref_points</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="n">heading</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">last_index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">index</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">last_index</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">ref_points</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">         </span><span class="n">AngleDiff</span><span class="p">(</span><span class="n">cur_heading</span><span class="p">,</span><span class="w"> </span><span class="n">ref_points</span><span class="p">[</span><span class="n">last_index</span><span class="p">].</span><span class="n">heading</span><span class="p">())</span><span class="w"> </span><span class="o">&lt;</span><span class="w"></span>
+<span class="w">             </span><span class="n">kMaxHeadingDiff</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="o">++</span><span class="n">last_index</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="o">--</span><span class="n">last_index</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">last_index</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">ref_points</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">need_shrink</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">common</span><span class="o">::</span><span class="n">SLPoint</span><span class="w"> </span><span class="n">forward_sl</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">reference_line</span><span class="o">-&gt;</span><span class="n">XYToSL</span><span class="p">(</span><span class="n">ref_points</span><span class="p">[</span><span class="n">last_index</span><span class="p">],</span><span class="w"> </span><span class="o">&amp;</span><span class="n">forward_sl</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">new_forward_distance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">forward_sl</span><span class="p">.</span><span class="n">s</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 分割并且收缩参考线</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">need_shrink</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">reference_line</span><span class="o">-&gt;</span><span class="n">Segment</span><span class="p">(</span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">(),</span><span class="w"> </span><span class="n">new_backward_distance</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                 </span><span class="n">new_forward_distance</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to shrink reference line&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">segments</span><span class="o">-&gt;</span><span class="n">Shrink</span><span class="p">(</span><span class="n">sl</span><span class="p">.</span><span class="n">s</span><span class="p">(),</span><span class="w"> </span><span class="n">new_backward_distance</span><span class="p">,</span><span class="w"></span>
+<span class="w">                          </span><span class="n">new_forward_distance</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to shrink route segment&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>自此没有更新routing情况下的参考线生成流程已经分析完成了。</p>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>新routing生成参考线<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>todo</p>
+<div class="section" id="updatedreferenceline">
+<h3>UpdatedReferenceLine<a class="headerlink" href="#updatedreferenceline" title="Permalink to this headline">¶</a></h3>
+<p>根据是否更新了routing重新给参考线进行赋值。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">ReferenceLineProvider::UpdateReferenceLine</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">ReferenceLine</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_lines</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">hdmap</span><span class="o">::</span><span class="n">RouteSegments</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">route_segments</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 如果参考线大小和roue路线段不相等，则返回</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reference_lines</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">route_segments</span><span class="p">.</span><span class="n">size</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;The calculated reference line size(&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">reference_lines</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;) and route_segments size(&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">route_segments</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;) are different&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">reference_lines_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2.1 如果新旧参考线大小不等，则拷贝</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reference_lines_</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">reference_lines</span><span class="p">.</span><span class="n">size</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">reference_lines_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_lines</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">route_segments_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">route_segments</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 2.2 如果相等，则依次拷贝</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">segment_iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">route_segments</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">internal_iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_lines_</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">internal_segment_iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">route_segments_</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reference_lines</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span><span class="w"></span>
+<span class="w">         </span><span class="n">iter</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">reference_lines</span><span class="p">.</span><span class="n">end</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">         </span><span class="n">segment_iter</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">route_segments</span><span class="p">.</span><span class="n">end</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">         </span><span class="n">internal_iter</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">reference_lines_</span><span class="p">.</span><span class="n">end</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">         </span><span class="n">internal_segment_iter</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">route_segments_</span><span class="p">.</span><span class="n">end</span><span class="p">();</span><span class="w"></span>
+<span class="w">         </span><span class="o">++</span><span class="n">iter</span><span class="p">,</span><span class="w"> </span><span class="o">++</span><span class="n">segment_iter</span><span class="p">,</span><span class="w"> </span><span class="o">++</span><span class="n">internal_iter</span><span class="p">,</span><span class="w"> </span><span class="o">++</span><span class="n">internal_segment_iter</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">iter</span><span class="o">-&gt;</span><span class="n">reference_points</span><span class="p">().</span><span class="n">empty</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="o">*</span><span class="n">internal_iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">iter</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="o">*</span><span class="n">internal_segment_iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">segment_iter</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">common</span><span class="o">::</span><span class="n">util</span><span class="o">::</span><span class="n">SamePointXY</span><span class="p">(</span><span class="w"></span>
+<span class="w">              </span><span class="n">iter</span><span class="o">-&gt;</span><span class="n">reference_points</span><span class="p">().</span><span class="n">front</span><span class="p">(),</span><span class="w"></span>
+<span class="w">              </span><span class="n">internal_iter</span><span class="o">-&gt;</span><span class="n">reference_points</span><span class="p">().</span><span class="n">front</span><span class="p">())</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">          </span><span class="n">common</span><span class="o">::</span><span class="n">util</span><span class="o">::</span><span class="n">SamePointXY</span><span class="p">(</span><span class="n">iter</span><span class="o">-&gt;</span><span class="n">reference_points</span><span class="p">().</span><span class="n">back</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                                    </span><span class="n">internal_iter</span><span class="o">-&gt;</span><span class="n">reference_points</span><span class="p">().</span><span class="n">back</span><span class="p">())</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">          </span><span class="n">std</span><span class="o">::</span><span class="n">fabs</span><span class="p">(</span><span class="n">iter</span><span class="o">-&gt;</span><span class="n">Length</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">internal_iter</span><span class="o">-&gt;</span><span class="n">Length</span><span class="p">())</span><span class="w"> </span><span class="o">&lt;</span><span class="w"></span>
+<span class="w">              </span><span class="n">common</span><span class="o">::</span><span class="n">math</span><span class="o">::</span><span class="n">kMathEpsilon</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">      </span><span class="o">*</span><span class="n">internal_iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">iter</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="o">*</span><span class="n">internal_segment_iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">segment_iter</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 存储并且更新最近3次的参考线和routing历史信息</span>
+<span class="w">  </span><span class="n">reference_line_history_</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">reference_lines_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">route_segments_history_</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">route_segments_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="k">constexpr</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">kMaxHistoryNum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reference_line_history_</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">kMaxHistoryNum</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">reference_line_history_</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">route_segments_history_</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/modules/planning/reference_line/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

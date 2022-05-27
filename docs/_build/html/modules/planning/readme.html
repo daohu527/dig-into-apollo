@@ -1,0 +1,750 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dig into Apollo - Planning &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="dig-into-apollo-planning-github">
+<h1>Dig into Apollo - Planning <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-planning-github" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>吾尝终日而思矣 不如须臾之所学也</p>
+</div></blockquote>
+<div class="section" id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><span class="xref myst">Planning模块简介</span></p>
+<ul>
+<li><p><span class="xref myst">Planning输入输出</span></p></li>
+<li><p><span class="xref myst">Planning整个流程</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">Planning模块入口</span></p>
+<ul>
+<li><p><span class="xref myst">模块注册</span></p></li>
+<li><p><span class="xref myst">模块初始化</span></p></li>
+<li><p><span class="xref myst">模块运行</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">Reference line参考线</span></p>
+<ul>
+<li><p><span class="xref myst">介绍</span></p></li>
+<li><p><span class="xref myst">参考线</span></p></li>
+<li><p><span class="xref myst">平滑器</span></p></li>
+<li><p><span class="xref myst">参考线提供者</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">OnLanePlanning</span></p>
+<ul>
+<li><p><span class="xref myst">初始化</span></p></li>
+<li><p><span class="xref myst">事件触发</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">Planner</span></p>
+<ul>
+<li><p><span class="xref myst">Planner注册场景</span></p></li>
+<li><p><span class="xref myst">运行场景</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">Scenario</span></p>
+<ul>
+<li><p><span class="xref myst">场景转换</span></p></li>
+<li><p><span class="xref myst">场景运行</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">Task</span></p>
+<ul>
+<li><p><span class="xref myst">DP &amp; QP</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">Reference</span></p></li>
+</ul>
+<a name="introduction" />
+</div>
+<div class="section" id="planning">
+<h2>Planning模块简介<a class="headerlink" href="#planning" title="Permalink to this headline">¶</a></h2>
+<p>规划(planning)模块的作用是根据感知预测的结果，当前的车辆信息和路况规划出一条车辆能够行驶的轨迹，这个轨迹会交给控制(control)模块，控制模块通过油门，刹车和方向盘使得车辆按照规划的轨迹运行。<br />
+规划模块的轨迹是短期轨迹，即车辆短期内行驶的轨迹，长期的轨迹是routing模块规划出的导航轨迹，即起点到目的地的轨迹，规划模块会先生成导航轨迹，然后根据导航轨迹和路况的情况，沿着短期轨迹行驶，直到目的地。这点也很好理解，我们开车之前先打开导航，然后根据导航行驶，如果前面有车就会减速或者变道，超车，避让行人等，这就是短期轨迹，结合上述的方式直到行驶到目的地。</p>
+<a name="planning_io" />
+<div class="section" id="id1">
+<h3>Planning输入输出<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>我们先看下Apollo的数据流向：
+<img alt="Apollo_dataflow" src="../../_images/dataflow.png" /></p>
+<p>可以看到规划(planning)模块的上游是Localization, Prediction, Routing模块，而下游是Control模块。Routing模块先规划出一条导航线路，然后Planning模块根据这条线路做局部优化，如果Planning模块发现短期规划的线路行不通（比如前面修路，或者错过了路口），会触发Routing模块重新规划线路，因此这两个模块的数据流是双向的。<br />
+Planning模块的输入在”planning_component.h”中，接口如下:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Proc</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">prediction</span><span class="o">::</span><span class="n">PredictionObstacles</span><span class="o">&gt;&amp;</span><span class="w"></span>
+<span class="w">                </span><span class="n">prediction_obstacles</span><span class="p">,</span><span class="w"></span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">canbus</span><span class="o">::</span><span class="n">Chassis</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">chassis</span><span class="p">,</span><span class="w"></span>
+<span class="w">            </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">localization</span><span class="o">::</span><span class="n">LocalizationEstimate</span><span class="o">&gt;&amp;</span><span class="w"></span>
+<span class="w">                </span><span class="n">localization_estimate</span><span class="p">)</span><span class="w"> </span><span class="k">override</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+</div>
+<p>输入参数为:</p>
+<ol class="arabic simple">
+<li><p>预测的障碍物信息(prediction_obstacles)</p></li>
+<li><p>车辆底盘(chassis)信息(车辆的速度，加速度，航向角等信息)</p></li>
+<li><p>车辆当前位置(localization_estimate)</p></li>
+</ol>
+<blockquote>
+<div><p>实际上还有高精度地图信息，不在参数中传入，而是在函数中直接读取的。</p>
+</div></blockquote>
+<p>Planning模块的输出结果在”PlanningComponent::Proc()”中，为规划好的线路，发布到Control模块订阅的Topic中。<br />
+输出结果为：规划好的路径。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">planning_writer_</span><span class="o">-&gt;</span><span class="n">Write</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">ADCTrajectory</span><span class="o">&gt;</span><span class="p">(</span><span class="n">adc_trajectory_pb</span><span class="p">));</span><span class="w"></span>
+</pre></div>
+</div>
+<a name="planning_flow" />
+</div>
+<div class="section" id="id2">
+<h3>Planning整个流程<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>下图是整个Planning模块的执行过程：<br />
+<img alt="planning_flow" src="../../_images/planning_flow.png" /></p>
+<ol class="arabic simple">
+<li><p>模块的入口是PlanningComponent，在Cyber中注册模块，订阅和发布消息，并且注册对应的Planning类。</p></li>
+<li><p>Planning的过程之前是定时器触发，即每隔一段固定的时间执行一次，现已经改为事件触发，即只要收集完成对应TOPIC的消息，就会触发执行，这样的好处是提高的实时性。</p></li>
+<li><p>Planning类主要实现了2个功能，一个是启动ReferenceLineProvider来提供参考线，后面生成的轨迹都是在参考线的基础上做优化，ReferenceLineProvider启动了一个单独的线程，每隔50ms执行一次，和Planning主流程并行执行。Planning类另外的一个功能是执行Planning主流程。</p></li>
+<li><p>Planning主流程先是选择对应的Planner，我们这里主要分析PublicRoadPlanner，在配置文件中定义了Planner支持的场景(Scenario)，把规划分为具体的几个场景来执行，每个场景又分为几个阶段(Stage)，每个阶段会执行多个任务(Task)，任务执行完成后，对应的场景就完成了。不同场景间的切换是由一个状态机(ScenarioDispatch)来控制的。规划控制器根据ReferenceLineProvider提供的参考线，在不同的场景下做切换，生成一条车辆可以行驶的轨迹，并且不断重复上述过程直到到达目的地。</p></li>
+</ol>
+<p>接下来我们逐步分析整个planning模块的代码结构。</p>
+<a name="planning_entry" />
+</div>
+</div>
+<div class="section" id="id3">
+<h2>Planning模块入口<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<a name="planning_register" />
+<div class="section" id="id4">
+<h3>模块注册<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>Planning模块的入口为”planning_component.h”和”planning_component.cc”两个文件，实现的功能如下：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// 订阅和发布消息</span>
+<span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">perception</span><span class="o">::</span><span class="n">TrafficLightDetection</span><span class="o">&gt;&gt;</span><span class="w"></span>
+<span class="w">  </span><span class="n">traffic_light_reader_</span><span class="p">;</span><span class="w"></span>
+<span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">routing</span><span class="o">::</span><span class="n">RoutingResponse</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">routing_reader_</span><span class="p">;</span><span class="w"></span>
+<span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">planning</span><span class="o">::</span><span class="n">PadMessage</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">pad_message_reader_</span><span class="p">;</span><span class="w"></span>
+<span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">relative_map</span><span class="o">::</span><span class="n">MapMsg</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">relative_map_reader_</span><span class="p">;</span><span class="w"></span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Writer</span><span class="o">&lt;</span><span class="n">ADCTrajectory</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">planning_writer_</span><span class="p">;</span><span class="w"></span>
+<span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">::</span><span class="n">Writer</span><span class="o">&lt;</span><span class="n">routing</span><span class="o">::</span><span class="n">RoutingRequest</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">rerouting_writer_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span>
+<span class="c1">// 在Cyber中注册模块</span>
+<span class="n">CYBER_REGISTER_COMPONENT</span><span class="p">(</span><span class="n">PlanningComponent</span><span class="p">)</span><span class="w"></span>
+</pre></div>
+</div>
+<a name="planning_init" />
+</div>
+<div class="section" id="id5">
+<h3>模块初始化<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>除了注册模块，订阅和发布消息之外，planning模块实现了2个主要函数”init”和”proc”。<br />
+Init中实现了模块的初始化：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_open_space_planner_switchable</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">planning_base_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">OpenSpacePlanning</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_use_navigation_mode</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">planning_base_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">NaviPlanning</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">planning_base_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">OnLanePlanning</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>上面实现了3种Planning的注册，planning模块根据配置选择不同的Planning实现方式，”FLAGS_open_space_planner_switchable”和”FLAGS_use_navigation_mode”在Planning模块的conf目录中。因为上述2个配置默认都为false，Planning默认情况下的实现是”OnLanePlanning”。下面介绍下这3种Planning的区别。</p>
+<ul class="simple">
+<li><p><strong>OpenSpacePlanning</strong> - 主要的应用场景是自主泊车和狭窄路段的掉头。<a class="reference external" href="https://github.com/ApolloAuto/apollo/blob/master/docs/specs/Open_Space_Planner.md">参考</a></p></li>
+<li><p><strong>NaviPlanning</strong> -</p></li>
+<li><p><strong>OnLanePlanning</strong> - 主要的应用场景是开放道路的自动驾驶。</p></li>
+</ul>
+<p>模块之间的关系如下：<br />
+<img alt="planning" src="../../_images/planning_base.png" /></p>
+<p>可以看到”OpenSpacePlanning”,”NaviPlanning”和”OnLanePlanning”都继承自同一个基类，并且在PlanningComponent中通过配置选择一个具体的实现进行注册。</p>
+<p>Init接下来实现了具体的消息发布和消息订阅，我们只看具体的一个例子：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// 读取routing模块的消息</span>
+<span class="n">routing_reader_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">RoutingResponse</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">FLAGS_routing_response_topic</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="p">[</span><span class="k">this</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">RoutingResponse</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">routing</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Received routing data: run routing callback.&quot;</span><span class="w"></span>
+<span class="w">              </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">routing</span><span class="o">-&gt;</span><span class="n">header</span><span class="p">().</span><span class="n">DebugString</span><span class="p">();</span><span class="w"></span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">        </span><span class="n">routing_</span><span class="p">.</span><span class="n">CopyFrom</span><span class="p">(</span><span class="o">*</span><span class="n">routing</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="p">});</span><span class="w"></span>
+<span class="c1">// 读取红绿灯</span>
+<span class="w">  </span><span class="n">traffic_light_reader_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span><span class="w"></span>
+<span class="c1">// 是否使用导航模式</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_use_navigation_mode</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">pad_message_reader_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span><span class="w"></span>
+<span class="c1">// 读取相对地图</span>
+<span class="w">    </span><span class="n">relative_map_reader_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="c1">// 发布规划好的线路</span>
+<span class="w">  </span><span class="n">planning_writer_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">ADCTrajectory</span><span class="o">&gt;</span><span class="p">(</span><span class="n">FLAGS_planning_trajectory_topic</span><span class="p">);</span><span class="w"></span>
+<span class="c1">// 发布重新规划请求</span>
+<span class="w">  </span><span class="n">rerouting_writer_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">RoutingRequest</span><span class="o">&gt;</span><span class="p">(</span><span class="n">FLAGS_routing_request_topic</span><span class="p">);</span><span class="w"></span>
+</pre></div>
+</div>
+<p>至此，Planning模块的初始化就完成了。</p>
+<a name="planning_proc" />
+</div>
+<div class="section" id="id6">
+<h3>模块运行<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>Proc的主要是检查数据，并且执行注册好的Planning，生成路线并且发布。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">PlanningComponent::Proc</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 检查是否需要重新规划线路。</span>
+<span class="w">  </span><span class="n">CheckRerouting</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 数据放入local_view_中，并且检查输入数据。</span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 3. 执行注册好的Planning，生成线路。</span>
+<span class="w">  </span><span class="n">planning_base_</span><span class="o">-&gt;</span><span class="n">RunOnce</span><span class="p">(</span><span class="n">local_view_</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">adc_trajectory_pb</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 4. 发布消息</span>
+<span class="w">  </span><span class="n">planning_writer_</span><span class="o">-&gt;</span><span class="n">Write</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">ADCTrajectory</span><span class="o">&gt;</span><span class="p">(</span><span class="n">adc_trajectory_pb</span><span class="p">));</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>整个”PlanningComponent”的分析就完成了，可以看到”PlanningComponent”是Planning模块的入口，在Apollo3.5引入了Cyber之后，实现了Planning模块在Cyber中的注册，订阅和发布topic消息。同时实现了3种不同的Planning，根据配置选择其中的一种并且运行。<br />
+由于默认的Planning是开放道路的OnLanePlanning，我们接下来主要分析这个Planning。</p>
+<a name="onLanePlanning" />
+</div>
+</div>
+<div class="section" id="onlaneplanning">
+<h2>OnLanePlanning<a class="headerlink" href="#onlaneplanning" title="Permalink to this headline">¶</a></h2>
+<p>每次Planning会根据以下2个信息作为输入来执行：</p>
+<ol class="arabic simple">
+<li><p>Planning上下文信息</p></li>
+<li><p>Frame结构体(车辆信息，位置信息等所有规划需要用到的信息，在/planning/common/frame.h中)</p></li>
+</ol>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">sequence_num_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="n">LocalView</span><span class="w"> </span><span class="n">local_view_</span><span class="p">;</span><span class="w"></span>
+<span class="k">const</span><span class="w"> </span><span class="n">hdmap</span><span class="o">::</span><span class="n">HDMap</span><span class="w"> </span><span class="o">*</span><span class="n">hdmap_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="n">common</span><span class="o">::</span><span class="n">TrajectoryPoint</span><span class="w"> </span><span class="n">planning_start_point_</span><span class="p">;</span><span class="w"></span>
+<span class="n">common</span><span class="o">::</span><span class="n">VehicleState</span><span class="w"> </span><span class="n">vehicle_state_</span><span class="p">;</span><span class="w"></span>
+<span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">ReferenceLineInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="n">reference_line_info_</span><span class="p">;</span><span class="w"></span>
+
+<span class="kt">bool</span><span class="w"> </span><span class="n">is_near_destination_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+
+<span class="cm">/**</span>
+<span class="cm">* the reference line info that the vehicle finally choose to drive on</span>
+<span class="cm">**/</span><span class="w"></span>
+<span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="n">drive_reference_line_info_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+
+<span class="n">ThreadSafeIndexedObstacles</span><span class="w"> </span><span class="n">obstacles_</span><span class="p">;</span><span class="w"></span>
+<span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">perception</span><span class="o">::</span><span class="n">TrafficLight</span><span class="w"> </span><span class="o">*&gt;</span><span class="w"></span>
+<span class="w">  </span><span class="n">traffic_lights_</span><span class="p">;</span><span class="w"></span>
+
+<span class="n">ChangeLaneDecider</span><span class="w"> </span><span class="n">change_lane_decider_</span><span class="p">;</span><span class="w"></span>
+<span class="n">ADCTrajectory</span><span class="w"> </span><span class="n">current_frame_planned_trajectory_</span><span class="p">;</span><span class="w">  </span><span class="c1">// last published trajectory</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">routing</span><span class="o">::</span><span class="n">LaneWaypoint</span><span class="o">&gt;</span><span class="w"> </span><span class="n">future_route_waypoints_</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+</div>
+<a name="onLanePlanning_init" />
+<div class="section" id="id7">
+<h3>初始化<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>OnLanePlanning的初始化逻辑在Init中，主要实现分配具体的Planner，启动参考线提供器(reference_line_provider_)，代码分析如下：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Status</span><span class="w"> </span><span class="nf">OnLanePlanning::Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">PlanningConfig</span><span class="o">&amp;</span><span class="w"> </span><span class="n">config</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 启动参考线提供器，会另启动一个线程，执行一个定时任务，每隔50ms提供一次参考线。</span>
+<span class="w">  </span><span class="n">reference_line_provider_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">ReferenceLineProvider</span><span class="o">&gt;</span><span class="p">(</span><span class="n">hdmap_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">reference_line_provider_</span><span class="o">-&gt;</span><span class="n">Start</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 为Planning分配具体的Planner。</span>
+<span class="w">  </span><span class="n">planner_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">planner_dispatcher_</span><span class="o">-&gt;</span><span class="n">DispatchPlanner</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>可以看到”DispatchPlanner”在”OnLanePlanning”实例化的时候就指定了。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OnLanePlanning</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">PlanningBase</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
+<span class="w">  </span><span class="n">OnLanePlanning</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">planner_dispatcher_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">OnLanePlannerDispatcher</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>在看”OnLanePlannerDispatcher”具体的实现，也是根据配置选择具体的”Planner”，默认为”PUBLIC_ROAD”规划器:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// 配置文件</span>
+<span class="n">standard_planning_config</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nl">planner_type</span><span class="p">:</span><span class="w"> </span><span class="n">PUBLIC_ROAD</span><span class="w"></span>
+<span class="w">  </span><span class="nl">planner_type</span><span class="p">:</span><span class="w"> </span><span class="n">OPEN_SPACE</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="c1">// OnLanePlannerDispatcher具体实现</span>
+<span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">Planner</span><span class="o">&gt;</span><span class="w"> </span><span class="n">OnLanePlannerDispatcher</span><span class="o">::</span><span class="n">DispatchPlanner</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">PlanningConfig</span><span class="w"> </span><span class="n">planning_config</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">GetProtoFromFile</span><span class="p">(</span><span class="n">FLAGS_planning_config_file</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                          </span><span class="o">&amp;</span><span class="n">planning_config</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_open_space_planner_switchable</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">planner_factory_</span><span class="p">.</span><span class="n">CreateObject</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="c1">// OPEN_SPACE规划器</span>
+<span class="w">        </span><span class="n">planning_config</span><span class="p">.</span><span class="n">standard_planning_config</span><span class="p">().</span><span class="n">planner_type</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">planner_factory_</span><span class="p">.</span><span class="n">CreateObject</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// PUBLIC_ROAD规划器</span>
+<span class="w">      </span><span class="n">planning_config</span><span class="p">.</span><span class="n">standard_planning_config</span><span class="p">().</span><span class="n">planner_type</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<a name="onLanePlanning_trigger" />
+</div>
+<div class="section" id="id8">
+<h3>事件触发<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p>OnLanePlanning的主要逻辑在”RunOnce()”中，在Apollo 3.5之前是定时器触发，3.5改为事件触发，即收到对应的消息之后，就触发执行，这样做的好处是增加了实时性 <a class="reference external" href="https://github.com/ApolloAuto/apollo/issues/6572">参考</a>。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">OnLanePlanning::RunOnce</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">LocalView</span><span class="o">&amp;</span><span class="w"> </span><span class="n">local_view</span><span class="p">,</span><span class="w"></span>
+<span class="w">                             </span><span class="n">ADCTrajectory</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">ptr_trajectory_pb</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 初始化Frame</span>
+<span class="w">  </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">InitFrame</span><span class="p">(</span><span class="n">frame_num</span><span class="p">,</span><span class="w"> </span><span class="n">stitching_trajectory</span><span class="p">.</span><span class="n">back</span><span class="p">(),</span><span class="w"> </span><span class="n">vehicle_state</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 判断是否符合交通规则</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ref_line_info</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="o">*</span><span class="n">frame_</span><span class="o">-&gt;</span><span class="n">mutable_reference_line_info</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">TrafficDecider</span><span class="w"> </span><span class="n">traffic_decider</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">traffic_decider</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">traffic_rule_configs_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">traffic_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">traffic_decider</span><span class="p">.</span><span class="n">Execute</span><span class="p">(</span><span class="n">frame_</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ref_line_info</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">traffic_status</span><span class="p">.</span><span class="n">ok</span><span class="p">()</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="n">ref_line_info</span><span class="p">.</span><span class="n">IsDrivable</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">ref_line_info</span><span class="p">.</span><span class="n">SetDrivable</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">AWARN</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Reference line &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">ref_line_info</span><span class="p">.</span><span class="n">Lanes</span><span class="p">().</span><span class="n">Id</span><span class="p">()</span><span class="w"></span>
+<span class="w">            </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; traffic decider failed&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 执行计划</span>
+<span class="w">  </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Plan</span><span class="p">(</span><span class="n">start_timestamp</span><span class="p">,</span><span class="w"> </span><span class="n">stitching_trajectory</span><span class="p">,</span><span class="w"> </span><span class="n">ptr_trajectory_pb</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+
+<span class="n">Status</span><span class="w"> </span><span class="nf">OnLanePlanning::Plan</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">current_time_stamp</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TrajectoryPoint</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">stitching_trajectory</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">ADCTrajectory</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">ptr_trajectory_pb</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 调用具体的(PUBLIC_ROAD)Planner执行</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">planner_</span><span class="o">-&gt;</span><span class="n">Plan</span><span class="p">(</span><span class="n">stitching_trajectory</span><span class="p">.</span><span class="n">back</span><span class="p">(),</span><span class="w"> </span><span class="n">frame_</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                               </span><span class="n">ptr_trajectory_pb</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>上述就是”OnLanePlanning”的执行过程，先是Planner分发器根据配置，选择具体的planner，然后初始化Frame，(PUBLIC_ROAD)planner根据输入帧执行”Plan”方法。</p>
+<a name="planner" />
+</div>
+</div>
+<div class="section" id="planner">
+<h2>Planner<a class="headerlink" href="#planner" title="Permalink to this headline">¶</a></h2>
+<p>我们先看下Planner目录结构，一共实现了5种Planner：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
+├── BUILD
+├── navi_planner_dispatcher.cc
+├── navi_planner_dispatcher.h
+├── navi_planner_dispatcher_test.cc
+├── on_lane_planner_dispatcher.cc
+├── on_lane_planner_dispatcher.h
+├── on_lane_planner_dispatcher_test.cc
+├── planner_dispatcher.cc
+├── planner_dispatcher.h
+├── planner.h
+├── lattice           // lattice planner
+├── navi              // navi planner
+├── open_space        // open space planner
+├── public_road       // public road planner
+└── rtk               // rtk planner
+</pre></div>
+</div>
+<p>可以看到Planner目录分别实现了Planner发布器和具体的Planner，关于发布器我们后面会根据流程图来介绍，这里先介绍一下5种不同的Planner。</p>
+<ul class="simple">
+<li><p><strong>rtk</strong>          - 根据录制的轨迹来规划行车路线</p></li>
+<li><p><strong>public_road</strong>  - 开放道路的轨迹规划器</p></li>
+<li><p><strong>lattice</strong>      - 基于网格算法的轨迹规划器</p></li>
+<li><p><strong>navi</strong>         - 基于实时相对地图的规划器</p></li>
+<li><p><strong>open_space</strong>   - 自主泊车规划器</p></li>
+</ul>
+<a name="planner_register" />
+<div class="section" id="id9">
+<h3>Planner注册场景<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<p>下面我们整理一下planner模块的流程：<br />
+<img alt="planner流程" src="../../_images/planning_component.png" /></p>
+<ol class="arabic simple">
+<li><p>PlanningComponent在cyber中注册</p></li>
+<li><p>选择Planning</p></li>
+<li><p>根据不同的Dispatcher，分发Planner</p></li>
+</ol>
+<p>下面我们主要介绍”PublicRoadPlanner”，主要的实现还是在Init和Plan中。<br />
+init中主要是注册规划器支持的场景(scenario)。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Status</span><span class="w"> </span><span class="nf">PublicRoadPlanner::Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">PlanningConfig</span><span class="o">&amp;</span><span class="w"> </span><span class="n">config</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 读取public Road配置</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">public_road_config</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">config_</span><span class="p">.</span><span class="n">standard_planning_config</span><span class="p">().</span><span class="n">planner_public_road_config</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 根据配置注册不同的场景</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">public_road_config</span><span class="p">.</span><span class="n">scenario_type_size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">ScenarioConfig</span><span class="o">::</span><span class="n">ScenarioType</span><span class="w"> </span><span class="n">scenario</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">public_road_config</span><span class="p">.</span><span class="n">scenario_type</span><span class="p">(</span><span class="n">i</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">supported_scenarios</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">scenario</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">scenario_manager_</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">supported_scenarios</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>我们看下”PublicRoadPlanner”支持的场景有哪些？</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">还是在</span><span class="s2">&quot;/conf/planning_config.pb.txt&quot;</span><span class="n">中</span>
+<span class="n">standard_planning_config</span> <span class="p">{</span>
+  <span class="n">planner_type</span><span class="p">:</span> <span class="n">PUBLIC_ROAD</span>
+  <span class="n">planner_type</span><span class="p">:</span> <span class="n">OPEN_SPACE</span>
+  <span class="n">planner_public_road_config</span> <span class="p">{</span>
+     <span class="o">//</span> <span class="n">支持的场景</span>
+     <span class="n">scenario_type</span><span class="p">:</span> <span class="n">LANE_FOLLOW</span>  <span class="o">//</span> <span class="n">车道线保持</span>
+     <span class="n">scenario_type</span><span class="p">:</span> <span class="n">SIDE_PASS</span>    <span class="o">//</span> <span class="n">超车</span>
+     <span class="n">scenario_type</span><span class="p">:</span> <span class="n">STOP_SIGN_UNPROTECTED</span>  <span class="o">//</span> <span class="n">停止</span>
+     <span class="n">scenario_type</span><span class="p">:</span> <span class="n">TRAFFIC_LIGHT_PROTECTED</span>    <span class="o">//</span> <span class="n">红绿灯</span>
+     <span class="n">scenario_type</span><span class="p">:</span> <span class="n">TRAFFIC_LIGHT_UNPROTECTED_LEFT_TURN</span>  <span class="o">//</span> <span class="n">红绿灯左转</span>
+     <span class="n">scenario_type</span><span class="p">:</span> <span class="n">TRAFFIC_LIGHT_UNPROTECTED_RIGHT_TURN</span> <span class="o">//</span> <span class="n">红绿灯右转</span>
+     <span class="n">scenario_type</span><span class="p">:</span> <span class="n">VALET_PARKING</span>  <span class="o">//</span> <span class="n">代客泊车</span>
+  <span class="p">}</span>
+</pre></div>
+</div>
+<a name="planner_plan" />
+</div>
+<div class="section" id="id10">
+<h3>运行场景<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<p>接着看”Plan”中的实现：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Status</span><span class="w"> </span><span class="nf">PublicRoadPlanner::Plan</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TrajectoryPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">planning_start_point</span><span class="p">,</span><span class="w"></span>
+<span class="w">                               </span><span class="n">Frame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                               </span><span class="n">ADCTrajectory</span><span class="o">*</span><span class="w"> </span><span class="n">ptr_computed_trajectory</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">DCHECK_NOTNULL</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 更新场景，决策当前应该执行什么场景</span>
+<span class="w">  </span><span class="n">scenario_manager_</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span><span class="n">planning_start_point</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取当前场景</span>
+<span class="w">  </span><span class="n">scenario_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scenario_manager_</span><span class="p">.</span><span class="n">mutable_scenario</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 执行当前场景的任务</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scenario_</span><span class="o">-&gt;</span><span class="n">Process</span><span class="p">(</span><span class="n">planning_start_point</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+
+
+<span class="w">  </span><span class="c1">// 当前场景完成</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">scenario</span><span class="o">::</span><span class="n">Scenario</span><span class="o">::</span><span class="n">STATUS_DONE</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// only updates scenario manager when previous scenario&#39;s status is</span>
+<span class="w">    </span><span class="c1">// STATUS_DONE</span>
+<span class="w">    </span><span class="n">scenario_manager_</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span><span class="n">planning_start_point</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">result</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">scenario</span><span class="o">::</span><span class="n">Scenario</span><span class="o">::</span><span class="n">STATUS_UNKNOWN</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 当前场景失败</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">Status</span><span class="p">(</span><span class="n">common</span><span class="o">::</span><span class="n">PLANNING_ERROR</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;scenario returned unknown&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">Status</span><span class="o">::</span><span class="n">OK</span><span class="p">();</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>可以看到”Planner”模块把具体的规划转化成一系列的场景，每次执行规划之前先判断更新当前的场景，然后针对具体的场景去执行。<br />
+下面我们先看下”Scenario”模块，然后把这2个模块串起来讲解。</p>
+<a name="scenario" />
+</div>
+</div>
+<div class="section" id="scenario">
+<h2>Scenario<a class="headerlink" href="#scenario" title="Permalink to this headline">¶</a></h2>
+<p>我们同样先看下”Scenario”的目录结构：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
+├── bare_intersection
+├── BUILD
+├── lane_follow            // 车道线保持
+├── narrow_street_u_turn   // 狭窄掉头
+├── scenario.cc
+├── scenario.h
+├── scenario_manager.cc
+├── scenario_manager.h
+├── side_pass             // 超车
+├── stage.cc
+├── stage.h
+├── stop_sign             // 停止
+├── traffic_light         // 红绿灯
+├── util
+└── valet_parking         // 代客泊车
+</pre></div>
+</div>
+<p>其中需要知道场景如何转换，以及每种场景如何执行。几种场景的介绍可以先看下Apollo的官方文档<a class="reference external" href="https://github.com/ApolloAuto/apollo/blob/master/modules/planning/README.md">planning</a>，主要的场景是lane_follow，side_pass和stop_sign。</p>
+<a name="scenario_update" />
+<div class="section" id="id11">
+<h3>场景转换<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p>场景转换的实现在”scenario_manager.cc”中，其中实现了场景注册，创建场景和更新场景的功能。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ScenarioManager::Init</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="n">ScenarioConfig</span><span class="o">::</span><span class="n">ScenarioType</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">supported_scenarios</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 注册场景</span>
+<span class="w">  </span><span class="n">RegisterScenarios</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">default_scenario_type_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ScenarioConfig</span><span class="o">::</span><span class="n">LANE_FOLLOW</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">supported_scenarios_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">supported_scenarios</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 创建场景，默认为lane_follow</span>
+<span class="w">  </span><span class="n">current_scenario_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CreateScenario</span><span class="p">(</span><span class="n">default_scenario_type_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="c1">// 更新场景</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">ScenarioManager::Update</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">TrajectoryPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ego_point</span><span class="p">,</span><span class="w"></span>
+<span class="w">                             </span><span class="k">const</span><span class="w"> </span><span class="n">Frame</span><span class="o">&amp;</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">CHECK</span><span class="p">(</span><span class="o">!</span><span class="n">frame</span><span class="p">.</span><span class="n">reference_line_info</span><span class="p">().</span><span class="n">empty</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 保留当前帧</span>
+<span class="w">  </span><span class="n">Observe</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 场景分发</span>
+<span class="w">  </span><span class="n">ScenarioDispatch</span><span class="p">(</span><span class="n">ego_point</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="c1">// 通过一个有限状态机，决定当前的场景</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">ScenarioManager::ScenarioDispatch</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">TrajectoryPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ego_point</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                       </span><span class="k">const</span><span class="w"> </span><span class="n">Frame</span><span class="o">&amp;</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>其中”ScenarioDispatch”的状态切换可以参考下图:<br />
+<img alt="Scenario切换" src="../../_images/flowchart.png" /></p>
+<p>可以看到，每次切换场景必须是从默认场景(LANE_FOLLOW)开始，即每次场景切换之后都会回到默认场景。</p>
+<blockquote>
+<div><p>ScenarioDispatch目前的代码还没完全完成(有些分支TODO)，而且个人感觉这个实现不够简介和优秀，逻辑看起来有些混乱，不知道是否可以用状态机改进？</p>
+</div></blockquote>
+<a name="scenario_process" />
+</div>
+<div class="section" id="id12">
+<h3>场景运行<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<p>场景的执行在”scenario.cc”和对应的场景目录中，实际上每个场景又分为一个或者多个阶段(stage)，每个阶段又由不同的任务(task)组成。执行一个场景，就是顺序执行不同阶段的不同任务。<br />
+<img alt="Planner结构" src="../../_images/Planner.png" /><br />
+下面我们来看一个具体的例子，Scenario对应的stage和task在”planning/conf/scenario”中。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Scenario对应的Stage</span>
+<span class="nl">scenario_type</span><span class="p">:</span><span class="w"> </span><span class="n">SIDE_PASS</span><span class="w"></span>
+<span class="nl">stage_type</span><span class="p">:</span><span class="w"> </span><span class="n">SIDE_PASS_APPROACH_OBSTACLE</span><span class="w"></span>
+<span class="nl">stage_type</span><span class="p">:</span><span class="w"> </span><span class="n">SIDE_PASS_GENERATE_PATH</span><span class="w"></span>
+<span class="nl">stage_type</span><span class="p">:</span><span class="w"> </span><span class="n">SIDE_PASS_STOP_ON_WAITPOINT</span><span class="w"></span>
+<span class="nl">stage_type</span><span class="p">:</span><span class="w"> </span><span class="n">SIDE_PASS_DETECT_SAFETY</span><span class="w"></span>
+<span class="nl">stage_type</span><span class="p">:</span><span class="w"> </span><span class="n">SIDE_PASS_PASS_OBSTACLE</span><span class="w"></span>
+<span class="nl">stage_type</span><span class="p">:</span><span class="w"> </span><span class="n">SIDE_PASS_BACKUP</span><span class="w"></span>
+
+<span class="c1">// Stage对应的Task</span>
+<span class="nl">stage_type</span><span class="p">:</span><span class="w"> </span><span class="n">SIDE_PASS_APPROACH_OBSTACLE</span><span class="w"></span>
+<span class="nl">enabled</span><span class="p">:</span><span class="w"> </span><span class="nb">true</span><span class="w"></span>
+<span class="nl">task_type</span><span class="p">:</span><span class="w"> </span><span class="n">DP_POLY_PATH_OPTIMIZER</span><span class="w"></span>
+<span class="nl">task_type</span><span class="p">:</span><span class="w"> </span><span class="n">PATH_DECIDER</span><span class="w"></span>
+<span class="nl">task_type</span><span class="p">:</span><span class="w"> </span><span class="n">SPEED_BOUNDS_PRIORI_DECIDER</span><span class="w"></span>
+<span class="nl">task_type</span><span class="p">:</span><span class="w"> </span><span class="n">DP_ST_SPEED_OPTIMIZER</span><span class="w"></span>
+<span class="nl">task_type</span><span class="p">:</span><span class="w"> </span><span class="n">SPEED_DECIDER</span><span class="w"></span>
+<span class="nl">task_type</span><span class="p">:</span><span class="w"> </span><span class="n">SPEED_BOUNDS_FINAL_DECIDER</span><span class="w"></span>
+<span class="nl">task_type</span><span class="p">:</span><span class="w"> </span><span class="n">QP_SPLINE_ST_SPEED_OPTIMIZER</span><span class="w"></span>
+
+<span class="c1">// 以此类推</span>
+</pre></div>
+</div>
+<p>由于Scenario都是顺序执行，只需要判断这一阶段是否结束，然后转到下一个阶段就可以了。具体的实现在：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Scenario</span><span class="o">::</span><span class="n">ScenarioStatus</span><span class="w"> </span><span class="nf">Scenario::Process</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">TrajectoryPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">planning_init_point</span><span class="p">,</span><span class="w"> </span><span class="n">Frame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 如果当前阶段完成，则退出</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">current_stage_</span><span class="o">-&gt;</span><span class="n">stage_type</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">ScenarioConfig</span><span class="o">::</span><span class="n">NO_STAGE</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">scenario_status_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">STATUS_DONE</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">scenario_status_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 进入下一阶段执行或者错误处理</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current_stage_</span><span class="o">-&gt;</span><span class="n">Process</span><span class="p">(</span><span class="n">planning_init_point</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">ret</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="n">Stage</span><span class="o">::</span><span class="n">ERROR</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="p">...}</span><span class="w"></span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="n">Stage</span><span class="o">::</span><span class="n">RUNNING</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="p">...}</span><span class="w"></span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="n">Stage</span><span class="o">::</span><span class="n">FINISHED</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="p">...}</span><span class="w"></span>
+<span class="w">    </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="p">...}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">scenario_status_</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>我们接着看一下Stage中”Process”的执行：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Stage</span><span class="o">::</span><span class="n">StageStatus</span><span class="w"> </span><span class="nf">LaneFollowStage::Process</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">TrajectoryPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">planning_start_point</span><span class="p">,</span><span class="w"> </span><span class="n">Frame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="p">...</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 根据参考线规划</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">cur_status</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">PlanOnReferenceLine</span><span class="p">(</span><span class="n">planning_start_point</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_line_info</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">...</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="c1">// LANE_FOLLOW中的PlanOnReferenceLine</span>
+<span class="n">Status</span><span class="w"> </span><span class="nf">LaneFollowStage::PlanOnReferenceLine</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">TrajectoryPoint</span><span class="o">&amp;</span><span class="w"> </span><span class="n">planning_start_point</span><span class="p">,</span><span class="w"> </span><span class="n">Frame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">ReferenceLineInfo</span><span class="o">*</span><span class="w"> </span><span class="n">reference_line_info</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 顺序执行stage中的任务</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="o">*</span><span class="w"> </span><span class="n">optimizer</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">task_list_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">start_timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Clock</span><span class="o">::</span><span class="n">NowInSeconds</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 任务</span>
+<span class="w">    </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">optimizer</span><span class="o">-&gt;</span><span class="n">Execute</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span><span class="w"> </span><span class="n">reference_line_info</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+
+<span class="w">  </span><span class="c1">// 增加障碍物的代价</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">*</span><span class="w"> </span><span class="n">obstacle</span><span class="w"> </span><span class="o">:</span><span class="w"></span>
+<span class="w">       </span><span class="n">reference_line_info</span><span class="o">-&gt;</span><span class="n">path_decision</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">obstacles</span><span class="p">().</span><span class="n">Items</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">obstacle</span><span class="o">-&gt;</span><span class="n">IsVirtual</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">obstacle</span><span class="o">-&gt;</span><span class="n">IsStatic</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">obstacle</span><span class="o">-&gt;</span><span class="n">LongitudinalDecision</span><span class="p">().</span><span class="n">has_stop</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="p">...</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 返回参考线</span>
+<span class="w">  </span><span class="n">reference_line_info</span><span class="o">-&gt;</span><span class="n">SetTrajectory</span><span class="p">(</span><span class="n">trajectory</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">reference_line_info</span><span class="o">-&gt;</span><span class="n">SetDrivable</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">Status</span><span class="o">::</span><span class="n">OK</span><span class="p">();</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>上面是用”LaneFollowStage”中的”PlanOnReferenceLine”来举例子，不同场景中的”PlanOnReferenceLine”实现可能也不一样，这样设计的好处是，当发现一个场景有问题，需要修改不会影响到其他的场景。同时也可以针对不同场景做优化，比通用的规划更加适合单独的场景。每种场景都有一个专门的目录来进行优化。</p>
+<p>接下来我们看下Task是如何执行的。</p>
+<a name="task" />
+</div>
+</div>
+<div class="section" id="task">
+<h2>Task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h2>
+<p>我们先看Task的目录结构：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
+├── BUILD
+├── deciders       // 决策器
+├── optimizers     // 优化器
+├── rss
+├── smoothers     // 平滑器
+├── task.cc
+├── task_factory.cc
+├── task_factory.h
+└── task.h
+</pre></div>
+</div>
+<p>可以看到每个Task都可以对应到一个决策器或者优化器（平滑器不作为Task，单独作为一个类）。</p>
+<p>每个Task都实现了”Execute”方法，而每个决策器和优化器都继承至Task类。可以参考下图：<br />
+<img alt="Task类" src="../../_images/task.png" /></p>
+<blockquote>
+<div><p>Task类的生成用到了设计模式的工厂模式，通过”TaskFactory”类生产不同的Task类。</p>
+</div></blockquote>
+<a name="dp_qp" />
+<div class="section" id="dp-qp">
+<h3>DP &amp; QP<a class="headerlink" href="#dp-qp" title="Permalink to this headline">¶</a></h3>
+<p>Task中的决策器和优化器采用的方法有DP和QP:</p>
+<ul class="simple">
+<li><p><strong>DP</strong> 动态规划</p></li>
+<li><p><strong>QP</strong> 二次规划</p></li>
+</ul>
+<p>QP方法的路径优化和速度优化可以参考apollo文档:<br />
+<a class="reference external" href="https://github.com/ApolloAuto/apollo/blob/master/docs/specs/qp_spline_path_optimizer.md">QP-Spline-Path Optimizer</a><br />
+<a class="reference external" href="https://github.com/ApolloAuto/apollo/blob/master/docs/specs/qp_spline_st_speed_optimizer.md">QP-Spline-ST-Speed Optimizer</a></p>
+<a name="reference" />
+</div>
+</div>
+<div class="section" id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://paul.pub/apollo-planning/#id-planning%E4%B8%8Eplanner">解析百度Apollo之决策规划模块</a><br />
+<a class="reference external" href="https://github.com/ApolloAuto/apollo/blob/master/docs/specs/Open_Space_Planner.md">Open Space Planner Algorithm</a></p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/planning/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

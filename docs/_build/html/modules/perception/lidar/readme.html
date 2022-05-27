@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>lidar &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <a name="lidar_module" />
+<div class="section" id="lidar">
+<h1>lidar<a class="headerlink" href="#lidar" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="app">
+<h1>app<a class="headerlink" href="#app" title="Permalink to this headline">¶</a></h1>
+<p>app目录主要实现3个功能lidar_obstacle_detection，lidar_obstacle_segmentation，lidar_obstacle_tracking三个功能。</p>
+</div>
+<div class="section" id="lib">
+<h1>lib目录<a class="headerlink" href="#lib" title="Permalink to this headline">¶</a></h1>
+<p>整个激光雷达的处理流程是什么？？？ 先分割，找地面，然后找障碍物？？？</p>
+<div class="section" id="classifier">
+<h2>classifier<a class="headerlink" href="#classifier" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="ground-detector">
+<h2>ground_detector<a class="headerlink" href="#ground-detector" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="map-manager">
+<h2>map_manager<a class="headerlink" href="#map-manager" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="object-builder">
+<h2>object_builder<a class="headerlink" href="#object-builder" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="object-filter-bank">
+<h2>object_filter_bank<a class="headerlink" href="#object-filter-bank" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="pointcloud-preprocessor">
+<h2>pointcloud_preprocessor<a class="headerlink" href="#pointcloud-preprocessor" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="roi-filter">
+<h2>roi_filter<a class="headerlink" href="#roi-filter" title="Permalink to this headline">¶</a></h2>
+<p>感兴趣区域过滤</p>
+</div>
+<div class="section" id="scene-manager">
+<h2>scene_manager<a class="headerlink" href="#scene-manager" title="Permalink to this headline">¶</a></h2>
+<p>场景管理？？？</p>
+</div>
+<div class="section" id="segmentation">
+<h2>segmentation<a class="headerlink" href="#segmentation" title="Permalink to this headline">¶</a></h2>
+<p>分割</p>
+</div>
+<div class="section" id="tracker">
+<h2>tracker<a class="headerlink" href="#tracker" title="Permalink to this headline">¶</a></h2>
+<p>追踪</p>
+</div>
+</div>
+<div class="section" id="tools">
+<h1>tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h1>
+<p>tools目录主要有2个工具，一个是OfflineLidarObstaclePerception，另一个是msg_exporter_main，下面分别介绍这2个工具的作用。</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/modules/perception/lidar/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

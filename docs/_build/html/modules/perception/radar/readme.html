@@ -1,0 +1,662 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>radar &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <a name="radar_module" />
+<div class="section" id="radar">
+<h1>radar<a class="headerlink" href="#radar" title="Permalink to this headline">¶</a></h1>
+<p>毫米波雷达的处理流程相对比较简单，毫米波雷达的入口在”RadarDetectionComponent”中，在”RadarDetectionComponent”中首先对毫米波雷达数据做预处理(ContiArsPreprocessor)，实际上就是对毫米波雷达每一帧的时间做校正，之后在对毫米波雷达障碍物做识别”RadarObstaclePerception”，由于毫米波雷达可以直接输出障碍物的信息，识别的工作实际上已经简化了，识别出障碍物之后再根据ROI区域对检测结果做过滤，最后再采用卡尔曼滤波和匈牙利匹配对障碍物做追踪和匹配，上述这种追踪算法实际上是SORT算法，论文是2016年发表的”Simple Online and Realtime Tracking”。</p>
+<p>下图是毫米波雷达模块的整个调用流程，可以看到在”RadarDetectionComponent”模块中实现了预处理(ContiArsPreprocessor)和障碍物检测(RadarObstaclePerception)。而障碍物检测”RadarObstaclePerception”在radar目录中实现，主要分为检测、感兴趣区域过滤、追踪3个步骤。<br />
+<img alt="radar_process" src="../../../_images/radar_process.jpg" /></p>
+<p><strong>疑问</strong><br />
+不知道毫米波雷达对静态障碍物的检测和识别效果怎么样？</p>
+<p>下面我们主要介绍radar目录的具体实现，实际上radar,camera,lidar的目录结构都大体类似，在app中申明功能，在lib中实现。</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
+├── app           // 功能定义
+├── common
+└── lib
+    ├── detector  // 物体检测
+    ├── dummy
+    ├── interface
+    ├── preprocessor  // 预处理
+    ├── roi_filter    // 感兴趣区域过滤
+    └── tracker       // 目标追踪
+        ├── common      
+        ├── conti_ars_tracker
+        ├── filter          // 卡尔曼滤波
+        └── matcher         // 匈牙利算法
+</pre></div>
+</div>
+</div>
+<div class="section" id="app">
+<h1>app<a class="headerlink" href="#app" title="Permalink to this headline">¶</a></h1>
+<p>毫米波雷达的实现在”radar_obstacle_perception.cc”中实现，实现的类为”RadarObstaclePerception”。主要调用了”lib”目录中的方法，来实现雷达检测目标的输出。</p>
+<div class="section" id="init">
+<h2>Init初始化<a class="headerlink" href="#init" title="Permalink to this headline">¶</a></h2>
+<p>Init初始化中会指定预处理器，识别器，追踪器等几个组件，接下来毫米波雷达会采用上述组件进行障碍物的识别和追踪。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RadarObstaclePerception::Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">pipeline_name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">model_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pipeline_name</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 读取配置</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">ModelConfig</span><span class="o">*</span><span class="w"> </span><span class="n">model_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">ConfigManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetModelConfig</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">model_config</span><span class="p">))</span><span class="w"></span>
+<span class="w">      </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;not found model: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">model_name</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">detector_name</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">model_config</span><span class="o">-&gt;</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;Detector&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">detector_name</span><span class="p">))</span><span class="w"></span>
+<span class="w">      </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Detector not found&quot;</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">roi_filter_name</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">model_config</span><span class="o">-&gt;</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;RoiFilter&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">roi_filter_name</span><span class="p">))</span><span class="w"></span>
+<span class="w">      </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;RoiFilter not found&quot;</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">tracker_name</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">model_config</span><span class="o">-&gt;</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;Tracker&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">tracker_name</span><span class="p">))</span><span class="w"></span>
+<span class="w">      </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Tracker not found&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 2. 给指定的识别器，过滤器，追踪器赋值</span>
+<span class="w">  </span><span class="n">BaseDetector</span><span class="o">*</span><span class="w"> </span><span class="n">detector</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">BaseDetectorRegisterer</span><span class="o">::</span><span class="n">GetInstanceByName</span><span class="p">(</span><span class="n">detector_name</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">CHECK_NOTNULL</span><span class="p">(</span><span class="n">detector</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">detector_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">detector</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">BaseRoiFilter</span><span class="o">*</span><span class="w"> </span><span class="n">roi_filter</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">BaseRoiFilterRegisterer</span><span class="o">::</span><span class="n">GetInstanceByName</span><span class="p">(</span><span class="n">roi_filter_name</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">CHECK_NOTNULL</span><span class="p">(</span><span class="n">roi_filter</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">roi_filter_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">roi_filter</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">BaseTracker</span><span class="o">*</span><span class="w"> </span><span class="n">tracker</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BaseTrackerRegisterer</span><span class="o">::</span><span class="n">GetInstanceByName</span><span class="p">(</span><span class="n">tracker_name</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">CHECK_NOTNULL</span><span class="p">(</span><span class="n">tracker</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">tracker_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">tracker</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 3. 识别器，过滤器，追踪器初始化</span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">detector_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">())</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;radar detector init error&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">roi_filter_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">())</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;radar roi filter init error&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">tracker_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">())</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;radar tracker init error&quot;</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="perceive">
+<h2>Perceive识别<a class="headerlink" href="#perceive" title="Permalink to this headline">¶</a></h2>
+<p>接下来是整个识别流程，输入为障碍物，配置选项，输出为障碍物对象。其中处理器，识别器，追踪器具体的实现在”lib”目录中。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RadarObstaclePerception::Perceive</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">drivers</span><span class="o">::</span><span class="n">ContiRadar</span><span class="o">&amp;</span><span class="w"> </span><span class="n">corrected_obstacles</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">RadarPerceptionOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">base</span><span class="o">::</span><span class="n">ObjectPtr</span><span class="o">&gt;*</span><span class="w"> </span><span class="n">objects</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sensor_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">options</span><span class="p">.</span><span class="n">sensor_name</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">base</span><span class="o">::</span><span class="n">FramePtr</span><span class="w"> </span><span class="n">detect_frame_ptr</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">Frame</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 识别障碍物</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">detector_</span><span class="o">-&gt;</span><span class="n">Detect</span><span class="p">(</span><span class="n">corrected_obstacles</span><span class="p">,</span><span class="w"> </span><span class="n">options</span><span class="p">.</span><span class="n">detector_options</span><span class="p">,</span><span class="w"></span>
+<span class="w">                         </span><span class="n">detect_frame_ptr</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;radar detect error&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 感兴趣区域过滤</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">roi_filter_</span><span class="o">-&gt;</span><span class="n">RoiFilter</span><span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">roi_filter_options</span><span class="p">,</span><span class="w"> </span><span class="n">detect_frame_ptr</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;All radar objects were filtered out&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 3. 追踪</span>
+<span class="w">  </span><span class="n">base</span><span class="o">::</span><span class="n">FramePtr</span><span class="w"> </span><span class="n">tracker_frame_ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">base</span><span class="o">::</span><span class="n">Frame</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">tracker_</span><span class="o">-&gt;</span><span class="n">Track</span><span class="p">(</span><span class="o">*</span><span class="n">detect_frame_ptr</span><span class="p">,</span><span class="w"> </span><span class="n">options</span><span class="p">.</span><span class="n">track_options</span><span class="p">,</span><span class="w"></span>
+<span class="w">                       </span><span class="n">tracker_frame_ptr</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;radar track error&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 4. 输出结果</span>
+<span class="w">  </span><span class="o">*</span><span class="n">objects</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tracker_frame_ptr</span><span class="o">-&gt;</span><span class="n">objects</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="lib">
+<h1>lib目录<a class="headerlink" href="#lib" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="preprocessor">
+<h2>preprocessor 预处理<a class="headerlink" href="#preprocessor" title="Permalink to this headline">¶</a></h2>
+<p>预处理主要是对时间戳做预处理。</p>
+</div>
+<div class="section" id="detector">
+<h2>detector 识别<a class="headerlink" href="#detector" title="Permalink to this headline">¶</a></h2>
+<p>这里不是获取的雷达的raw_data而是直接获取的radar输出的感知结果。实现的类为”ContiArsDetector”主要实现了”Detect”方法。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ContiArsDetector::Detect</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">drivers</span><span class="o">::</span><span class="n">ContiRadar</span><span class="o">&amp;</span><span class="w"> </span><span class="n">corrected_obstacles</span><span class="p">,</span><span class="w"></span>
+<span class="w">                              </span><span class="k">const</span><span class="w"> </span><span class="n">DetectorOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"></span>
+<span class="w">                              </span><span class="n">base</span><span class="o">::</span><span class="n">FramePtr</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 通过校准好的数据填充雷达帧</span>
+<span class="w">  </span><span class="n">RawObs2Frame</span><span class="p">(</span><span class="n">corrected_obstacles</span><span class="p">,</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">radar_frame</span><span class="o">-&gt;</span><span class="n">timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">corrected_obstacles</span><span class="p">.</span><span class="n">header</span><span class="p">().</span><span class="n">timestamp_sec</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">radar_frame</span><span class="o">-&gt;</span><span class="n">sensor2world_pose</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">radar2world_pose</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>具体在雷达帧中填充了什么数据呢？下面我们来看下具体的实现。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">ContiArsDetector::RawObs2Frame</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">drivers</span><span class="o">::</span><span class="n">ContiRadar</span><span class="o">&amp;</span><span class="w"> </span><span class="n">corrected_obstacles</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">DetectorOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">FramePtr</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 雷达到世界，雷达到IMU的位置关系，以及车的角速度</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix4d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">radar2world</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">radar2world_pose</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix4d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">radar2novatel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">radar2novatel_trans</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Vector3f</span><span class="o">&amp;</span><span class="w"> </span><span class="n">angular_speed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">options</span><span class="p">.</span><span class="n">car_angular_speed</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix3d</span><span class="w"> </span><span class="n">rotation_novatel</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">rotation_novatel</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">angular_speed</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="w"> </span><span class="n">angular_speed</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">angular_speed</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">angular_speed</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"> </span><span class="o">-</span><span class="n">angular_speed</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">angular_speed</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix3d</span><span class="w"> </span><span class="n">rotation_radar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar2novatel</span><span class="p">.</span><span class="n">topLeftCorner</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">).</span><span class="n">inverse</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"></span>
+<span class="w">                                   </span><span class="n">rotation_novatel</span><span class="w"> </span><span class="o">*</span><span class="w"></span>
+<span class="w">                                   </span><span class="n">radar2novatel</span><span class="p">.</span><span class="n">topLeftCorner</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix3d</span><span class="w"> </span><span class="n">radar2world_rotate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar2world</span><span class="p">.</span><span class="n">block</span><span class="o">&lt;</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix3d</span><span class="w"> </span><span class="n">radar2world_rotate_t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar2world_rotate</span><span class="p">.</span><span class="n">transpose</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// Eigen::Vector3d radar2world_translation = radar2world.block&lt;3, 1&gt;(0, 3);</span>
+<span class="w">  </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;radar2novatel: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">radar2novatel</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;angular_speed: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">angular_speed</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;rotation_radar: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">rotation_radar</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">radar_obs</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">corrected_obstacles</span><span class="p">.</span><span class="n">contiobs</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">base</span><span class="o">::</span><span class="n">ObjectPtr</span><span class="w"> </span><span class="n">radar_object</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">base</span><span class="o">::</span><span class="n">Object</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">obstacle_id</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">track_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">obstacle_id</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Vector4d</span><span class="w"> </span><span class="n">local_loc</span><span class="p">(</span><span class="n">radar_obs</span><span class="p">.</span><span class="n">longitude_dist</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                              </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">lateral_dist</span><span class="p">(),</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Vector4d</span><span class="w"> </span><span class="n">world_loc</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">radar2world</span><span class="w"> </span><span class="o">*</span><span class="w"></span>
+<span class="w">                                                          </span><span class="n">local_loc</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">center</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">world_loc</span><span class="p">.</span><span class="n">block</span><span class="o">&lt;</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">anchor_point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">center</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">    </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Vector3d</span><span class="w"> </span><span class="n">local_vel</span><span class="p">(</span><span class="n">radar_obs</span><span class="p">.</span><span class="n">longitude_vel</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                              </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">lateral_vel</span><span class="p">(),</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">    </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Vector3d</span><span class="w"> </span><span class="n">angular_trans_speed</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">rotation_radar</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">local_loc</span><span class="p">.</span><span class="n">topLeftCorner</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Vector3d</span><span class="w"> </span><span class="n">world_vel</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">            </span><span class="n">radar2world_rotate</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">local_vel</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">angular_trans_speed</span><span class="p">));</span><span class="w"></span>
+<span class="w">    </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Vector3d</span><span class="w"> </span><span class="n">vel_temp</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">world_vel</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">options</span><span class="p">.</span><span class="n">car_linear_speed</span><span class="p">.</span><span class="n">cast</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">velocity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vel_temp</span><span class="p">.</span><span class="n">cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">    </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix3d</span><span class="w"> </span><span class="n">dist_rms</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">dist_rms</span><span class="p">.</span><span class="n">setZero</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix3d</span><span class="w"> </span><span class="n">vel_rms</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">vel_rms</span><span class="p">.</span><span class="n">setZero</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">dist_rms</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">longitude_dist_rms</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">dist_rms</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">lateral_dist_rms</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">vel_rms</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">longitude_vel_rms</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">vel_rms</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">lateral_vel_rms</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">center_uncertainty</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="p">(</span><span class="n">radar2world_rotate</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dist_rms</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">dist_rms</span><span class="p">.</span><span class="n">transpose</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"></span>
+<span class="w">         </span><span class="n">radar2world_rotate_t</span><span class="p">)</span><span class="w"></span>
+<span class="w">            </span><span class="p">.</span><span class="n">cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">velocity_uncertainty</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="p">(</span><span class="n">radar2world_rotate</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">vel_rms</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">vel_rms</span><span class="p">.</span><span class="n">transpose</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"></span>
+<span class="w">         </span><span class="n">radar2world_rotate_t</span><span class="p">)</span><span class="w"></span>
+<span class="w">            </span><span class="p">.</span><span class="n">cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">local_obj_theta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">oritation_angle</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">180.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Vector3f</span><span class="w"> </span><span class="n">direction</span><span class="p">(</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">local_obj_theta</span><span class="p">)),</span><span class="w"></span>
+<span class="w">                              </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">local_obj_theta</span><span class="p">)),</span><span class="w"> </span><span class="mf">0.0f</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">direction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar2world_rotate</span><span class="p">.</span><span class="n">cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">direction</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">direction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">direction</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">theta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">atan2</span><span class="p">(</span><span class="n">direction</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">direction</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">theta_variance</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">radar_obs</span><span class="p">.</span><span class="n">oritation_angle_rms</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">180.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">PI</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">confidence</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">radar_obs</span><span class="p">.</span><span class="n">probexist</span><span class="p">());</span><span class="w"></span>
+
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">motion_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">dynprop</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">prob_target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">probexist</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">prob_target</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">MIN_PROBEXIST</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">        </span><span class="p">(</span><span class="n">motion_state</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_MOVING</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">motion_state</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_ONCOMING</span><span class="w"> </span><span class="o">||</span><span class="w"></span>
+<span class="w">         </span><span class="n">motion_state</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_CROSSING_MOVING</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">motion_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">MotionState</span><span class="o">::</span><span class="n">MOVING</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">motion_state</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_DYNAMIC_UNKNOWN</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">motion_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">MotionState</span><span class="o">::</span><span class="n">UNKNOWN</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">motion_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">MotionState</span><span class="o">::</span><span class="n">STATIONARY</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">velocity</span><span class="p">.</span><span class="n">setZero</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">cls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">obstacle_class</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cls</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_CAR</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">cls</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_TRUCK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">ObjectType</span><span class="o">::</span><span class="n">VEHICLE</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cls</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_PEDESTRIAN</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">ObjectType</span><span class="o">::</span><span class="n">PEDESTRIAN</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cls</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_MOTOCYCLE</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">cls</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_BICYCLE</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">ObjectType</span><span class="o">::</span><span class="n">BICYCLE</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">ObjectType</span><span class="o">::</span><span class="n">UNKNOWN</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">radar_obs</span><span class="p">.</span><span class="n">length</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">radar_obs</span><span class="p">.</span><span class="n">width</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0f</span><span class="p">;</span><span class="w">  </span><span class="c1">// vehicle template (pnc required)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cls</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_POINT</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// extreme case protection</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">1.0e-4</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cls</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_CAR</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">cls</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">CONTI_TRUCK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">4.0f</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.6f</span><span class="p">;</span><span class="w">  </span><span class="c1">// vehicle template</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">MockRadarPolygon</span><span class="p">(</span><span class="n">radar_object</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">local_range</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">local_loc</span><span class="p">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="n">norm</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">local_angle</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">atan2</span><span class="p">(</span><span class="n">local_loc</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">local_loc</span><span class="p">(</span><span class="mi">0</span><span class="p">)));</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">radar_supplement</span><span class="p">.</span><span class="n">range</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">local_range</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">radar_object</span><span class="o">-&gt;</span><span class="n">radar_supplement</span><span class="p">.</span><span class="n">angle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">local_angle</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">    </span><span class="n">radar_frame</span><span class="o">-&gt;</span><span class="n">objects</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">radar_object</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">    </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;obs_id: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">obstacle_id</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;long_dist: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">longitude_dist</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;lateral_dist: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">lateral_dist</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;long_vel: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">longitude_vel</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;latera_vel: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">lateral_vel</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;rcs: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">rcs</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;meas_state: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">radar_obs</span><span class="p">.</span><span class="n">meas_state</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="roi-filter">
+<h2>roi_filter  过滤<a class="headerlink" href="#roi-filter" title="Permalink to this headline">¶</a></h2>
+<p>根据地图过滤感兴趣的区域。主要的实现在”HdmapRadarRoiFilter”中，主要是判断障碍物是否在感兴趣区域之内。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">HdmapRadarRoiFilter::RoiFilter</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">RoiFilterOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                    </span><span class="n">base</span><span class="o">::</span><span class="n">FramePtr</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">base</span><span class="o">::</span><span class="n">ObjectPtr</span><span class="o">&gt;</span><span class="w"> </span><span class="n">origin_objects</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_frame</span><span class="o">-&gt;</span><span class="n">objects</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 判断障碍物是否在感兴趣区域之内</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">ObjectInRoiCheck</span><span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">roi</span><span class="p">,</span><span class="w"> </span><span class="n">origin_objects</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                  </span><span class="o">&amp;</span><span class="n">radar_frame</span><span class="o">-&gt;</span><span class="n">objects</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p><strong>疑问</strong></p>
+<ol class="arabic simple">
+<li><p>感兴趣区域是如何组成的，为何定义的是点云的格式？？？</p></li>
+</ol>
+</div>
+</div>
+<div class="section" id="tracker">
+<h1>tracker 追踪<a class="headerlink" href="#tracker" title="Permalink to this headline">¶</a></h1>
+<p>追踪的主要实现在”ContiArsTracker”中，用的算法是SORT算法，先对目标做检测，然后用卡尔曼滤波对物体的运动做估计，然后用匈牙利算法对多个目标做匹配，得到多个目标的跟踪结果。</p>
+<div class="section" id="contiarstracker">
+<h2>ContiArsTracker<a class="headerlink" href="#contiarstracker" title="Permalink to this headline">¶</a></h2>
+<p>初始化</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ContiArsTracker::Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">model_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">lib</span><span class="o">::</span><span class="n">ModelConfig</span><span class="w"> </span><span class="o">*</span><span class="n">model_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">lib</span><span class="o">::</span><span class="n">ConfigManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetModelConfig</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                                      </span><span class="o">&amp;</span><span class="n">model_config</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;not found model: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">model_name</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">model_config</span><span class="o">-&gt;</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;tracking_time_window&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">s_tracking_time_win_</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;track_time_window is not found.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">model_config</span><span class="o">-&gt;</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;macher_name&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">matcher_name_</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;macher_name is not found.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">chosen_filter</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">model_config</span><span class="o">-&gt;</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;chosen_filter&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">chosen_filter</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;chosen_filter is not found.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">RadarTrack</span><span class="o">::</span><span class="n">SetChosenFilter</span><span class="p">(</span><span class="n">chosen_filter</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">tracked_times_threshold</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">model_config</span><span class="o">-&gt;</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;tracked_times_threshold&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">                               </span><span class="o">&amp;</span><span class="n">tracked_times_threshold</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;tracked_times_threshold is not found.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">RadarTrack</span><span class="o">::</span><span class="n">SetTrackedTimesThreshold</span><span class="p">(</span><span class="n">tracked_times_threshold</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">use_filter</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">model_config</span><span class="o">-&gt;</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;use_filter&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">use_filter</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;use_filter is not found.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">RadarTrack</span><span class="o">::</span><span class="n">SetUseFilter</span><span class="p">(</span><span class="n">use_filter</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// Or use register class instead.</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">matcher_name_</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">&quot;HMMatcher&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">matcher_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HMMatcher</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">matcher_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">();</span><span class="w">  </span><span class="c1">//  use proto later</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Not supported matcher : &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">matcher_name_</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">track_manager_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">RadarTrackManager</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">track_manager_</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"></span>
+<span class="w">      </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to get RadarTrackManager instance.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">state</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>追踪</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ContiArsTracker::Track</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">Frame</span><span class="w"> </span><span class="o">&amp;</span><span class="n">detected_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="k">const</span><span class="w"> </span><span class="n">TrackerOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="n">base</span><span class="o">::</span><span class="n">FramePtr</span><span class="w"> </span><span class="n">tracked_frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">TrackObjects</span><span class="p">(</span><span class="n">detected_frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">CollectTrackedFrame</span><span class="p">(</span><span class="n">tracked_frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="adaptivekalmanfilter">
+<h2>AdaptiveKalmanFilter<a class="headerlink" href="#adaptivekalmanfilter" title="Permalink to this headline">¶</a></h2>
+<p>自适应卡尔曼滤波器</p>
+</div>
+<div class="section" id="hmmatcher">
+<h2>HMMatcher<a class="headerlink" href="#hmmatcher" title="Permalink to this headline">¶</a></h2>
+<p>匈牙利匹配</p>
+<ol class="arabic simple">
+<li><p>配置文件目录<br />
+配置文件在”modules\perception\production\data\perception\radar\models\tracker\hm_matcher.conf”中。</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">max_match_distance</span> <span class="p">:</span> <span class="mf">2.5</span>
+<span class="n">bound_match_distance</span> <span class="p">:</span> <span class="mf">10.0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="match">
+<h2>Match<a class="headerlink" href="#match" title="Permalink to this headline">¶</a></h2>
+<p>首先是找到没有追踪到的目标，和丢失追踪的目标？这里的”unassigned_tracks”和”unassigned_objects”如何定义呢？</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">HMMatcher::Match</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">RadarTrackPtr</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">radar_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">Frame</span><span class="w"> </span><span class="o">&amp;</span><span class="n">radar_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">TrackObjectMatcherOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TrackObjectPair</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">assignments</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">unassigned_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">unassigned_objects</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. traceid相等，并且距离小于max_match_distance</span>
+<span class="w">  </span><span class="n">IDMatch</span><span class="p">(</span><span class="n">radar_tracks</span><span class="p">,</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">,</span><span class="w"> </span><span class="n">assignments</span><span class="p">,</span><span class="w"> </span><span class="n">unassigned_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="n">unassigned_objects</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">TrackObjectPropertyMatch</span><span class="p">(</span><span class="n">radar_tracks</span><span class="p">,</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">,</span><span class="w"> </span><span class="n">assignments</span><span class="p">,</span><span class="w"></span>
+<span class="w">                           </span><span class="n">unassigned_tracks</span><span class="p">,</span><span class="w"> </span><span class="n">unassigned_objects</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id1">
+<h2>HMMatcher<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>雷达障碍物的匹配通过HMMatcher来实现，本质上采用的是匈牙利算法，这里的实现稍微有点变化，下面我们就着重分析下整个匹配算法。</p>
+<p>HMMatcher初始化Init()，Init获取”hm_matcher.conf”配置文件路径”modules\perception\production\data\perception\radar\models\tracker\hm_matcher.conf”，并读取”max_match_distance”和”bound_match_distance”的值。这里默认值为</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">max_match_distance</span> <span class="p">:</span> <span class="mf">2.5</span>
+<span class="n">bound_match_distance</span> <span class="p">:</span> <span class="mf">10.0</span>
+</pre></div>
+</div>
+<p>那么接下来看HMMatcher如何来进行匹配的。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">HMMatcher::Match</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">RadarTrackPtr</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">radar_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">Frame</span><span class="w"> </span><span class="o">&amp;</span><span class="n">radar_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="k">const</span><span class="w"> </span><span class="n">TrackObjectMatcherOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TrackObjectPair</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">assignments</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">unassigned_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">                      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">unassigned_objects</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">IDMatch</span><span class="p">(</span><span class="n">radar_tracks</span><span class="p">,</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">,</span><span class="w"> </span><span class="n">assignments</span><span class="p">,</span><span class="w"> </span><span class="n">unassigned_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">          </span><span class="n">unassigned_objects</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">TrackObjectPropertyMatch</span><span class="p">(</span><span class="n">radar_tracks</span><span class="p">,</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">,</span><span class="w"> </span><span class="n">assignments</span><span class="p">,</span><span class="w"></span>
+<span class="w">                           </span><span class="n">unassigned_tracks</span><span class="p">,</span><span class="w"> </span><span class="n">unassigned_objects</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>先看下IDMatch中做了什么？</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">BaseMatcher::IDMatch</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">RadarTrackPtr</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">radar_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">                          </span><span class="k">const</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">Frame</span><span class="w"> </span><span class="o">&amp;</span><span class="n">radar_frame</span><span class="p">,</span><span class="w"></span>
+<span class="w">                          </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TrackObjectPair</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">assignments</span><span class="p">,</span><span class="w"></span>
+<span class="w">                          </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">unassigned_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">                          </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">unassigned_objects</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="kt">size_t</span><span class="w"> </span><span class="n">num_track</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_tracks</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">objects</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">.</span><span class="n">objects</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">object_timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">.</span><span class="n">timestamp</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">size_t</span><span class="w"> </span><span class="n">num_obj</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">objects</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">num_track</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">num_obj</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">unassigned_tracks</span><span class="o">-&gt;</span><span class="n">resize</span><span class="p">(</span><span class="n">num_track</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">unassigned_objects</span><span class="o">-&gt;</span><span class="n">resize</span><span class="p">(</span><span class="n">num_obj</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">iota</span><span class="p">(</span><span class="n">unassigned_tracks</span><span class="o">-&gt;</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">unassigned_tracks</span><span class="o">-&gt;</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">iota</span><span class="p">(</span><span class="n">unassigned_objects</span><span class="o">-&gt;</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">unassigned_objects</span><span class="o">-&gt;</span><span class="n">end</span><span class="p">(),</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="w"> </span><span class="n">track_used</span><span class="p">(</span><span class="n">num_track</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="w"> </span><span class="n">object_used</span><span class="p">(</span><span class="n">num_obj</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">num_track</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">track_object</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_tracks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">GetObsRadar</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">track_timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">radar_tracks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">GetTimestamp</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">track_object</span><span class="p">.</span><span class="n">get</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;track_object is not available&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">track_object_track_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">track_object</span><span class="o">-&gt;</span><span class="n">track_id</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">num_obj</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">j</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="kt">int</span><span class="w"> </span><span class="n">object_track_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">objects</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">track_id</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">track_object_track_id</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">object_track_id</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"></span>
+<span class="w">          </span><span class="n">RefinedTrack</span><span class="p">(</span><span class="n">track_object</span><span class="p">,</span><span class="w"> </span><span class="n">track_timestamp</span><span class="p">,</span><span class="w"> </span><span class="n">objects</span><span class="p">[</span><span class="n">j</span><span class="p">],</span><span class="w"></span>
+<span class="w">                       </span><span class="n">object_timestamp</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">assignments</span><span class="o">-&gt;</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">));</span><span class="w"></span>
+<span class="w">        </span><span class="n">track_used</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="n">object_used</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">track_used</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">track_used</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">unassigned_tracks</span><span class="o">-&gt;</span><span class="n">push_back</span><span class="p">(</span><span class="n">i</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">object_used</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">object_used</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">unassigned_objects</span><span class="o">-&gt;</span><span class="n">push_back</span><span class="p">(</span><span class="n">i</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>接着看TrackObjectPropertyMatch如何进行匹配。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">HMMatcher::TrackObjectPropertyMatch</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">RadarTrackPtr</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">radar_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">Frame</span><span class="w"> </span><span class="o">&amp;</span><span class="n">radar_frame</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TrackObjectPair</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">assignments</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">unassigned_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">unassigned_objects</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 如果任意一个为空，则结束，那么物体和追踪是如何对应的？？？  </span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">unassigned_tracks</span><span class="o">-&gt;</span><span class="n">empty</span><span class="p">()</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">unassigned_objects</span><span class="o">-&gt;</span><span class="n">empty</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">association_mat</span><span class="p">(</span><span class="n">unassigned_tracks</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">association_mat</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">association_mat</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">resize</span><span class="p">(</span><span class="n">unassigned_objects</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(),</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 计算追踪物体和当前帧物体的距离，并且保存在association_mat中。</span>
+<span class="w">  </span><span class="n">ComputeAssociationMat</span><span class="p">(</span><span class="n">radar_tracks</span><span class="p">,</span><span class="w"> </span><span class="n">radar_frame</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">unassigned_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">                        </span><span class="o">*</span><span class="n">unassigned_objects</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">association_mat</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 把association_mat赋值给global_costs</span>
+<span class="w">  </span><span class="n">common</span><span class="o">::</span><span class="n">SecureMat</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">global_costs</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">hungarian_matcher_</span><span class="p">.</span><span class="n">mutable_global_costs</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">global_costs</span><span class="o">-&gt;</span><span class="n">Resize</span><span class="p">(</span><span class="n">unassigned_tracks</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(),</span><span class="w"> </span><span class="n">unassigned_objects</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">unassigned_tracks</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">unassigned_objects</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">j</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="p">(</span><span class="o">*</span><span class="n">global_costs</span><span class="p">)(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">association_mat</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">];</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 通过直方图来计算匹配？？？  </span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TrackObjectPair</span><span class="o">&gt;</span><span class="w"> </span><span class="n">property_assignments</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">property_unassigned_tracks</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">property_unassigned_objects</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">hungarian_matcher_</span><span class="p">.</span><span class="n">Match</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">BaseMatcher</span><span class="o">::</span><span class="n">GetMaxMatchDistance</span><span class="p">(),</span><span class="w"> </span><span class="n">BaseMatcher</span><span class="o">::</span><span class="n">GetBoundMatchDistance</span><span class="p">(),</span><span class="w"></span>
+<span class="w">      </span><span class="n">common</span><span class="o">::</span><span class="n">GatedHungarianMatcher</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;::</span><span class="n">OptimizeFlag</span><span class="o">::</span><span class="n">OPTMIN</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="o">&amp;</span><span class="n">property_assignments</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">property_unassigned_tracks</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="o">&amp;</span><span class="n">property_unassigned_objects</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 是否目标和追踪到的目标数量一定相等？？？  </span>
+<span class="w">  </span><span class="c1">// assignments 存放匹配好的对象，unassigned_tracks没有匹配的追踪，unassigned_objects没有匹配的目标</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">property_assignments</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">gt_idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">unassigned_tracks</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">property_assignments</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">first</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">go_idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">unassigned_objects</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">property_assignments</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">second</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">assignments</span><span class="o">-&gt;</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">gt_idx</span><span class="p">,</span><span class="w"> </span><span class="n">go_idx</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">temp_unassigned_tracks</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="w"> </span><span class="n">temp_unassigned_objects</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">property_unassigned_tracks</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">gt_idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">unassigned_tracks</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">property_unassigned_tracks</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span><span class="w"></span>
+<span class="w">    </span><span class="n">temp_unassigned_tracks</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">gt_idx</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">property_unassigned_objects</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">go_idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">unassigned_objects</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">property_unassigned_objects</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span><span class="w"></span>
+<span class="w">    </span><span class="n">temp_unassigned_objects</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">go_idx</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="o">*</span><span class="n">unassigned_tracks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">temp_unassigned_tracks</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="o">*</span><span class="n">unassigned_objects</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">temp_unassigned_objects</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>这里的匹配，采用的是”Kuhn-Munkres Algorithm”来进行多目标追踪的。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span><span class="w"></span>
+<span class="kt">void</span><span class="w"> </span><span class="n">GatedHungarianMatcher</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">Match</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">T</span><span class="w"> </span><span class="n">cost_thresh</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="n">bound_value</span><span class="p">,</span><span class="w"> </span><span class="n">OptimizeFlag</span><span class="w"> </span><span class="n">opt_flag</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="o">&gt;&gt;*</span><span class="w"> </span><span class="n">assignments</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;*</span><span class="w"> </span><span class="n">unassigned_rows</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;*</span><span class="w"> </span><span class="n">unassigned_cols</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+
+<span class="w">  </span><span class="cm">/* initialize matcher */</span><span class="w"></span>
+<span class="w">  </span><span class="n">cost_thresh_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cost_thresh</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">opt_flag_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">opt_flag</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">bound_value_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bound_value</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">assignments_ptr_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">assignments</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 这里为何要检查cost_thresh &lt; bound_value</span>
+<span class="w">  </span><span class="n">MatchInit</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="cm">/* compute components */</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">row_components</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">col_components</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">ComputeConnectedComponents</span><span class="p">(</span><span class="o">&amp;</span><span class="n">row_components</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">col_components</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">CHECK_EQ</span><span class="p">(</span><span class="n">row_components</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span><span class="w"> </span><span class="n">col_components</span><span class="p">.</span><span class="n">size</span><span class="p">());</span><span class="w"></span>
+
+<span class="w">  </span><span class="cm">/* compute assignments */</span><span class="w"></span>
+<span class="w">  </span><span class="n">assignments_ptr_</span><span class="o">-&gt;</span><span class="n">clear</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">assignments_ptr_</span><span class="o">-&gt;</span><span class="n">reserve</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">rows_num_</span><span class="p">,</span><span class="w"> </span><span class="n">cols_num_</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">row_components</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">OptimizeConnectedComponent</span><span class="p">(</span><span class="n">row_components</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">col_components</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">GenerateUnassignedData</span><span class="p">(</span><span class="n">unassigned_rows</span><span class="p">,</span><span class="w"> </span><span class="n">unassigned_cols</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/modules/perception/radar/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

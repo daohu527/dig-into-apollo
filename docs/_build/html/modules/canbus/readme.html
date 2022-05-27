@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dig into Apollo - Canbus &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="dig-into-apollo-canbus-github">
+<h1>Dig into Apollo - Canbus <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-canbus-github" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><p>黑发不知勤学早，白首方悔读书迟。</p>
+</div></blockquote>
+<div class="section" id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><span class="xref myst">Canbus模块介绍</span></p></li>
+<li><p><span class="xref myst">Canbus模块主流程</span></p>
+<ul>
+<li><p><span class="xref myst">车辆工厂模式(VehicleFactory)</span></p></li>
+<li><p><span class="xref myst">车辆控制器(LincolnController)</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">Canbus(驱动程序)</span></p>
+<ul>
+<li><p><span class="xref myst">消息管理器(MessageManager)</span></p></li>
+<li><p><span class="xref myst">消息接收(CanReceiver)</span></p></li>
+<li><p><span class="xref myst">消息发送(CanSender)</span></p></li>
+<li><p><span class="xref myst">canbus客户端(CanClient)</span></p></li>
+</ul>
+</li>
+<li><p><span class="xref myst">Reference</span></p></li>
+</ul>
+<a name="introduction" />
+</div>
+<div class="section" id="canbus">
+<h2>Canbus模块介绍<a class="headerlink" href="#canbus" title="Permalink to this headline">¶</a></h2>
+<p>我们先看下什么是Canbus： 控制器局域网 (Controller Area Network，简称CAN或者CAN bus) 是一种车用总线标准。被设计用于在不需要主机（Host）的情况下，允许网络上的节点相互通信。采用广播机制，并利用标识符来定义内容和消息的优先顺序，使得canbus的扩展性良好，同时不基于特殊类型（Host）的节点，增加了升级网络的便利性。<br />
+这里的<strong>Canbus模块其实可以称为Chassis模块</strong>，主要的作用是反馈车当前的状态（航向，角度，速度等信息），并且发送控制命令到车线控底盘，<strong>可以说Canbus模块是车和自动驾驶软件之间的桥梁</strong>。由于这个模块和”drivers/canbus”的联系紧密，因此也一起在这里介绍。<br />
+Canbus模块是车和自动驾驶软件之间的桥梁，通过canbus驱动(drivers/canbus)来实现将车身信息发送给apollo上层软件，同时接收控制命令，发送给汽车线控底盘实现对汽车的控制。</p>
+<p>那么canbus模块的输入是什么？输出是什么呢？<br />
+<img alt="input" src="../../_images/input.jpg" /><br />
+可以看到canbus模块：</p>
+<ul class="simple">
+<li><p><strong>输入</strong> - 1. ControlCommand（控制命令）</p></li>
+<li><p><strong>输出</strong> - 1. Chassis（汽车底盘信息）, 2. ChassisDetail（汽车底盘信息详细信息）</p></li>
+</ul>
+<p>Canbus模块的输入是control模块发送的控制命令，输出汽车底盘信息，这里apollo的上层模块被当做一个can_client来处理，实现接收和发送canbus上的消息。</p>
+<p>Canbus模块的目录结构如下：</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── BUILD                    // bazel编译文件
+├── canbus_component.cc      // canbus主入口
+├── canbus_component.h       
+├── canbus_test.cc           // canbus测试
+├── common                   // gflag配置
+├── conf                     // 配置文件
+├── dag                      // dag依赖
+├── launch                   // launch加载
+├── proto                    // protobuf文件
+├── testdata                 // 测试数据
+├── tools                    // 遥控汽车和测试canbus总线工具
+└── vehicle                  //   
+</pre></div>
+</div>
+<p>接着我们来分析下Canbus模块的执行流程。</p>
+<a name="main" />
+</div>
+<div class="section" id="id1">
+<h2>Canbus模块主流程<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Canbus模块的主流程在文件”canbus_component.cc”中，canbus模块为定时触发，每10ms执行一次，发布chassis信息，而ControlCommand则是每次读取到之后触发回调”OnControlCommand”，发送”control_command”到线控底盘。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">CanbusComponent::Proc</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">PublishChassis</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_enable_chassis_detail_pub</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">PublishChassisDetail</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>由于不同型号的车辆的canbus命令不一样，在”/vehicle”中适配了不同型号车辆的canbus消息格式，所有的车都继承自Vehicle_controller基类，通过对Vehicle_controller的抽象来发送和读取canbus信息。<br />
+<img alt="main" src="../../_images/main1.jpg" /></p>
+<a name="vehicle_factory" />
+<div class="section" id="vehiclefactory">
+<h3>车辆工厂模式(VehicleFactory)<a class="headerlink" href="#vehiclefactory" title="Permalink to this headline">¶</a></h3>
+<p>在vehicle中可以适配不同的车型，而每种车型都对应一个vehicle_controller，创建每种车辆的控制器(VehicleController)和消息管理(MessageManager)流程如下：
+<img alt="factory" src="../../_images/factory.jpg" /><br />
+VehicleFactory类通过创建不同的类型AbstractVehicleFactory，每个车型自己的Factory在创建出对应的VehicleController和MessageManager，用林肯来举例子就是： VehicleFactory创建LincolnVehicleFactory，之后通过CreateMessageManager和CreateVehicleController创建对应的控制器（LincolnController）和消息管理器（LincolnMessageManager）。<br />
+上述代码流程用到了设计模式的工厂模式，通过车辆工厂创造不同的车辆类型。</p>
+<a name="lincoln_controller" />
+</div>
+<div class="section" id="lincolncontroller">
+<h3>车辆控制器(LincolnController)<a class="headerlink" href="#lincolncontroller" title="Permalink to this headline">¶</a></h3>
+<p>下面以林肯来介绍LincolnController，以及如何接收chassis信息，其它的车型可以以此类推，下面主要分为2部分介绍，第一部分为controller的init-&gt;start-&gt;stop流程，第二部分为chassis信息获取：
+<img alt="process" src="../../_images/process.jpg" /><br />
+可以看到control模块初始化(init)的过程获取了发送的消息的格式，通过can_sender应该发送那些消息，而启动(start)之后启动一个看门狗，检查canbus消息格式是否正确，最后关闭(stop)模块则是结束看门狗进程。</p>
+<p><img alt="chassis" src="../../_images/chassis.jpg" /><br />
+而chassis的获取则是通过message_manager_获取chassis_detail，之后对chassis进行赋值。</p>
+<a name="canbus_driver" />
+</div>
+</div>
+<div class="section" id="id2">
+<h2>Canbus(驱动程序)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>上层的canbus就介绍完成了，而canbus的发送(CanSender)和接收(CanReceiver)，还有消息管理(MessageManager)都是在”drivers/canbus”中实现的。</p>
+<a name="message_manager" />
+<div class="section" id="messagemanager">
+<h3>消息管理器(MessageManager)<a class="headerlink" href="#messagemanager" title="Permalink to this headline">¶</a></h3>
+<p>MessageManager是如何获取消息的呢？</p>
+<p><strong>MessageManager主要作用是解析和保存canbus数据，而具体的接收和发送则是在”CanReceiver”和”CanSender”中</strong>，拿接收消息举例子，也就是说CanReceiver收到消息后，会调用MessageManager中的parse去解析消息，消息的解析协议在”modules/canbus/vehicle/lincoln/protocol”中，每个消息把自己对应的信息塞到”chassis_detail”中完成了消息的接收。<br />
+<img alt="canbus" src="../../_images/canbus.jpg" /></p>
+<a name="can_receiver" />
+</div>
+<div class="section" id="canreceiver">
+<h3>消息接收(CanReceiver)<a class="headerlink" href="#canreceiver" title="Permalink to this headline">¶</a></h3>
+<p>canbus消息的接收在上面有介绍，在CanReceiver中的”Start”调用”RecvThreadFunc”实现消息的接收，这里会启动一个异步进程去完成接收。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">SensorType</span><span class="o">&gt;</span><span class="w"></span>
+<span class="o">::</span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="w"> </span><span class="n">CanReceiver</span><span class="o">&lt;</span><span class="n">SensorType</span><span class="o">&gt;::</span><span class="n">Start</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_init_</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">false</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">::</span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">CANBUS_ERROR</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">is_running_</span><span class="p">.</span><span class="n">exchange</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 启动异步接收消息</span>
+<span class="w">  </span><span class="n">async_result_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Async</span><span class="p">(</span><span class="o">&amp;</span><span class="n">CanReceiver</span><span class="o">&lt;</span><span class="n">SensorType</span><span class="o">&gt;::</span><span class="n">RecvThreadFunc</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="o">::</span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">OK</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>RecvThreadFunc通过”can_client_”接收消息，然后通过”MessageManager”去解析消息，在MessageManager中有讲到。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">SensorType</span><span class="o">&gt;</span><span class="w"></span>
+<span class="kt">void</span><span class="w"> </span><span class="n">CanReceiver</span><span class="o">&lt;</span><span class="n">SensorType</span><span class="o">&gt;::</span><span class="n">RecvThreadFunc</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+<span class="w">  </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">IsRunning</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">CanFrame</span><span class="o">&gt;</span><span class="w"> </span><span class="n">buf</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">frame_num</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MAX_CAN_RECV_FRAME_LEN</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span>
+<span class="w">    </span><span class="c1">// 1. can_client_接收canbus数据</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">can_client_</span><span class="o">-&gt;</span><span class="n">Receive</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">frame_num</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"></span>
+<span class="w">        </span><span class="o">::</span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span>
+<span class="w">      </span><span class="n">cyber</span><span class="o">::</span><span class="n">USleep</span><span class="p">(</span><span class="n">default_period</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">...</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">frame</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">buf</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">frame</span><span class="p">.</span><span class="n">len</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">uid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">frame</span><span class="p">.</span><span class="n">id</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">const</span><span class="w"> </span><span class="kt">uint8_t</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">frame</span><span class="p">.</span><span class="n">data</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">      </span><span class="c1">// 2. MessageManager解析canbus数据</span>
+<span class="w">      </span><span class="n">pt_manager_</span><span class="o">-&gt;</span><span class="n">Parse</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="n">len</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">enable_log_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;recv_can_frame#&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">frame</span><span class="p">.</span><span class="n">CanFrameString</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">cyber</span><span class="o">::</span><span class="n">Yield</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Can client receiver thread stopped.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<a name="can_sender" />
+</div>
+<div class="section" id="cansender">
+<h3>消息发送(CanSender)<a class="headerlink" href="#cansender" title="Permalink to this headline">¶</a></h3>
+<p>消息发送对应的是在CanSender中的”Start”调用”PowerSendThreadFunc”，我们可以看具体实现:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">SensorType</span><span class="o">&gt;</span><span class="w"></span>
+<span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="w"> </span><span class="n">CanSender</span><span class="o">&lt;</span><span class="n">SensorType</span><span class="o">&gt;::</span><span class="n">Start</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">is_running_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Cansender has already started.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">CANBUS_ERROR</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">is_running_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 启动线程发送消息</span>
+<span class="w">  </span><span class="n">thread_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kr">thread</span><span class="p">([</span><span class="k">this</span><span class="p">]</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">PowerSendThreadFunc</span><span class="p">();</span><span class="w"> </span><span class="p">}));</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">OK</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>PowerSendThreadFunc再通过”can_client”发送消息：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">CanFrame</span><span class="o">&gt;</span><span class="w"> </span><span class="n">can_frames</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">CanFrame</span><span class="w"> </span><span class="n">can_frame</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">message</span><span class="p">.</span><span class="n">CanFrame</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="n">can_frames</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">can_frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span>
+<span class="w">      </span><span class="c1">// 通过can_client发送消息</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">can_client_</span><span class="o">-&gt;</span><span class="n">SendSingleFrame</span><span class="p">(</span><span class="n">can_frames</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Send msg failed:&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">can_frame</span><span class="p">.</span><span class="n">CanFrameString</span><span class="p">();</span><span class="w"></span>
+<span class="w">      </span><span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<a name="can_client" />
+</div>
+<div class="section" id="canbus-canclient">
+<h3>canbus客户端(CanClient)<a class="headerlink" href="#canbus-canclient" title="Permalink to this headline">¶</a></h3>
+<p>CanClient是canbus客户端，同时也是canbus的驱动程序，针对不同的canbus卡，对发送和接收进行封装，并且提供给消息发送和接收控制器使用。<br />
+<img alt="canclient" src="../../_images/canclient.jpg" /><br />
+拿”EsdCanClient”来举例子，发送在”Send”函数中，调用的是第三方的硬件驱动，目录在”third_party/can_card_library/esd_can”，实现can消息的发送：</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">ErrorCode</span><span class="w"> </span><span class="nf">EsdCanClient::Send</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">CanFrame</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">frames</span><span class="p">,</span><span class="w"></span>
+<span class="w">                             </span><span class="kt">int32_t</span><span class="w"> </span><span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">frame_num</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="p">...</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// canWrite为第三方库的硬件驱动，third_party/can_card_library/esd_can</span>
+<span class="w">  </span><span class="c1">// Synchronous transmission of CAN messages</span>
+<span class="w">  </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">canWrite</span><span class="p">(</span><span class="n">dev_handler_</span><span class="p">,</span><span class="w"> </span><span class="n">send_frames_</span><span class="p">,</span><span class="w"> </span><span class="n">frame_num</span><span class="p">,</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ret</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">NTCAN_SUCCESS</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;send message failed, error code: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="w"></span>
+<span class="w">           </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">GetErrorString</span><span class="p">(</span><span class="n">ret</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">CAN_CLIENT_ERROR_BASE</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">OK</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>其他的can卡可以参考上述的流程，至此整个canbus驱动就分析完成了。</p>
+<a name="reference" />
+</div>
+</div>
+<div class="section" id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://www.ni.com/zh-tw/innovations/white-papers/06/controller-area-network--can--overview.html">Controller Area Network (CAN BUS) 通訊​協定​原理​概述</a></p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/canbus/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

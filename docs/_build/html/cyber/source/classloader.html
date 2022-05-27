@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClassLoader &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="classloader">
+<h1>ClassLoader<a class="headerlink" href="#classloader" title="Permalink to this headline">¶</a></h1>
+<p>每个ClassLoader加载一个路径，每个路径代表一个so库？load_ref_count_代表加载library引用计数。</p>
+<p>plugin_ref_count_代表创建类的引用计数？</p>
+</div>
+<div class="section" id="loadlibrary">
+<h1>loadLibrary<a class="headerlink" href="#loadlibrary" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">ClassLoader::loadLibrary</span><span class="p">()</span><span class="w"></span>
+<span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">boost</span><span class="o">::</span><span class="n">recursive_mutex</span><span class="o">::</span><span class="n">scoped_lock</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">load_ref_count_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 每次引用计数加1</span>
+<span class="w">  </span><span class="n">load_ref_count_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load_ref_count_</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 加载库</span>
+<span class="w">  </span><span class="n">class_loader</span><span class="o">::</span><span class="n">impl</span><span class="o">::</span><span class="n">loadLibrary</span><span class="p">(</span><span class="n">getLibraryPath</span><span class="p">(),</span><span class="w"> </span><span class="k">this</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="islibraryloaded">
+<h1>isLibraryLoaded<a class="headerlink" href="#islibraryloaded" title="Permalink to this headline">¶</a></h1>
+<p>判断Library是否加载</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ClassLoader::isLibraryLoaded</span><span class="p">()</span><span class="w"></span>
+<span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">class_loader</span><span class="o">::</span><span class="n">impl</span><span class="o">::</span><span class="n">isLibraryLoaded</span><span class="p">(</span><span class="n">getLibraryPath</span><span class="p">(),</span><span class="w"> </span><span class="k">this</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="islibraryloadedbyanyclassloader">
+<h1>isLibraryLoadedByAnyClassloader<a class="headerlink" href="#islibraryloadedbyanyclassloader" title="Permalink to this headline">¶</a></h1>
+<p>判断Library是否被其它的classloader加载</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ClassLoader::isLibraryLoadedByAnyClassloader</span><span class="p">()</span><span class="w"></span>
+<span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">class_loader</span><span class="o">::</span><span class="n">impl</span><span class="o">::</span><span class="n">isLibraryLoadedByAnybody</span><span class="p">(</span><span class="n">getLibraryPath</span><span class="p">());</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="systemlibraryformat">
+<h1>systemLibraryFormat<a class="headerlink" href="#systemlibraryformat" title="Permalink to this headline">¶</a></h1>
+<p>获取库的名称？</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">systemLibraryFormat</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">library_name</span><span class="p">)</span><span class="w"></span>
+<span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">systemLibraryPrefix</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">library_name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">systemLibrarySuffix</span><span class="p">();</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="unloadlibrary">
+<h1>unloadLibrary<a class="headerlink" href="#unloadlibrary" title="Permalink to this headline">¶</a></h1>
+<p>卸载Library，先判断是否plugin_ref_count_，即是否有创建的类没有销毁，如果没有销毁则不能卸载，如果类已经销毁了，需要加载次数清零，保证加载和卸载次数相等。</p>
+</div>
+<div class="section" id="id1">
+<h1>创建类<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">Base</span><span class="o">&gt;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="w"> </span><span class="n">createSharedInstance</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">derived_class_name</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">createRawInstance</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="p">(</span><span class="n">derived_class_name</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ClassLoader</span><span class="o">::</span><span class="n">onPluginDeletion</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="n">_1</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="registerplugin">
+<h1>registerPlugin<a class="headerlink" href="#registerplugin" title="Permalink to this headline">¶</a></h1>
+<p>申明静态变量<code class="docutils literal notranslate"><span class="pre">g_register_plugin_UniqueID</span></code></p>
+<p>注册类，这里是注册派生类到factoryMap，通过派生类可以找到对应的MetaObject&lt;Derived, Base&gt;，创建的时候创建派生类。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="c1">// Create factory</span>
+<span class="w">  </span><span class="n">impl</span><span class="o">::</span><span class="n">AbstractMetaObject</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">new_factory</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">    </span><span class="k">new</span><span class="w"> </span><span class="n">impl</span><span class="o">::</span><span class="n">MetaObject</span><span class="o">&lt;</span><span class="n">Derived</span><span class="p">,</span><span class="w"> </span><span class="n">Base</span><span class="o">&gt;</span><span class="p">(</span><span class="n">class_name</span><span class="p">,</span><span class="w"> </span><span class="n">base_class_name</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">new_factory</span><span class="o">-&gt;</span><span class="n">addOwningClassLoader</span><span class="p">(</span><span class="n">getCurrentlyActiveClassLoader</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="n">new_factory</span><span class="o">-&gt;</span><span class="n">setAssociatedLibraryPath</span><span class="p">(</span><span class="n">getCurrentlyLoadingLibraryName</span><span class="p">());</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">FactoryMap</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">factoryMap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getFactoryMapForBaseClass</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">factoryMap</span><span class="p">[</span><span class="n">class_name</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new_factory</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h1>总结<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic simple">
+<li><p>首先通过宏定义注册派生类和基类</p></li>
+</ol>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">CLASS_LOADER_REGISTER_CLASS</span><span class="p">(</span><span class="n">Derived</span><span class="p">,</span><span class="w"> </span><span class="n">Base</span><span class="p">)</span><span class="w"></span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>注册的派生类和基类会注册到哈希表，key为派生类的名称，value为MetaObject&lt;Derived, Base&gt;，创建的时候会创建派生类。</p></li>
+</ol>
+<p>AbstractMetaObjectBase 对象有一个ClassLoaderVector，是一个加载器数组。 AbstractMetaObjectBase抽象类可以对应多个classloader？？？</p>
+<p>一个ClassLoader对应一个library_path，同时还有引用计数和实例化计数。创建了多少个对象则有多少个plugin_ref_count_，每个对象析构的时候会引用计数plugin_ref_count_减去1。
+同一个类可能被不同的ClassLoader加载，加载的路径当然也不一样，然后把classloader放到一个数组中。</p>
+</div>
+<div class="section" id="id3">
+<h1>程序链接几种方式<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic simple">
+<li><p>静态链接</p></li>
+<li><p>动态链接</p></li>
+<li><p>动态加载</p></li>
+</ol>
+<p>前2种在编译阶段就要指定，后1种是程序运行过程中动态加载到内存。有插件的系统都采用动态加载的方式来设计。</p>
+</div>
+<div class="section" id="id4">
+<h1>工作原理<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="linux">
+<h2>linux<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h2>
+<p>dlopen dlsysm dlclose</p>
+</div>
+<div class="section" id="elf">
+<h2>ELF文件<a class="headerlink" href="#elf" title="Permalink to this headline">¶</a></h2>
+<p>文件格式
+INIT FIN
+ctor
+符号表</p>
+<p>通过nm命令查看
+readelf</p>
+</div>
+</div>
+<div class="section" id="id5">
+<h1>加载原理<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="extern-c">
+<h2>extern c<a class="headerlink" href="#extern-c" title="Permalink to this headline">¶</a></h2>
+<p>这样符号表的函数名称不会变化。</p>
+</div>
+<div class="section" id="id6">
+<h2>静态变量<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>静态变量加载的时候会动态初始化</p>
+<ol class="arabic simple">
+<li><p>elf文件中的init和ctor段，也可以用<code class="docutils literal notranslate"><span class="pre">__attribute__</span> </code>宏来实现启动的时候就执行，然后再把控制权交给main函数</p></li>
+</ol>
+<p>全部类继承一个基类，实现了new object方法，然后再注册工厂类到全局变量，这样就可以创建变量了。</p>
+</div>
+<div class="section" id="id7">
+<h2>注册<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>注册通过宏定义实现</p></li>
+<li><p>加载的时候动态构造，并且注册到全局变量</p></li>
+<li><p>类实现了创建方法</p></li>
+</ol>
+</div>
+<div class="section" id="id8">
+<h2>创建<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>找到对应的类，然后调用创建方法</p></li>
+<li><p>每次销毁的时候引用计数减1</p></li>
+</ol>
+</div>
+<div class="section" id="id9">
+<h2>加载<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<p>采用dlopen加载，可以反复加载，但是返回同一个指针，卸载的时候次数相等？classloader对原生重复加载做了拦截？</p>
+</div>
+<div class="section" id="id10">
+<h2>卸载<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>判断是否有引用计数，有对象存活则不能卸载</p></li>
+<li><p>没有对象存活，则卸载库，这里的引用计数看起来没什么用（采用bool型就可以解决）？</p></li>
+</ol>
+<p>总之上述2种方法都是找一个绝对的物理地址去调用，函数在代码段，通过名称去调用，静态变量在数据段，然后去调用。</p>
+</div>
+</div>
+<div class="section" id="id11">
+<h1>静态变量作用域<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic simple">
+<li><p>file scope只作用在单个文件，全局变量的作用域，需要加上extern</p></li>
+<li><p>函数中的static变量作用域只在函数可见，并且在函数调用的时候初始化</p></li>
+<li><p>static变量在动态库卸载的时候会清零，再次加载的时候会重新初始化 （apollo中和ros中的区别，需要做一些实验去验证是否正确）为什么函数中的全局变量没有被卸载？？</p></li>
+<li><p>static变量的生命周期，创建一直保存到程序结束，对动态加载程序创建的变量好像是卸载的时候删除？</p></li>
+<li><p>static变量线程安全，c++11之后是线程安全的</p></li>
+</ol>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/cyber/source/classloader.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

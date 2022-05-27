@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>查找依赖库 &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>查找依赖库<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>由于c++中是允许重载，而函数名要唯一，所以需要名字修饰</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ldd</span> <span class="o">-</span><span class="n">r</span> <span class="o">/</span><span class="n">media</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">k8s</span><span class="o">/</span><span class="n">apollo</span><span class="o">/</span><span class="n">bazel</span><span class="o">-</span><span class="nb">bin</span><span class="o">/</span><span class="n">cyber</span><span class="o">/</span><span class="n">py_wrapper</span><span class="o">/../../</span><span class="n">_solib_k8</span><span class="o">/</span><span class="n">libcyber_Sclass_Uloader_Slibclass_Uloader</span><span class="o">.</span><span class="n">so</span>
+
+<span class="n">c</span><span class="o">++</span><span class="n">filt</span> <span class="n">_ZN4Poco13SharedLibraryC1ERKSs</span>
+</pre></div>
+</div>
+<p>也可以用”nm”命令查询:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nm</span> <span class="o">-</span><span class="n">u</span> <span class="o">/</span><span class="n">media</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">k8s</span><span class="o">/</span><span class="n">apollo</span><span class="o">/</span><span class="n">bazel</span><span class="o">-</span><span class="nb">bin</span><span class="o">/</span><span class="n">cyber</span><span class="o">/</span><span class="n">py_wrapper</span><span class="o">/../../</span><span class="n">_solib_k8</span><span class="o">/</span><span class="n">libcyber_Sclass_Uloader_Slibclass_Uloader</span><span class="o">.</span><span class="n">so</span> <span class="o">|</span> <span class="n">grep</span> <span class="n">_ZN4Poco13SharedLibraryC1ERKSs</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://blog.csdn.net/stpeace/article/details/76561814">undefined symbol</a><br />
+<a class="reference external" href="https://zh.wikipedia.org/wiki/%E5%90%8D%E5%AD%97%E4%BF%AE%E9%A5%B0">名字修饰</a></p>
+</div>
+<div class="section" id="coredump">
+<h1>CoreDump<a class="headerlink" href="#coredump" title="Permalink to this headline">¶</a></h1>
+<p>https://www.jianshu.com/p/3dc143c53ca2</p>
+</div>
+<div class="section" id="id2">
+<h1>编译<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="gdb">
+<h2>gdb调试<a class="headerlink" href="#gdb" title="Permalink to this headline">¶</a></h2>
+<p>https://blog.csdn.net/davidhopper/article/details/82589722<br />
+启动gdb调试</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gdb</span> <span class="o">-</span><span class="n">q</span> <span class="n">bazel</span><span class="o">-</span><span class="nb">bin</span><span class="o">/</span><span class="n">modules</span><span class="o">/</span><span class="nb">map</span><span class="o">/</span><span class="n">relative_map</span><span class="o">/</span><span class="n">navigation_lane_test</span>
+</pre></div>
+</div>
+<p>进入GDB调试界面后，使用l命令查看源代码，使用b 138在源代码第138行（可根据需要修改为自己所需的代码位置 ）设置断点，使用r命令运行navigation_lane_test程序，进入断点暂停后，使用p navigation_lane_查看当前变量值（可根据需要修改为其他变量名），使用n单步调试一条语句，使用s单步调试进入函数内部，使用c继续执行后续程序。如果哪个部分测试通不过，调试信息会立刻告诉你具体原因，可使用bt查看当前调用堆栈。</p>
+</div>
+<div class="section" id="bazel">
+<h2>bazel编译<a class="headerlink" href="#bazel" title="Permalink to this headline">¶</a></h2>
+<p>编译清除</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bazel</span> <span class="n">clean</span> <span class="o">--</span><span class="n">expunge</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/tools/todo.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

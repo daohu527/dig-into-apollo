@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>lgsvl介绍 &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="lgsvl">
+<h1>lgsvl介绍<a class="headerlink" href="#lgsvl" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="apollo">
+<h2>apollo桥接<a class="headerlink" href="#apollo" title="Permalink to this headline">¶</a></h2>
+<p>lgsvl通过socket实现了apollo和lgsvl的桥接，主要的原理如下：<br />
+<img alt="" src="../_images/simulation" /></p>
+<div class="section" id="id1">
+<h3>数据格式<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>需要重点关注的是数据格式的转换：<br />
+<img alt="" src="../_images/simulation" /></p>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>地图制作<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>lgsvl默认支持的地图为”San Francisco”，目前还不支持导入地图，如果需要自己制作地图可以按照下面的流程，在cityengine中制作城市的3维地图，然后导出模型到unity，用unity的地图编辑器编辑并且导出hd_map到apollo，之后在unity中创建场景，并且导入车的模型，整个地图的制作就完成了。</p>
+</div>
+<div class="section" id="id3">
+<h2>lgsvl场景介绍<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>我们以”SimpleMap”场景来举例子，介绍场景是如何组成的，SimpleMap由以下几个场景组成:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Directional light  // 平行光
+EventSystem  // 事件系统
+XE_Rigged-apollo  // 车模型
+ProceduralRoad  // 地图中的房屋以及模型
+MapSimple  // 道路，交通灯模型
+HDMapTool  // apollo高精度地图制作工具
+VectorMapTool  // autoware地图制作工具
+PointCloudTool  // ??
+PointCloudBounds  // ??
+MapOrigin // 地图起点，用来确定gps坐标？？
+spawn_transform  // 
+spawn_transform(1)
+</pre></div>
+</div>
+<p>EventSystem 事件系统检测游戏的事件，并且提供调用接口。例如键盘鼠标回调，射线检测。<br />
+Spawn GameObject 特殊的创建游戏对象事件。<a class="reference external" href="https://docs.unity3d.com/Manual/UNetSpawning.html"></a></p>
+<p>sanfrancisco</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Terrains</span> <span class="n">地形</span>
+</pre></div>
+</div>
+<p>碰撞采用的是<a class="reference external" href="http://docs.manew.com/Components/class-MeshCollider.html">网格碰撞</a></p>
+</div>
+<div class="section" id="unity">
+<h2>Unity帮助文档<a class="headerlink" href="#unity" title="Permalink to this headline">¶</a></h2>
+<p>http://docs.manew.com/Manual/71.html</p>
+<div class="section" id="id4">
+<h3>回放<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>https://gamedev.stackexchange.com/questions/141149/action-replay-in-unity-3d<br />
+https://www.gamasutra.com/blogs/AustonMontville/20141105/229437/Implementing_a_replay_system_in_Unity_and_how_Id_do_it_differently_next_time.php<br />
+https://forum.unity.com/threads/best-approach-to-replay-system.624517/</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docker/readme.html">Dig into Apollo - Docker </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library/readme.html">Dig into Apollo - Library </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../papers/readme.html">Dig into Apollo - Papers </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../performance/readme.html">Dig into Apollo - Performance </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../questions/readme.html">Dig into Apollo - Questions </a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Dig into Apollo - Simulation </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_to_build/readme.html">Dig into Apollo - Build </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/simulation/todo.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

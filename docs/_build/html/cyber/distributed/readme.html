@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>容器内部python运行 &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <p>参考 https://github.com/lgsvl/apollo-3.5</p>
+<div class="section" id="python">
+<h1>容器内部python运行<a class="headerlink" href="#python" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic simple">
+<li><p>在apollo目录下</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="n">cyber</span><span class="o">/</span><span class="n">setup</span><span class="o">.</span><span class="n">bash</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>执行</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">cyber</span><span class="o">/</span><span class="n">python</span><span class="o">/</span><span class="n">examples</span><span class="o">/</span><span class="n">listener</span><span class="o">.</span><span class="n">py</span>
+<span class="n">python</span> <span class="n">cyber</span><span class="o">/</span><span class="n">python</span><span class="o">/</span><span class="n">examples</span><span class="o">/</span><span class="n">talker</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id1">
+<h1>容器外部执行<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic simple">
+<li><p>python 环境变量</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PYTHONPATH=$PYTHONPATH:/media/data/k8s/apollo
+export PYTHONPATH=$PYTHONPATH:/media/data/k8s/apollo/bazel-bin/cyber/py_wrapper
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>环境变量
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib</p></li>
+<li><p>安装Fast-RTPS
+直接拷贝so也可以
+/usr/local/fast-rtps/lib/libfastcdr.so.1
+/usr/local/fast-rtps/lib/libfastrtps.so.1</p></li>
+<li><p>拷贝so
+在容器里面
+cp /usr/local/lib/libglog.so.0 .
+cp /usr/local/lib/libgflags.so.2.2 .
+cp /usr/lib/libprotobuf.so.17 .
+cp /usr/lib/libPocoFoundation.so.9 .</p></li>
+</ol>
+</div>
+<div class="section" id="id2">
+<h1>拷贝到另外的机器<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic simple">
+<li><p>设置机器IP
+A机器 在setup.bash中设置 export CYBER_IP=192.168.1.101
+B机器 在setup.bash中设置 export CYBER_IP=192.168.1.102</p></li>
+<li><p>拷贝文件和依赖库
+192.168.1.101
+在目录 /home/k8s/apollo/PythonClient</p></li>
+<li><p>设置环境变量
+source setup.bash</p></li>
+</ol>
+<p>export PYTHONPATH=$PYTHONPATH:/home/k8s/apollo/bazel-bin/cyber/py_wrapper
+export PYTHONPATH=$PYTHONPATH:/home/k8s/apollo/py_proto</p>
+<p>export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/k8s/apollo/bazel-bin</p>
+<p>export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/k8s/apollo/third_party/tf2/lib/</p>
+<p>export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/k8s/apollo/bazel-bin/cyber/py_wrapper/_cyber_init.so.runfiles/apollo/_solib_k8/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/k8s/apollo/bazel-bin/cyber/py_wrapper/_cyber_node.so.runfiles/apollo/_solib_k8</p>
+<p>export PYTHONPATH=$PYTHONPATH:/home/k8s/apollo/third_party</p>
+<p>sudo pip install protobuf</p>
+</div>
+<div class="section" id="id3">
+<h1>运行并且测试<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="a">
+<h2>A机器<a class="headerlink" href="#a" title="Permalink to this headline">¶</a></h2>
+<p>python client_example.py –host 192.168.1.102</p>
+</div>
+<div class="section" id="b">
+<h2>B机器<a class="headerlink" href="#b" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>启动carla  ./CarlaUE4.sh -carla-server</p></li>
+<li><p>容器内部执行 python listener.py</p></li>
+</ol>
+</div>
+</div>
+<div class="section" id="todo">
+<h1>TODO<a class="headerlink" href="#todo" title="Permalink to this headline">¶</a></h1>
+<p>适配carla和apollo的参数，并且对接发布出去。</p>
+</div>
+<div class="section" id="dreamview">
+<h1>dreamview<a class="headerlink" href="#dreamview" title="Permalink to this headline">¶</a></h1>
+<ol class="arabic simple">
+<li><p>bag转record</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">/</span><span class="n">your</span><span class="o">-</span><span class="n">path</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">apollo</span><span class="o">-</span><span class="n">install</span><span class="o">-</span><span class="nb">dir</span><span class="o">/</span><span class="n">cyber</span><span class="o">/</span><span class="n">setup</span><span class="o">.</span><span class="n">bash</span>
+<span class="n">rosbag_to_record</span> <span class="nb">input</span><span class="o">.</span><span class="n">bag</span> <span class="n">output</span><span class="o">.</span><span class="n">record</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://github.com/ApolloAuto/apollo/blob/master/docs/cyber/CyberRT_Developer_Tools.md">参考</a></p>
+<ol class="arabic simple" start="2">
+<li><p>record播放</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">bazel</span><span class="o">-</span><span class="nb">bin</span><span class="o">/</span><span class="n">modules</span><span class="o">/</span><span class="n">dreamview</span><span class="o">/</span><span class="n">backend</span><span class="o">/</span><span class="n">simulation_command</span><span class="o">/</span><span class="n">sim_cmd</span>
+<span class="n">cyber_recorder</span> <span class="n">play</span> <span class="o">-</span><span class="n">f</span> <span class="n">out</span><span class="o">.</span><span class="n">record</span> <span class="o">-</span><span class="n">s</span> <span class="mi">10</span> <span class="o">-</span><span class="n">c</span> <span class="o">/</span><span class="n">apollo</span><span class="o">/</span><span class="n">canbus</span><span class="o">/</span><span class="n">chassis</span> <span class="o">/</span><span class="n">apollo</span><span class="o">/</span><span class="n">localization</span><span class="o">/</span><span class="n">pose</span> <span class="o">/</span><span class="n">apollo</span><span class="o">/</span><span class="n">sensor</span><span class="o">/</span><span class="n">gnss</span><span class="o">/</span><span class="n">odometry</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>HMI status
+HMI status一直保存在内存中？</p></li>
+</ol>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/cyber/distributed/readme.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

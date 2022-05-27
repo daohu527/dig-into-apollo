@@ -1,0 +1,1051 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DetectionComponent &#8212; dig-into-apollo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="detectioncomponent">
+<h1>DetectionComponent<a class="headerlink" href="#detectioncomponent" title="Permalink to this headline">¶</a></h1>
+<p>DetectionComponent主要的目的是用来做物体识别。接收点云信息，最后输出感知到的结果。
+输入TOPIC： drivers::PointCloud
+输出TOPIC： LidarFrameMessage</p>
+<p>实际上在BUILD文件中，DetectionComponent等几个模块编译为一个模块，最后的可执行文件为”libperception_component_lidar”。也就是说DetectionComponent的配置文件在DAG中查找libperception_component_lidar中对应的”DetectionComponent”的配置。
+疑问：<br />
+目前并没有在dag中找到对应的配置文件，看起来这个模块是给第三方雷达感知算法提供的接口？？？</p>
+<div class="section" id="init">
+<h2>初始化(Init)<a class="headerlink" href="#init" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">DetectionComponent::Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">LidarDetectionComponentConfig</span><span class="w"> </span><span class="n">comp_config</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 读取配置文件</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">GetProtoConfig</span><span class="p">(</span><span class="o">&amp;</span><span class="n">comp_config</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Lidar Component Configs: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">comp_config</span><span class="p">.</span><span class="n">DebugString</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">output_channel_name_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">comp_config</span><span class="p">.</span><span class="n">output_channel_name</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">sensor_name_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">comp_config</span><span class="p">.</span><span class="n">sensor_name</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">lidar2novatel_tf2_child_frame_id_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">comp_config</span><span class="p">.</span><span class="n">lidar2novatel_tf2_child_frame_id</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">lidar_query_tf_offset_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">comp_config</span><span class="p">.</span><span class="n">lidar_query_tf_offset</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="n">enable_hdmap_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">comp_config</span><span class="p">.</span><span class="n">enable_hdmap</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 注册发布消息</span>
+<span class="w">  </span><span class="n">writer_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">LidarFrameMessage</span><span class="o">&gt;</span><span class="p">(</span><span class="n">output_channel_name_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 3. 初始化算法插件</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">InitAlgorithmPlugin</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init detection component algorithm plugin.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="initalgorithmplugin">
+<h2>InitAlgorithmPlugin<a class="headerlink" href="#initalgorithmplugin" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">DetectionComponent::InitAlgorithmPlugin</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">common</span><span class="o">::</span><span class="n">SensorManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetSensorInfo</span><span class="p">(</span><span class="n">sensor_name_</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                                          </span><span class="o">&amp;</span><span class="n">sensor_info_</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 设置雷达障碍物识别器</span>
+<span class="w">  </span><span class="n">detector_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">lidar</span><span class="o">::</span><span class="n">LidarObstacleDetection</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">lidar</span><span class="o">::</span><span class="n">LidarObstacleDetectionInitOptions</span><span class="w"> </span><span class="n">init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">init_options</span><span class="p">.</span><span class="n">sensor_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sensor_name_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">init_options</span><span class="p">.</span><span class="n">enable_hdmap_input</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">FLAGS_obs_enable_hdmap_input</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">enable_hdmap_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 初始化识别器，调用LidarObstacleDetection的Init方法</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">detector_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">(</span><span class="n">init_options</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;sensor_name_ &quot;</span><span class="w"></span>
+<span class="w">          </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init detection.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 初始化坐标转换关系</span>
+<span class="w">  </span><span class="n">lidar2world_trans_</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">lidar2novatel_tf2_child_frame_id_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="proc">
+<h2>执行(Proc)<a class="headerlink" href="#proc" title="Permalink to this headline">¶</a></h2>
+<p>执行主要在Proc，而Proc主要是调用内部的实现”InternalProc”。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">DetectionComponent::InternalProc</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">drivers</span><span class="o">::</span><span class="n">PointCloud</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">in_message</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">LidarFrameMessage</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">out_message</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 为什么要加锁，难道有多个雷达的情况？？？</span>
+<span class="w">  </span><span class="n">PERCEPTION_PERF_FUNCTION_WITH_INDICATOR</span><span class="p">(</span><span class="n">sensor_name_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">s_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">s_seq_num_</span><span class="o">++</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 初始化信息帧</span>
+<span class="w">  </span><span class="n">out_message</span><span class="o">-&gt;</span><span class="n">timestamp_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">timestamp</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">out_message</span><span class="o">-&gt;</span><span class="n">lidar_timestamp_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">header</span><span class="p">().</span><span class="n">lidar_timestamp</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">out_message</span><span class="o">-&gt;</span><span class="n">seq_num_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s_seq_num_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">out_message</span><span class="o">-&gt;</span><span class="n">process_stage_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ProcessStage</span><span class="o">::</span><span class="n">LIDAR_DETECTION</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">out_message</span><span class="o">-&gt;</span><span class="n">error_code_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">OK</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">frame</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">out_message</span><span class="o">-&gt;</span><span class="n">lidar_frame_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">frame</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lidar</span><span class="o">::</span><span class="n">LidarFramePool</span><span class="o">::</span><span class="n">Instance</span><span class="p">().</span><span class="n">Get</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">cloud</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">PointFCloudPool</span><span class="o">::</span><span class="n">Instance</span><span class="p">().</span><span class="n">Get</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">timestamp</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">sensor_info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sensor_info_</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">PERCEPTION_PERF_BLOCK_START</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Affine3d</span><span class="w"> </span><span class="n">pose</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Affine3d</span><span class="o">::</span><span class="n">Identity</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">lidar_query_tf_timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">timestamp</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">lidar_query_tf_offset_</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.001</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 获取车的姿态</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">lidar2world_trans_</span><span class="p">.</span><span class="n">GetSensor2worldTrans</span><span class="p">(</span><span class="n">lidar_query_tf_timestamp</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                               </span><span class="o">&amp;</span><span class="n">pose</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">out_message</span><span class="o">-&gt;</span><span class="n">error_code_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">PERCEPTION_ERROR_TF</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to get pose at time: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">lidar_query_tf_timestamp</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">PERCEPTION_PERF_BLOCK_END_WITH_INDICATOR</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">sensor_name_</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;detection_1::get_lidar_to_world_pose&quot;</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">lidar2world_pose</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pose</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">lidar</span><span class="o">::</span><span class="n">LidarObstacleDetectionOptions</span><span class="w"> </span><span class="n">detect_opts</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">detect_opts</span><span class="p">.</span><span class="n">sensor_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sensor_name_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">lidar2world_trans_</span><span class="p">.</span><span class="n">GetExtrinsics</span><span class="p">(</span><span class="o">&amp;</span><span class="n">detect_opts</span><span class="p">.</span><span class="n">sensor2novatel_extrinsics</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 4. 开始物体识别，调用LidarObstacleDetection的Process方法，下文会分析具体的实现</span>
+<span class="w">  </span><span class="n">lidar</span><span class="o">::</span><span class="n">LidarProcessResult</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">detector_</span><span class="o">-&gt;</span><span class="n">Process</span><span class="p">(</span><span class="n">detect_opts</span><span class="p">,</span><span class="w"> </span><span class="n">in_message</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">.</span><span class="n">get</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ret</span><span class="p">.</span><span class="n">error_code</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">lidar</span><span class="o">::</span><span class="n">LidarErrorCode</span><span class="o">::</span><span class="n">Succeed</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">out_message</span><span class="o">-&gt;</span><span class="n">error_code_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">PERCEPTION_ERROR_PROCESS</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">PERCEPTION_PERF_BLOCK_END_WITH_INDICATOR</span><span class="p">(</span><span class="n">sensor_name_</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                           </span><span class="s">&quot;detection_2::detect_obstacle&quot;</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="lidarobstacledetection">
+<h1>LidarObstacleDetection<a class="headerlink" href="#lidarobstacledetection" title="Permalink to this headline">¶</a></h1>
+<p>在DetectionComponent中会初始化LidarObstacleDetection，并且调用类的”Process()”方法，那么LidarObstacleDetection中究竟实现了哪些功能？</p>
+<p>下面先分析Init方法</p>
+<div class="section" id="id1">
+<h2>初始化Init<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">LidarObstacleDetection::Init</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">LidarObstacleDetectionInitOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 根据传感器名称获取模型配置</span>
+<span class="w">  </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sensor_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">options</span><span class="p">.</span><span class="n">sensor_name</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">config_manager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lib</span><span class="o">::</span><span class="n">ConfigManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">lib</span><span class="o">::</span><span class="n">ModelConfig</span><span class="o">*</span><span class="w"> </span><span class="n">model_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">config_manager</span><span class="o">-&gt;</span><span class="n">GetModelConfig</span><span class="p">(</span><span class="n">Name</span><span class="p">(),</span><span class="w"> </span><span class="o">&amp;</span><span class="n">model_config</span><span class="p">));</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 获取配置文件</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">work_root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">config_manager</span><span class="o">-&gt;</span><span class="n">work_root</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">config_file</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">root_path</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">model_config</span><span class="o">-&gt;</span><span class="n">get_value</span><span class="p">(</span><span class="s">&quot;root_path&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">root_path</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="n">config_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">GetAbsolutePath</span><span class="p">(</span><span class="n">work_root</span><span class="p">,</span><span class="w"> </span><span class="n">root_path</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">config_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">GetAbsolutePath</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span><span class="w"> </span><span class="n">sensor_name</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">config_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">GetAbsolutePath</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">config_file</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;lidar_obstacle_detection.conf&quot;</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 3. 从配置文件中获取，探测器的名称，是否采用地图管理，过滤目录参数</span>
+<span class="w">  </span><span class="n">LidarObstacleDetectionConfig</span><span class="w"> </span><span class="n">config</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">cyber</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">GetProtoFromFile</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">config</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="n">detector_name_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="n">detector</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">use_map_manager_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="n">use_map_manager</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">use_object_filter_bank_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="n">use_object_filter_bank</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">use_map_manager_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">use_map_manager_</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">.</span><span class="n">enable_hdmap_input</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 4. 初始化场景管理</span>
+<span class="w">  </span><span class="n">SceneManagerInitOptions</span><span class="w"> </span><span class="n">scene_manager_init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">SceneManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">().</span><span class="n">Init</span><span class="p">(</span><span class="n">scene_manager_init_options</span><span class="p">));</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 5. 点云预处理</span>
+<span class="w">  </span><span class="n">PointCloudPreprocessorInitOptions</span><span class="w"> </span><span class="n">preprocessor_init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">preprocessor_init_options</span><span class="p">.</span><span class="n">sensor_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sensor_name</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">cloud_preprocessor_</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">preprocessor_init_options</span><span class="p">));</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 6. 是否采用地图管理</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">use_map_manager_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">MapManagerInitOptions</span><span class="w"> </span><span class="n">map_manager_init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">map_manager_</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">map_manager_init_options</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init map manager.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">use_map_manager_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 7. 初始化探测器为PointPillarsDetection</span>
+<span class="w">  </span><span class="n">detector_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">PointPillarsDetection</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// detector_.reset(</span>
+<span class="w">  </span><span class="c1">//    BaseSegmentationRegisterer::GetInstanceByName(segmentor_name_));</span>
+<span class="w">  </span><span class="n">CHECK_NOTNULL</span><span class="p">(</span><span class="n">detector_</span><span class="p">.</span><span class="n">get</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="n">DetectionInitOptions</span><span class="w"> </span><span class="n">detection_init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// segmentation_init_options.sensor_name = sensor_name;</span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">detector_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">(</span><span class="n">detection_init_options</span><span class="p">));</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>接着看LidarObstacleDetection如何进行物体识别</p>
+</div>
+<div class="section" id="process">
+<h2>执行Process<a class="headerlink" href="#process" title="Permalink to this headline">¶</a></h2>
+<p>Process有多态实现，主要的区别为是否传入点云信息message。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">LidarProcessResult</span><span class="w"> </span><span class="nf">LidarObstacleDetection::Process</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">LidarObstacleDetectionOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">apollo</span><span class="o">::</span><span class="n">drivers</span><span class="o">::</span><span class="n">PointCloud</span><span class="w"> </span><span class="k">const</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">message</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">LidarFrame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sensor_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">options</span><span class="p">.</span><span class="n">sensor_name</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">PERCEPTION_PERF_FUNCTION_WITH_INDICATOR</span><span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">sensor_name</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">PERCEPTION_PERF_BLOCK_START</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">PointCloudPreprocessorOptions</span><span class="w"> </span><span class="n">preprocessor_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">preprocessor_options</span><span class="p">.</span><span class="n">sensor2novatel_extrinsics</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">options</span><span class="p">.</span><span class="n">sensor2novatel_extrinsics</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">PERCEPTION_PERF_BLOCK_END_WITH_INDICATOR</span><span class="p">(</span><span class="n">sensor_name</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;preprocess&quot;</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 1. 点云预处理</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cloud_preprocessor_</span><span class="p">.</span><span class="n">Preprocess</span><span class="p">(</span><span class="n">preprocessor_options</span><span class="p">,</span><span class="w"> </span><span class="n">message</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 2. 点云计算</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">ProcessCommon</span><span class="p">(</span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">LidarProcessResult</span><span class="p">(</span><span class="n">LidarErrorCode</span><span class="o">::</span><span class="n">PointCloudPreprocessorError</span><span class="p">,</span><span class="w"></span>
+<span class="w">                            </span><span class="s">&quot;Failed to preprocess point cloud.&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>点云计算<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">LidarProcessResult</span><span class="w"> </span><span class="nf">LidarObstacleDetection::ProcessCommon</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">LidarObstacleDetectionOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">LidarFrame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sensor_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">options</span><span class="p">.</span><span class="n">sensor_name</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">use_map_manager_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">MapManagerOptions</span><span class="w"> </span><span class="n">map_manager_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 1. 更新地图选项</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">map_manager_</span><span class="p">.</span><span class="n">Update</span><span class="p">(</span><span class="n">map_manager_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">LidarProcessResult</span><span class="p">(</span><span class="n">LidarErrorCode</span><span class="o">::</span><span class="n">MapManagerError</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                </span><span class="s">&quot;Failed to update map structure.&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 进行物体识别</span>
+<span class="w">  </span><span class="n">DetectionOptions</span><span class="w"> </span><span class="n">detection_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">detector_</span><span class="o">-&gt;</span><span class="n">Detect</span><span class="p">(</span><span class="n">detection_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">LidarProcessResult</span><span class="p">(</span><span class="n">LidarErrorCode</span><span class="o">::</span><span class="n">DetectionError</span><span class="p">,</span><span class="w"></span>
+<span class="w">                              </span><span class="s">&quot;Failed to detect.&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">LidarProcessResult</span><span class="p">(</span><span class="n">LidarErrorCode</span><span class="o">::</span><span class="n">Succeed</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>上述的识别过程实际上在Init中设置为PointPillarsDetection，也就是说点云识别在PointPillarsDetection中实现。</p>
+</div>
+</div>
+<div class="section" id="pointpillarsdetection">
+<h1>PointPillarsDetection<a class="headerlink" href="#pointpillarsdetection" title="Permalink to this headline">¶</a></h1>
+<p>PointPillarsDetection主要的实现在Init和Proc中。</p>
+<div class="section" id="id3">
+<h2>初始化<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>在PointPillarsDetection中初始化”PointPillars”类</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">PointPillarsDetection::Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">DetectionInitOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">point_pillars_ptr_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="k">new</span><span class="w"> </span><span class="n">PointPillars</span><span class="p">(</span><span class="n">reproduce_result_mode_</span><span class="p">,</span><span class="w"> </span><span class="n">score_threshold_</span><span class="p">,</span><span class="w"></span>
+<span class="w">                       </span><span class="n">nms_overlap_threshold_</span><span class="p">,</span><span class="w"> </span><span class="n">FLAGS_pfe_onnx_file</span><span class="p">,</span><span class="w"></span>
+<span class="w">                       </span><span class="n">FLAGS_rpn_onnx_file</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="detect">
+<h2>实现(detect)<a class="headerlink" href="#detect" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">PointPillarsDetection::Detect</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">DetectionOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="n">LidarFrame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// record input cloud and lidar frame</span>
+<span class="w">  </span><span class="n">original_cloud_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">cloud</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">original_world_cloud_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">world_cloud</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">lidar_frame_ref_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">frame</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// check output</span>
+<span class="w">  </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">segmented_objects</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">Timer</span><span class="w"> </span><span class="n">timer</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 1. 设置GPU id</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cudaSetDevice</span><span class="p">(</span><span class="n">FLAGS_gpu_id</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">cudaSuccess</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to set device to gpu &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">FLAGS_gpu_id</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 转化点云为数组</span>
+<span class="w">  </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">points_array</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="kt">float</span><span class="p">[</span><span class="n">original_cloud_</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">4</span><span class="p">];</span><span class="w"></span>
+<span class="w">  </span><span class="n">PclToArray</span><span class="p">(</span><span class="n">original_cloud_</span><span class="p">,</span><span class="w"> </span><span class="n">points_array</span><span class="p">,</span><span class="w"> </span><span class="n">kNormalizingFactor</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 3. 进行推理</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">out_detections</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">point_pillars_ptr_</span><span class="o">-&gt;</span><span class="n">doInference</span><span class="p">(</span><span class="n">points_array</span><span class="p">,</span><span class="w"> </span><span class="n">original_cloud_</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                                  </span><span class="o">&amp;</span><span class="n">out_detections</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">inference_time_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">timer</span><span class="p">.</span><span class="n">toc</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 4. 输出障碍物的boundbox</span>
+<span class="w">  </span><span class="n">GetObjects</span><span class="p">(</span><span class="o">&amp;</span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">segmented_objects</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">lidar2world_pose</span><span class="p">,</span><span class="w"></span>
+<span class="w">             </span><span class="o">&amp;</span><span class="n">out_detections</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;PointPillars: inference: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">inference_time_</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\t</span><span class="s">&quot;</span><span class="w"></span>
+<span class="w">        </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;collect: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">collect_time_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>输出障碍物<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>获取目标做分类，点云模型目前只输出了车的分类，因此无法做其他分类</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">PointPillarsDetection::GetObjects</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">&gt;&gt;*</span><span class="w"> </span><span class="n">objects</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Affine3d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">pose</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;*</span><span class="w"> </span><span class="n">detections</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="n">Timer</span><span class="w"> </span><span class="n">timer</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">num_objects</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">detections</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">kOutputNumBoxFeature</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">objects</span><span class="o">-&gt;</span><span class="n">clear</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="n">base</span><span class="o">::</span><span class="n">ObjectPool</span><span class="o">::</span><span class="n">Instance</span><span class="p">().</span><span class="n">BatchGet</span><span class="p">(</span><span class="n">num_objects</span><span class="p">,</span><span class="w"> </span><span class="n">objects</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">num_objects</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">object</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">objects</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">i</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">    </span><span class="c1">// read params of bounding box</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">detections</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">kOutputNumBoxFeature</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">detections</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">kOutputNumBoxFeature</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">detections</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">kOutputNumBoxFeature</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">detections</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">kOutputNumBoxFeature</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">detections</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">kOutputNumBoxFeature</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">detections</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">kOutputNumBoxFeature</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">5</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">yaw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">detections</span><span class="o">-&gt;</span><span class="n">at</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">kOutputNumBoxFeature</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">6</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">yaw</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">M_PI</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">yaw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">atan2</span><span class="p">(</span><span class="n">sinf</span><span class="p">(</span><span class="n">yaw</span><span class="p">),</span><span class="w"> </span><span class="n">cosf</span><span class="p">(</span><span class="n">yaw</span><span class="p">));</span><span class="w"></span>
+<span class="w">    </span><span class="n">yaw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">yaw</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">    </span><span class="c1">// directions</span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">theta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">yaw</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">direction</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cosf</span><span class="p">(</span><span class="n">yaw</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">direction</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sinf</span><span class="p">(</span><span class="n">yaw</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">direction</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">is_orientation_ready</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">    </span><span class="c1">// compute vertexes of bounding box and transform to world coordinate</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dx2cos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dx</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cosf</span><span class="p">(</span><span class="n">yaw</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dy2sin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dy</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sinf</span><span class="p">(</span><span class="n">yaw</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dx2sin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dx</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sinf</span><span class="p">(</span><span class="n">yaw</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dy2cos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dy</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cosf</span><span class="p">(</span><span class="n">yaw</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">num_points_in_roi</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">on_use</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">is_background</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">j</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">PointF</span><span class="w"> </span><span class="n">point0</span><span class="p">,</span><span class="w"> </span><span class="n">point1</span><span class="p">,</span><span class="w"> </span><span class="n">point2</span><span class="p">,</span><span class="w"> </span><span class="n">point3</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="kt">float</span><span class="w"> </span><span class="n">vz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">j</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">dz</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">point0</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dx2cos</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dy2sin</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point0</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dx2sin</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dy2cos</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point0</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vz</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point1</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dx2cos</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dy2sin</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point1</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dx2sin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dy2cos</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point1</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vz</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point2</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dx2cos</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dy2sin</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point2</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dx2sin</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dy2cos</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point2</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vz</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point3</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dx2cos</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dy2sin</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point3</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dx2sin</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dy2cos</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">point3</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">vz</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">cloud</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">point0</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">cloud</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">point1</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">cloud</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">point2</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">cloud</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">point3</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">pt</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">cloud</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Vector3d</span><span class="w"> </span><span class="n">trans_point</span><span class="p">(</span><span class="n">pt</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">pt</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">pt</span><span class="p">.</span><span class="n">z</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">trans_point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pose</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">trans_point</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">PointD</span><span class="w"> </span><span class="n">world_point</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">world_point</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trans_point</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">world_point</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trans_point</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">world_point</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">trans_point</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">cloud_world</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">world_point</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">    </span><span class="c1">// classification (only detect vehicles so far)</span>
+<span class="w">    </span><span class="c1">// TODO(chenjiahao): Fill object types completely</span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">raw_probs</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">base</span><span class="o">::</span><span class="n">ObjectType</span><span class="o">::</span><span class="n">MAX_OBJECT_TYPE</span><span class="p">),</span><span class="w"> </span><span class="mf">0.f</span><span class="p">));</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">raw_classification_methods</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">Name</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">raw_probs</span><span class="w"></span>
+<span class="w">        </span><span class="p">.</span><span class="n">back</span><span class="p">()[</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">base</span><span class="o">::</span><span class="n">ObjectType</span><span class="o">::</span><span class="n">VEHICLE</span><span class="p">)]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0f</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// copy to type</span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">type_probs</span><span class="p">.</span><span class="n">assign</span><span class="p">(</span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">raw_probs</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">begin</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                              </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">lidar_supplement</span><span class="p">.</span><span class="n">raw_probs</span><span class="p">.</span><span class="n">back</span><span class="p">().</span><span class="n">end</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">base</span><span class="o">::</span><span class="n">ObjectType</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">distance</span><span class="p">(</span><span class="n">object</span><span class="o">-&gt;</span><span class="n">type_probs</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                      </span><span class="n">std</span><span class="o">::</span><span class="n">max_element</span><span class="p">(</span><span class="n">object</span><span class="o">-&gt;</span><span class="n">type_probs</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                                       </span><span class="n">object</span><span class="o">-&gt;</span><span class="n">type_probs</span><span class="p">.</span><span class="n">end</span><span class="p">())));</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">collect_time_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">timer</span><span class="p">.</span><span class="n">toc</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="pointpillars">
+<h1>PointPillars<a class="headerlink" href="#pointpillars" title="Permalink to this headline">¶</a></h1>
+<p>PointPillars，一种新颖的编码器，它利用PointNets来学习在垂直列柱体组织中的点云的特征。 Apollo中的PointPillars是基于autoware。<br />
+疑问：</p>
+<ol class="arabic simple">
+<li><p>具体的实现是如何实现的，大量用到了cuda</p></li>
+</ol>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PointPillars</span><span class="o">::</span><span class="n">PointPillars</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">reproduce_result_mode</span><span class="p">,</span><span class="w"></span>
+<span class="w">                           </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">score_threshold</span><span class="p">,</span><span class="w"></span>
+<span class="w">                           </span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">nms_overlap_threshold</span><span class="p">,</span><span class="w"></span>
+<span class="w">                           </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">pfe_onnx_file</span><span class="p">,</span><span class="w"></span>
+<span class="w">                           </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">rpn_onnx_file</span><span class="p">)</span><span class="w"></span>
+</pre></div>
+</div>
+<p>其中网络在”pfe_onnx_file”和”rpn_onnx_file”中，那么大概判断PointPillars是否是自己实现了cuda对神经网络的加速计算？？？</p>
+<p>综上所述DetectionComponent主要实现了雷达的识别，识别的具体功能实现在”perception/lidar”中，同时”perception/lidar”还实现了雷达的分割和追踪，后面我们会接着分析这个模块。</p>
+</div>
+<div class="section" id="fusioncameradetectioncomponent">
+<h1>FusionCameraDetectionComponent<a class="headerlink" href="#fusioncameradetectioncomponent" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id5">
+<h2>初始化Init<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">FusionCameraDetectionComponent::Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 1. 初始化配置</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">InitConfig</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">SUCC</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;InitConfig() failed.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 2. 感知结果</span>
+<span class="w">  </span><span class="n">writer_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">PerceptionObstacles</span><span class="o">&gt;</span><span class="p">(</span><span class="n">output_obstacles_channel_name_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 3. 提前融合传感器消息帧</span>
+<span class="w">  </span><span class="n">sensorframe_writer_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">SensorFrameMessage</span><span class="o">&gt;</span><span class="p">(</span><span class="n">prefused_channel_name_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 4. 相机可视化消息</span>
+<span class="w">  </span><span class="n">camera_viz_writer_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">CameraPerceptionVizMessage</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">camera_perception_viz_message_channel_name_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 5. 相机调试消息</span>
+<span class="w">  </span><span class="n">camera_debug_writer_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">apollo</span><span class="o">::</span><span class="n">perception</span><span class="o">::</span><span class="n">camera</span><span class="o">::</span><span class="n">CameraDebug</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">          </span><span class="n">camera_debug_channel_name_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 6. 初始化场景</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">InitSensorInfo</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">SUCC</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;InitSensorInfo() failed.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 7. 初始化算法</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">InitAlgorithmPlugin</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">SUCC</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;InitAlgorithmPlugin() failed.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 8. 初始化相机帧</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">InitCameraFrames</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">SUCC</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;InitCameraFrames() failed.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 9. 初始化矩阵</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">InitProjectMatrix</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">SUCC</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;InitProjectMatrix() failed.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 10. 初始化相机监听</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">InitCameraListeners</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">SUCC</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;InitCameraListeners() failed.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 11. 初始化移动服务？？？</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">InitMotionService</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">SUCC</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;InitMotionService() failed.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 12. 设置相机高度和角度</span>
+<span class="w">  </span><span class="n">SetCameraHeightAndPitch</span><span class="p">();</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// Init visualizer</span>
+<span class="w">  </span><span class="c1">// TODO(techoe, yg13): homography from image to ground should be</span>
+<span class="w">  </span><span class="c1">// computed from camera height and pitch.</span>
+<span class="w">  </span><span class="c1">// Apply online calibration to adjust pitch/height automatically</span>
+<span class="w">  </span><span class="c1">// Temporary code is used here for test</span>
+
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">pitch_adj_degree</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">yaw_adj_degree</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">roll_adj_degree</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// load in lidar to imu extrinsic</span>
+<span class="w">  </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix4d</span><span class="w"> </span><span class="n">ex_lidar2imu</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">LoadExtrinsics</span><span class="p">(</span><span class="n">FLAGS_obs_sensor_intrinsic_path</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">&quot;/&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"></span>
+<span class="w">                     </span><span class="s">&quot;velodyne128_novatel_extrinsics.yaml&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">                 </span><span class="o">&amp;</span><span class="n">ex_lidar2imu</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;velodyne128_novatel_extrinsics: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">ex_lidar2imu</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 13. 可视化</span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">visualize_</span><span class="p">.</span><span class="n">Init_all_info_single_camera</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">camera_names_</span><span class="p">,</span><span class="w"> </span><span class="n">visual_camera_</span><span class="p">,</span><span class="w"> </span><span class="n">intrinsic_map_</span><span class="p">,</span><span class="w"> </span><span class="n">extrinsic_map_</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="n">ex_lidar2imu</span><span class="p">,</span><span class="w"> </span><span class="n">pitch_adj_degree</span><span class="p">,</span><span class="w"> </span><span class="n">yaw_adj_degree</span><span class="p">,</span><span class="w"> </span><span class="n">roll_adj_degree</span><span class="p">,</span><span class="w"></span>
+<span class="w">      </span><span class="n">image_height_</span><span class="p">,</span><span class="w"> </span><span class="n">image_width_</span><span class="p">));</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">homography_im2car_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">visualize_</span><span class="p">.</span><span class="n">homography_im2car</span><span class="p">(</span><span class="n">visual_camera_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">camera_obstacle_pipeline_</span><span class="o">-&gt;</span><span class="n">SetIm2CarHomography</span><span class="p">(</span><span class="n">homography_im2car_</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 14. 车道前方最危险目标检测</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">enable_cipv_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">cipv_</span><span class="p">.</span><span class="n">Init</span><span class="p">(</span><span class="n">homography_im2car_</span><span class="p">,</span><span class="w"> </span><span class="n">min_laneline_length_for_cipv_</span><span class="p">,</span><span class="w"></span>
+<span class="w">               </span><span class="n">average_lane_width_in_meter_</span><span class="p">,</span><span class="w"> </span><span class="n">max_vehicle_width_in_meter_</span><span class="p">,</span><span class="w"></span>
+<span class="w">               </span><span class="n">average_frame_rate_</span><span class="p">,</span><span class="w"> </span><span class="n">image_based_cipv_</span><span class="p">,</span><span class="w"> </span><span class="n">debug_level_</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 15. 使能可视化</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">enable_visualization_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">write_visual_img_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">visualize_</span><span class="p">.</span><span class="n">write_out_img_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">visualize_</span><span class="p">.</span><span class="n">SetDirectory</span><span class="p">(</span><span class="n">visual_debug_folder_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>算法部分的实现在”InitAlgorithmPlugin()”中初始化，具体的实现在”ObstacleCameraPerception”中</p>
+</div>
+</div>
+<div class="section" id="obstaclecameraperception">
+<h1>ObstacleCameraPerception<a class="headerlink" href="#obstaclecameraperception" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id6">
+<h2>初始化Init<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>相机检测的初始化比较复杂，分为了几个方面。<br />
+其中读取的配置在文件”perception\production\conf\perception\camera\obstacle.pt”中，这里的”.pt”文件是否是pytorch传统概念上的pt文件？？？如果打开实际上是一个配置文件，并且指定了具体的pt文件在哪个目录。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ObstacleCameraPerception::Init</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">CameraPerceptionInitOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 1. 初始化探测器</span>
+<span class="w">  </span><span class="n">base</span><span class="o">::</span><span class="n">BaseCameraModelPtr</span><span class="w"> </span><span class="n">model</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">detector_param_size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">ObstacleDetectorInitOptions</span><span class="w"> </span><span class="n">detector_init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">app</span><span class="o">::</span><span class="n">DetectorParam</span><span class="w"> </span><span class="n">detector_param</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">detector_param</span><span class="p">(</span><span class="n">i</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">plugin_param</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">detector_param</span><span class="p">.</span><span class="n">plugin_param</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">detector_init_options</span><span class="p">.</span><span class="n">root_dir</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">GetAbsolutePath</span><span class="p">(</span><span class="n">work_root</span><span class="p">,</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">root_dir</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">detector_init_options</span><span class="p">.</span><span class="n">conf_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">config_file</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">detector_init_options</span><span class="p">.</span><span class="n">gpu_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">gpu_id</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span>
+<span class="w">    </span><span class="c1">// 1.1 获取模型</span>
+<span class="w">    </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">SensorManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetUndistortCameraModel</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">detector_param</span><span class="p">.</span><span class="n">camera_name</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">pinhole</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">base</span><span class="o">::</span><span class="n">PinholeCameraModel</span><span class="w"> </span><span class="o">*&gt;</span><span class="p">(</span><span class="n">model</span><span class="p">.</span><span class="n">get</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">name_intrinsic_map_</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix3f</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">detector_param</span><span class="p">.</span><span class="n">camera_name</span><span class="p">(),</span><span class="w"> </span><span class="n">pinhole</span><span class="o">-&gt;</span><span class="n">get_intrinsic_params</span><span class="p">()));</span><span class="w"></span>
+<span class="w">    </span><span class="n">detector_init_options</span><span class="p">.</span><span class="n">base_camera_model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">model</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BaseObstacleDetector</span><span class="o">&gt;</span><span class="w"> </span><span class="n">detector_ptr</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">BaseObstacleDetectorRegisterer</span><span class="o">::</span><span class="n">GetInstanceByName</span><span class="p">(</span><span class="n">plugin_param</span><span class="p">.</span><span class="n">name</span><span class="p">()));</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 1.2 探测器</span>
+<span class="w">    </span><span class="n">name_detector_map_</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BaseObstacleDetector</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">            </span><span class="n">detector_param</span><span class="p">.</span><span class="n">camera_name</span><span class="p">(),</span><span class="w"> </span><span class="n">detector_ptr</span><span class="p">));</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// 1.3 初始化探测器</span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">name_detector_map_</span><span class="p">.</span><span class="n">at</span><span class="p">(</span><span class="n">detector_param</span><span class="p">.</span><span class="n">camera_name</span><span class="p">())</span><span class="w"></span>
+<span class="w">               </span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">(</span><span class="n">detector_init_options</span><span class="p">))</span><span class="w"></span>
+<span class="w">        </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">name</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 初始化追踪器</span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">has_tracker_param</span><span class="p">())</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init tracker.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">ObstacleTrackerInitOptions</span><span class="w"> </span><span class="n">tracker_init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">tracker_init_options</span><span class="p">.</span><span class="n">image_width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">model</span><span class="o">-&gt;</span><span class="n">get_width</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">tracker_init_options</span><span class="p">.</span><span class="n">image_height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">model</span><span class="o">-&gt;</span><span class="n">get_height</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">tracker_init_options</span><span class="p">.</span><span class="n">gpu_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">gpu_id</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">plugin_param</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">tracker_param</span><span class="p">().</span><span class="n">plugin_param</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">tracker_init_options</span><span class="p">.</span><span class="n">root_dir</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">GetAbsolutePath</span><span class="p">(</span><span class="n">work_root</span><span class="p">,</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">root_dir</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">tracker_init_options</span><span class="p">.</span><span class="n">conf_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">config_file</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">tracker_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">BaseObstacleTrackerRegisterer</span><span class="o">::</span><span class="n">GetInstanceByName</span><span class="p">(</span><span class="n">plugin_param</span><span class="p">.</span><span class="n">name</span><span class="p">()));</span><span class="w"></span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">tracker_</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">tracker_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">(</span><span class="n">tracker_init_options</span><span class="p">))</span><span class="w"></span>
+<span class="w">        </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">name</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 3. 初始化转换器</span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">has_transformer_param</span><span class="p">())</span><span class="w"></span>
+<span class="w">      </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init transformer.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">ObstacleTransformerInitOptions</span><span class="w"> </span><span class="n">transformer_init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">plugin_param</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">transformer_param</span><span class="p">().</span><span class="n">plugin_param</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">transformer_init_options</span><span class="p">.</span><span class="n">root_dir</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">GetAbsolutePath</span><span class="p">(</span><span class="n">work_root</span><span class="p">,</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">root_dir</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">transformer_init_options</span><span class="p">.</span><span class="n">conf_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">config_file</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">transformer_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="n">BaseObstacleTransformerRegisterer</span><span class="o">::</span><span class="n">GetInstanceByName</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">name</span><span class="p">()));</span><span class="w"></span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">transformer_</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">transformer_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">(</span><span class="n">transformer_init_options</span><span class="p">))</span><span class="w"></span>
+<span class="w">        </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">name</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 4. 初始化障碍物后处理</span>
+<span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">has_postprocessor_param</span><span class="p">())</span><span class="w"></span>
+<span class="w">      </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init obstacle postprocessor.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">ObstaclePostprocessorInitOptions</span><span class="w"> </span><span class="n">obstacle_postprocessor_init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">plugin_param</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">postprocessor_param</span><span class="p">().</span><span class="n">plugin_param</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">obstacle_postprocessor_init_options</span><span class="p">.</span><span class="n">root_dir</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">GetAbsolutePath</span><span class="p">(</span><span class="n">work_root</span><span class="p">,</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">root_dir</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">obstacle_postprocessor_init_options</span><span class="p">.</span><span class="n">conf_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">config_file</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">obstacle_postprocessor_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">BaseObstaclePostprocessorRegisterer</span><span class="o">::</span><span class="n">GetInstanceByName</span><span class="p">(</span><span class="w"></span>
+<span class="w">            </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">name</span><span class="p">()));</span><span class="w"></span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">obstacle_postprocessor_</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">obstacle_postprocessor_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">(</span><span class="n">obstacle_postprocessor_init_options</span><span class="p">))</span><span class="w"></span>
+<span class="w">        </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">name</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 5. 初始化特征展开</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">has_feature_param</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;No feature config found.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">extractor_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">FeatureExtractorInitOptions</span><span class="w"> </span><span class="n">init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">plugin_param</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">feature_param</span><span class="p">().</span><span class="n">plugin_param</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">init_options</span><span class="p">.</span><span class="n">root_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetAbsolutePath</span><span class="p">(</span><span class="n">work_root</span><span class="p">,</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">root_dir</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">init_options</span><span class="p">.</span><span class="n">conf_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">config_file</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">extractor_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="w"></span>
+<span class="w">        </span><span class="n">BaseFeatureExtractorRegisterer</span><span class="o">::</span><span class="n">GetInstanceByName</span><span class="p">(</span><span class="n">plugin_param</span><span class="p">.</span><span class="n">name</span><span class="p">()));</span><span class="w"></span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">extractor_</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">extractor_</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">(</span><span class="n">init_options</span><span class="p">))</span><span class="w"></span>
+<span class="w">        </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to init: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">name</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">lane_calibration_working_sensor_name_</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">options</span><span class="p">.</span><span class="n">lane_calibration_working_sensor_name</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 6. 初始化车道</span>
+<span class="w">  </span><span class="n">InitLane</span><span class="p">(</span><span class="n">work_root</span><span class="p">,</span><span class="w"> </span><span class="n">perception_param_</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 7. 初始化校准服务</span>
+<span class="w">  </span><span class="n">InitCalibrationService</span><span class="p">(</span><span class="n">work_root</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="n">perception_param_</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 8. 初始化调试信息</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">has_debug_param</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// Init debug info</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">has_track_out_file</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">out_track_</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">track_out_file</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                      </span><span class="n">std</span><span class="o">::</span><span class="n">ofstream</span><span class="o">::</span><span class="n">out</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">has_camera2world_out_file</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">out_pose_</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">camera2world_out_file</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                     </span><span class="n">std</span><span class="o">::</span><span class="n">ofstream</span><span class="o">::</span><span class="n">out</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 9. 初始化对象模板</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">has_object_template_param</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">ObjectTemplateManagerInitOptions</span><span class="w"> </span><span class="n">init_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">plugin_param</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">object_template_param</span><span class="p">().</span><span class="n">plugin_param</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">init_options</span><span class="p">.</span><span class="n">root_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetAbsolutePath</span><span class="p">(</span><span class="n">work_root</span><span class="p">,</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">root_dir</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">init_options</span><span class="p">.</span><span class="n">conf_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">plugin_param</span><span class="p">.</span><span class="n">config_file</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">ObjectTemplateManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Init</span><span class="p">(</span><span class="n">init_options</span><span class="p">));</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="perception">
+<h2>相机感知(Perception)<a class="headerlink" href="#perception" title="Permalink to this headline">¶</a></h2>
+<p>相机的感知包括车道线和障碍物的感知，障碍物追踪几个功能。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ObstacleCameraPerception::Perception</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">CameraPerceptionOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">CameraFrame</span><span class="w"> </span><span class="o">*</span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">inference</span><span class="o">::</span><span class="n">CudaUtil</span><span class="o">::</span><span class="n">set_device_id</span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">gpu_id</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="n">ObstacleDetectorOptions</span><span class="w"> </span><span class="n">detector_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ObstacleTransformerOptions</span><span class="w"> </span><span class="n">transformer_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ObstaclePostprocessorOptions</span><span class="w"> </span><span class="n">obstacle_postprocessor_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">ObstacleTrackerOptions</span><span class="w"> </span><span class="n">tracker_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">FeatureExtractorOptions</span><span class="w"> </span><span class="n">extractor_options</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">camera_k_matrix</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">name_intrinsic_map_</span><span class="p">.</span><span class="n">at</span><span class="p">(</span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">data_provider</span><span class="o">-&gt;</span><span class="n">sensor_name</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">calibration_service</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Calibraion service is not available&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 1. 车道线识别</span>
+<span class="w">  </span><span class="n">LaneDetectorOptions</span><span class="w"> </span><span class="n">lane_detetor_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">LanePostprocessorOptions</span><span class="w"> </span><span class="n">lane_postprocessor_options</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">lane_detector_</span><span class="o">-&gt;</span><span class="n">Detect</span><span class="p">(</span><span class="n">lane_detetor_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to detect lane.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 2. 车道线后处理</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">lane_postprocessor_</span><span class="o">-&gt;</span><span class="n">Process2D</span><span class="p">(</span><span class="n">lane_postprocessor_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to postprocess lane 2D.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 3. 校准服务</span>
+<span class="w">  </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">calibration_service</span><span class="o">-&gt;</span><span class="n">Update</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="n">PERCEPTION_PERF_BLOCK_END_WITH_INDICATOR</span><span class="p">(</span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">data_provider</span><span class="o">-&gt;</span><span class="n">sensor_name</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                                           </span><span class="s">&quot;CalibrationService&quot;</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">lane_postprocessor_</span><span class="o">-&gt;</span><span class="n">Process3D</span><span class="p">(</span><span class="n">lane_postprocessor_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to postprocess lane 3D.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 4. 输出车道信息到文件</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">write_out_lane_file_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">lane_file_path</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">absl</span><span class="o">::</span><span class="n">StrCat</span><span class="p">(</span><span class="n">out_lane_dir_</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">frame_id</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.txt&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">WriteLanelines</span><span class="p">(</span><span class="n">write_out_lane_file_</span><span class="p">,</span><span class="w"> </span><span class="n">lane_file_path</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">lane_objects</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 5. 输出校准信息到文件</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">write_out_calib_file_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">calib_file_path</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">absl</span><span class="o">::</span><span class="n">StrCat</span><span class="p">(</span><span class="n">out_calib_dir_</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">frame_id</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.txt&quot;</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">WriteCalibrationOutput</span><span class="p">(</span><span class="n">write_out_calib_file_</span><span class="p">,</span><span class="w"> </span><span class="n">calib_file_path</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 6. 障碍物追踪</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">tracker_</span><span class="o">-&gt;</span><span class="n">Predict</span><span class="p">(</span><span class="n">tracker_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to predict.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BaseObstacleDetector</span><span class="o">&gt;</span><span class="w"> </span><span class="n">detector</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">name_detector_map_</span><span class="p">.</span><span class="n">at</span><span class="p">(</span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">data_provider</span><span class="o">-&gt;</span><span class="n">sensor_name</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span>
+<span class="w">  </span><span class="c1">// 7. 障碍物识别</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">detector</span><span class="o">-&gt;</span><span class="n">Detect</span><span class="p">(</span><span class="n">detector_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to detect.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 8. 保存障碍物信息为KITTI格式</span>
+<span class="w">  </span><span class="n">WriteDetections</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">has_detection_out_dir</span><span class="p">(),</span><span class="w"></span>
+<span class="w">      </span><span class="n">absl</span><span class="o">::</span><span class="n">StrCat</span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">detection_out_dir</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;/&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">                   </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">frame_id</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.txt&quot;</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">detected_objects</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">extractor_</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">extractor_</span><span class="o">-&gt;</span><span class="n">Extract</span><span class="p">(</span><span class="n">extractor_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to extractor&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// Save detection results with bbox, detection_feature</span>
+<span class="w">  </span><span class="n">WriteDetections</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">has_detect_feature_dir</span><span class="p">(),</span><span class="w"></span>
+<span class="w">      </span><span class="n">absl</span><span class="o">::</span><span class="n">StrCat</span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">detect_feature_dir</span><span class="p">(),</span><span class="w"> </span><span class="s">&quot;/&quot;</span><span class="p">,</span><span class="w"></span>
+<span class="w">                   </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">frame_id</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.txt&quot;</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">frame</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// Set the sensor name of each object</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">detected_objects</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">detected_objects</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">camera_supplement</span><span class="p">.</span><span class="n">sensor_name</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">data_provider</span><span class="o">-&gt;</span><span class="n">sensor_name</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">tracker_</span><span class="o">-&gt;</span><span class="n">Associate2D</span><span class="p">(</span><span class="n">tracker_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to associate2d.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 9. 进行坐标转换</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">transformer_</span><span class="o">-&gt;</span><span class="n">Transform</span><span class="p">(</span><span class="n">transformer_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to transform.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 10. 障碍物后处理</span>
+<span class="w">  </span><span class="n">obstacle_postprocessor_options</span><span class="p">.</span><span class="n">do_refinement_with_calibration_service</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">calibration_service</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">obstacle_postprocessor_</span><span class="o">-&gt;</span><span class="n">Process</span><span class="p">(</span><span class="n">obstacle_postprocessor_options</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                        </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to post process obstacles.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">tracker_</span><span class="o">-&gt;</span><span class="n">Associate3D</span><span class="p">(</span><span class="n">tracker_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to Associate3D.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 11. 追踪障碍物信息</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">tracker_</span><span class="o">-&gt;</span><span class="n">Track</span><span class="p">(</span><span class="n">tracker_options</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to track.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">has_debug_param</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">has_camera2world_out_file</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">WriteCamera2World</span><span class="p">(</span><span class="n">out_pose_</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">frame_id</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">camera2world_pose</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">has_track_out_file</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">WriteTracking</span><span class="p">(</span><span class="n">out_track_</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">frame_id</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">tracked_objects</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 12. 保存障碍物追踪信息为KITTI格式</span>
+<span class="w">  </span><span class="n">WriteDetections</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">has_tracked_detection_out_dir</span><span class="p">(),</span><span class="w"></span>
+<span class="w">      </span><span class="n">absl</span><span class="o">::</span><span class="n">StrCat</span><span class="p">(</span><span class="n">perception_param_</span><span class="p">.</span><span class="n">debug_param</span><span class="p">().</span><span class="n">tracked_detection_out_dir</span><span class="p">(),</span><span class="w"></span>
+<span class="w">                   </span><span class="s">&quot;/&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">frame_id</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;.txt&quot;</span><span class="p">),</span><span class="w"></span>
+<span class="w">      </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">tracked_objects</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// 13. 保存结果？？？</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">obj</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">tracked_objects</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">FillObjectPolygonFromBBox3D</span><span class="p">(</span><span class="n">obj</span><span class="p">.</span><span class="n">get</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="n">obj</span><span class="o">-&gt;</span><span class="n">anchor_point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">obj</span><span class="o">-&gt;</span><span class="n">center</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="cipv">
+<h2>前方最危险目标检测(Cipv)<a class="headerlink" href="#cipv" title="Permalink to this headline">¶</a></h2>
+<p>Cipv在”perception/camera”中，</p>
+</div>
+</div>
+<div class="section" id="fusioncomponent">
+<h1>FusionComponent<a class="headerlink" href="#fusioncomponent" title="Permalink to this headline">¶</a></h1>
+<p>融合感知模块采用的是”ObstacleMultiSensorFusion”中的实现。当消息到来的时候会执行Proc，而Proc是调用内部实现”InternalProc”。</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">FusionComponent::InternalProc</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">SensorFrameMessage</span><span class="w"> </span><span class="k">const</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">in_message</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">PerceptionObstacles</span><span class="o">&gt;</span><span class="w"> </span><span class="n">out_message</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">SensorFrameMessage</span><span class="o">&gt;</span><span class="w"> </span><span class="n">viz_message</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">unique_lock</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">s_mutex_</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="n">s_seq_num_</span><span class="o">++</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">PERCEPTION_PERF_BLOCK_START</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">timestamp_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">lidar_timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">lidar_timestamp_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">base</span><span class="o">::</span><span class="n">ObjectPtr</span><span class="o">&gt;</span><span class="w"> </span><span class="n">valid_objects</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">error_code_</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">MsgSerializer</span><span class="o">::</span><span class="n">SerializeMsg</span><span class="p">(</span><span class="w"></span>
+<span class="w">            </span><span class="n">timestamp</span><span class="p">,</span><span class="w"> </span><span class="n">lidar_timestamp</span><span class="p">,</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">seq_num_</span><span class="p">,</span><span class="w"> </span><span class="n">valid_objects</span><span class="p">,</span><span class="w"></span>
+<span class="w">            </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">error_code_</span><span class="p">,</span><span class="w"> </span><span class="n">out_message</span><span class="p">.</span><span class="n">get</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to gen PerceptionObstacles object.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_obs_enable_visualization</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">process_stage_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ProcessStage</span><span class="o">::</span><span class="n">SENSOR_FUSION</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">error_code_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">error_code_</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Fusion receive message with error code, skip it.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">base</span><span class="o">::</span><span class="n">FramePtr</span><span class="w"> </span><span class="n">frame</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">frame_</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">timestamp_</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">base</span><span class="o">::</span><span class="n">ObjectPtr</span><span class="o">&gt;</span><span class="w"> </span><span class="n">fused_objects</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">fusion_</span><span class="o">-&gt;</span><span class="n">Process</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">fused_objects</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to call fusion plugin.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">PERCEPTION_PERF_BLOCK_END_WITH_INDICATOR</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">&quot;fusion_process&quot;</span><span class="p">),</span><span class="w"></span>
+<span class="w">                                           </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">sensor_id_</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">sensor_id_</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">fusion_main_sensor_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">  </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Matrix4d</span><span class="w"> </span><span class="n">sensor2world_pose</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">      </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">frame_</span><span class="o">-&gt;</span><span class="n">sensor2world_pose</span><span class="p">.</span><span class="n">matrix</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">object_in_roi_check_</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">FLAGS_obs_enable_hdmap_input</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="c1">// get hdmap</span>
+<span class="w">    </span><span class="n">base</span><span class="o">::</span><span class="n">HdmapStructPtr</span><span class="w"> </span><span class="n">hdmap</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">HdmapStruct</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hdmap_input_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">base</span><span class="o">::</span><span class="n">PointD</span><span class="w"> </span><span class="n">position</span><span class="p">;</span><span class="w"></span>
+<span class="w">      </span><span class="n">position</span><span class="p">.</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sensor2world_pose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">position</span><span class="p">.</span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sensor2world_pose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">position</span><span class="p">.</span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sensor2world_pose</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="n">hdmap_input_</span><span class="o">-&gt;</span><span class="n">GetRoiHDMapStruct</span><span class="p">(</span><span class="n">position</span><span class="p">,</span><span class="w"> </span><span class="n">radius_for_roi_object_check_</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                      </span><span class="n">hdmap</span><span class="p">);</span><span class="w"></span>
+<span class="w">      </span><span class="c1">// TODO(use check)</span>
+<span class="w">      </span><span class="c1">// ObjectInRoiSlackCheck(hdmap, fused_objects, &amp;valid_objects);</span>
+<span class="w">      </span><span class="n">valid_objects</span><span class="p">.</span><span class="n">assign</span><span class="p">(</span><span class="n">fused_objects</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">fused_objects</span><span class="p">.</span><span class="n">end</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">      </span><span class="n">valid_objects</span><span class="p">.</span><span class="n">assign</span><span class="p">(</span><span class="n">fused_objects</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">fused_objects</span><span class="p">.</span><span class="n">end</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">valid_objects</span><span class="p">.</span><span class="n">assign</span><span class="p">(</span><span class="n">fused_objects</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span><span class="w"> </span><span class="n">fused_objects</span><span class="p">.</span><span class="n">end</span><span class="p">());</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">PERCEPTION_PERF_BLOCK_END_WITH_INDICATOR</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">&quot;fusion_roi_check&quot;</span><span class="p">),</span><span class="w"></span>
+<span class="w">                                           </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">sensor_id_</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="c1">// produce visualization msg</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_obs_enable_visualization</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">timestamp_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">timestamp_</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">seq_num_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">seq_num_</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">frame_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="o">::</span><span class="n">FramePool</span><span class="o">::</span><span class="n">Instance</span><span class="p">().</span><span class="n">Get</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">frame_</span><span class="o">-&gt;</span><span class="n">sensor2world_pose</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">frame_</span><span class="o">-&gt;</span><span class="n">sensor2world_pose</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">sensor_id_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">sensor_id_</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">hdmap_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">hdmap_</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">process_stage_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ProcessStage</span><span class="o">::</span><span class="n">SENSOR_FUSION</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">error_code_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">error_code_</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">viz_message</span><span class="o">-&gt;</span><span class="n">frame_</span><span class="o">-&gt;</span><span class="n">objects</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fused_objects</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// produce pb output msg</span>
+<span class="w">  </span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="w"> </span><span class="n">error_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="o">::</span><span class="n">OK</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">MsgSerializer</span><span class="o">::</span><span class="n">SerializeMsg</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span><span class="w"> </span><span class="n">lidar_timestamp</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">seq_num_</span><span class="p">,</span><span class="w"> </span><span class="n">valid_objects</span><span class="p">,</span><span class="w"></span>
+<span class="w">                                   </span><span class="n">error_code</span><span class="p">,</span><span class="w"> </span><span class="n">out_message</span><span class="p">.</span><span class="n">get</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to gen PerceptionObstacles object.&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="w">  </span><span class="n">PERCEPTION_PERF_BLOCK_END_WITH_INDICATOR</span><span class="p">(</span><span class="w"></span>
+<span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">&quot;fusion_serialize_message&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">in_message</span><span class="o">-&gt;</span><span class="n">sensor_id_</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">cur_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">time</span><span class="o">::</span><span class="n">Clock</span><span class="o">::</span><span class="n">NowInSeconds</span><span class="p">();</span><span class="w"></span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">latency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">cur_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">timestamp</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1e3</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;FRAME_STATISTICS:Obstacle:End:msg_time[&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">timestamp</span><span class="w"></span>
+<span class="w">        </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;]:cur_time[&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">cur_time</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;]:cur_latency[&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">latency</span><span class="w"></span>
+<span class="w">        </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;]:obj_cnt[&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">valid_objects</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;]&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="n">AINFO</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;publish_number: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">valid_objects</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; obj&quot;</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<div class="section" id="obstaclemultisensorfusion">
+<h2>ObstacleMultiSensorFusion<a class="headerlink" href="#obstaclemultisensorfusion" title="Permalink to this headline">¶</a></h2>
+<p>ObstacleMultiSensorFusion实现了障碍物的融合，在目录”modules\perception\fusion”中。</p>
+</div>
+</div>
+<div class="section" id="lanedetectioncomponent">
+<h1>LaneDetectionComponent<a class="headerlink" href="#lanedetectioncomponent" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="lidaroutputcomponent">
+<h1>LidarOutputComponent<a class="headerlink" href="#lidaroutputcomponent" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="recognitioncomponent">
+<h1>RecognitionComponent<a class="headerlink" href="#recognitioncomponent" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="radardetectioncomponent">
+<h1>RadarDetectionComponent<a class="headerlink" href="#radardetectioncomponent" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="segmentationcomponent">
+<h1>SegmentationComponent<a class="headerlink" href="#segmentationcomponent" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="trafficlightsperceptioncomponent">
+<h1>TrafficLightsPerceptionComponent<a class="headerlink" href="#trafficlightsperceptioncomponent" title="Permalink to this headline">¶</a></h1>
+<p>至此，整个感知模块的分析就完成了，可以看到感知模块主要是负责获取障碍物的类型、以及车道等信息反馈给车。</p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, daohu527.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/perception/detection_component.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
