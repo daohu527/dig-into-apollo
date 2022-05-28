@@ -1,40 +1,81 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Frame &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frame &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">Dig into Apollo - Library </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">Dig into Apollo - Papers </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">Dig into Apollo - Performance </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">Dig into Apollo - Questions </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">Dig into Apollo - Simulation </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">Dig into Apollo - Build </a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Frame</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/planning/todo.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <div class="section" id="frame">
-<h1>Frame<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h1>
+<h1>Frame<a class="headerlink" href="#frame" title="Permalink to this headline"></a></h1>
 <p>Frame代表了规划模块中的一帧，包括了多种信息。</p>
 <div class="section" id="finddrivereferencelineinfo">
-<h2>FindDriveReferenceLineInfo<a class="headerlink" href="#finddrivereferencelineinfo" title="Permalink to this headline">¶</a></h2>
+<h2>FindDriveReferenceLineInfo<a class="headerlink" href="#finddrivereferencelineinfo" title="Permalink to this headline"></a></h2>
 <p>找到代价最小并且可以行驶的参考线，然后返回结果。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="nf">Frame::FindDriveReferenceLineInfo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">min_cost</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">numeric_limits</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;::</span><span class="n">infinity</span><span class="p">();</span><span class="w"></span>
@@ -53,7 +94,7 @@
 </div>
 </div>
 <div class="section" id="findtargetreferencelineinfo">
-<h2>FindTargetReferenceLineInfo<a class="headerlink" href="#findtargetreferencelineinfo" title="Permalink to this headline">¶</a></h2>
+<h2>FindTargetReferenceLineInfo<a class="headerlink" href="#findtargetreferencelineinfo" title="Permalink to this headline"></a></h2>
 <p>返回第一个变道类型的参考线，如果没有找到，则返回最后一个参考线。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="nf">Frame::FindTargetReferenceLineInfo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="n">target_reference_line_info</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span><span class="w"></span>
@@ -69,7 +110,7 @@
 </div>
 </div>
 <div class="section" id="findfailedreferencelineinfo">
-<h2>FindFailedReferenceLineInfo<a class="headerlink" href="#findfailedreferencelineinfo" title="Permalink to this headline">¶</a></h2>
+<h2>FindFailedReferenceLineInfo<a class="headerlink" href="#findfailedreferencelineinfo" title="Permalink to this headline"></a></h2>
 <p>找到是变道类型并且不能行驶的参考线，如果没有找到则返回空。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="nf">Frame::FindFailedReferenceLineInfo</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_line_info</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">reference_line_info_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -85,7 +126,7 @@
 </div>
 </div>
 <div class="section" id="drivereferencelineinfo">
-<h2>DriveReferenceLineInfo<a class="headerlink" href="#drivereferencelineinfo" title="Permalink to this headline">¶</a></h2>
+<h2>DriveReferenceLineInfo<a class="headerlink" href="#drivereferencelineinfo" title="Permalink to this headline"></a></h2>
 <p>返回FindDriveReferenceLineInfo中找到的参考线。即代价最小并且可以行驶的参考线。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">const</span><span class="w"> </span><span class="n">ReferenceLineInfo</span><span class="w"> </span><span class="o">*</span><span class="nf">Frame::DriveReferenceLineInfo</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">drive_reference_line_info_</span><span class="p">;</span><span class="w"></span>
@@ -94,7 +135,7 @@
 </div>
 </div>
 <div class="section" id="updatereferencelinepriority">
-<h2>UpdateReferenceLinePriority<a class="headerlink" href="#updatereferencelinepriority" title="Permalink to this headline">¶</a></h2>
+<h2>UpdateReferenceLinePriority<a class="headerlink" href="#updatereferencelinepriority" title="Permalink to this headline"></a></h2>
 <p>更新参考线的优先级，其中key为lane的id，value为优先级。(todo)这里的lanes是<code class="docutils literal notranslate"><span class="pre">hdmap::RouteSegments</span></code>类型，为什么id只有一个？</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Frame::UpdateReferenceLinePriority</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="kt">uint32_t</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">id_to_priority</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -115,7 +156,7 @@
 </div>
 </div>
 <div class="section" id="createreferencelineinfo">
-<h2>CreateReferenceLineInfo<a class="headerlink" href="#createreferencelineinfo" title="Permalink to this headline">¶</a></h2>
+<h2>CreateReferenceLineInfo<a class="headerlink" href="#createreferencelineinfo" title="Permalink to this headline"></a></h2>
 <p>根据reference_lines创建reference_line_info_（也是一个数组），并且添加障碍物到数组。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">Frame::CreateReferenceLineInfo</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">ReferenceLine</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_lines</span><span class="p">,</span><span class="w"></span>
@@ -170,71 +211,31 @@
 </div>
 
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/modules/planning/todo.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

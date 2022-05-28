@@ -1,4 +1,4 @@
-# Dig into Apollo - Audio ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
+# Audio
 
 > 勤学如春起之苗，不见其增，日有所长。
 
@@ -32,7 +32,7 @@ audio模块的输出是`/apollo/audio_detection`，输出的消息包括：是�
 <a name="content" />
 
 ## 目录结构
-audio模块的目录结构如下，整体来说并不复杂，主要的逻辑在"inference"中。  
+audio模块的目录结构如下，整体来说并不复杂，主要的逻辑在"inference"中。
 ```
 ├── audio_component.cc
 ├── audio_component.h   // 模块入口
@@ -50,12 +50,12 @@ audio模块的目录结构如下，整体来说并不复杂，主要的逻辑在
 
 Audio模块为事件驱动，当接受到驱动模块的声音输入的时候，就开始解析声音，并且输出结果，下面我们来详细分析具体的处理过程。
 audio模块的整体调用流程如图：
-![调用流程](img/main.jpg)  
+![调用流程](img/main.jpg)
 
 <a name="main_process" />
 
 #### 模块入口
-audio模块通过"Init()"进行初始化，主要是读取录音机的外参，并且创建"audio_writer_"用于发布消息。初始化好之后，接着通过"Proc"来处理消息。处理的过程通过"OnMicrophone"来完成。  
+audio模块通过"Init()"进行初始化，主要是读取录音机的外参，并且创建"audio_writer_"用于发布消息。初始化好之后，接着通过"Proc"来处理消息。处理的过程通过"OnMicrophone"来完成。
 ```c++
 bool AudioComponent::Proc(const std::shared_ptr<AudioData>& audio_data) {
   // TODO(all) remove GetSignals() multiple calls
@@ -93,13 +93,13 @@ class SirenDetection {
   void LoadModel();
 ```
 
-Evaluate函数对多个通道声音进行处理，然后输入到模型，并且得出正向和反向的结果，当正向的分数大于反向的时候，则表示检测到了特殊车辆。  
+Evaluate函数对多个通道声音进行处理，然后输入到模型，并且得出正向和反向的结果，当正向的分数大于反向的时候，则表示检测到了特殊车辆。
 ```c++
 bool SirenDetection::Evaluate(const std::vector<std::vector<double>>& signals) {
   // 1. 读取4个通道的数据，装入audio_tensor中
   torch::Tensor audio_tensor = torch::empty(4 * 1 * 72000);
   float* data = audio_tensor.data_ptr<float>();
-  
+
   for (const auto& channel : signals) {
     for (const auto& i : channel) {
       *data++ = static_cast<float>(i) / 32767.0;
@@ -172,7 +172,7 @@ MovingResult MovingDetection::DetectSingleChannel(
   return top_frequency_result;
 }
 ```
-可以看到单个通道先通过"GetSignalStat"获取声音信息，并且优先采用声音强度信息，然后采用声音频率。  
+可以看到单个通道先通过"GetSignalStat"获取声音信息，并且优先采用声音强度信息，然后采用声音频率。
 
 我们接着上一步骤看如何获取声音强度和声音频率。
 ```c++
@@ -204,8 +204,8 @@ MovingDetection::SignalStat MovingDetection::GetSignalStat(
 <a name="direction_detection" />
 
 ## 方向检测(DirectionDetection)
-在"DirectionDetection"类中对紧急车辆的方向进行估计，通过2个通道的差异和声音的速度，就可以得到车辆的大概位置。  
-DirectionDetection类的主要实现在"EstimateSoundSource"函数中，下面我们来分析下具体的实现。  
+在"DirectionDetection"类中对紧急车辆的方向进行估计，通过2个通道的差异和声音的速度，就可以得到车辆的大概位置。
+DirectionDetection类的主要实现在"EstimateSoundSource"函数中，下面我们来分析下具体的实现。
 ```c++
 std::pair<Point3D, double> DirectionDetection::EstimateSoundSource(
     std::vector<std::vector<double>>&& channels_vec,
@@ -233,7 +233,7 @@ std::pair<Point3D, double> DirectionDetection::EstimateSoundSource(
 }
 ```
 
-那么如何计算方向角度呢？ 下面我们看下"EstimateDirection"的实现。  
+那么如何计算方向角度呢？ 下面我们看下"EstimateDirection"的实现。
 ```c++
 double DirectionDetection::EstimateDirection(
     std::vector<std::vector<double>>&& channels_vec, const int sample_rate,
@@ -269,7 +269,7 @@ double DirectionDetection::EstimateDirection(
 }
 ```
 
-计算2个通道，从而得到角度信息的实现如下。  
+计算2个通道，从而得到角度信息的实现如下。
 ```c++
 double DirectionDetection::GccPhat(const torch::Tensor& sig,
                                    const torch::Tensor& refsig, int fs,
@@ -302,7 +302,7 @@ double DirectionDetection::GccPhat(const torch::Tensor& sig,
 }
 ```
 
-Todo:  
+Todo:
 关于上述过程的详细计算原理，之后需要做进一步的补充？？？
 
 <a name="tools" />
@@ -316,4 +316,4 @@ tools目录提供了一些录制和调试工具。
 
 至此，我们就得到了是否有紧急车辆，以及车辆的移动方式和方向。实际上audio模块的代码中还遗留有位置信息、感知的结果，估计后面会增加一些新的融合功能。
 
-整体上audio模块还是挺有意思的，当然声音的识别，以及在嘈杂环境如何获取到比较关注的声音，都是业界研究的热点方向，但主要还是集中在室内对人的声音的追踪，室外以及对车或者后续增加到人的场景，还有待发掘。  
+整体上audio模块还是挺有意思的，当然声音的识别，以及在嘈杂环境如何获取到比较关注的声音，都是业界研究的热点方向，但主要还是集中在室内对人的声音的追踪，室外以及对车或者后续增加到人的场景，还有待发掘。

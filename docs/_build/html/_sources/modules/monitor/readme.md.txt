@@ -1,6 +1,6 @@
-# Dig into Apollo - Monitor ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)  
+# Monitor
 
-> 人不知而不愠，不亦君子乎。  
+> 人不知而不愠，不亦君子乎。
 
 ## Table of Contents
 
@@ -8,7 +8,7 @@
 <a name="introduction" />
 
 ## 简介
-monitor模块主要是监控硬件和软件状态，当出现故障的时候，显示故障原因，并且输出状态给guardian模块进行紧急处理。  
+monitor模块主要是监控硬件和软件状态，当出现故障的时候，显示故障原因，并且输出状态给guardian模块进行紧急处理。
 
 ## MonitorManager
 

@@ -1,48 +1,123 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dig into Apollo - Guardian &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>9. Guardian &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="next" title="10. Localization" href="../localization/readme.html" />
+    <link rel="prev" title="8. Drivers" href="../drivers/readme.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">快速开始:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">1. 什么是Apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">2. 如何编译</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">3. 启动容器</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">1. Cyber</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../audio/readme.html">2. Audio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bridge/readme.html">3. Bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../canbus/readme.html">4. Canbus</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../control/readme.html">5. Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data/readme.html">6. Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dreamview/readme.html">7. Dreamview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../drivers/readme.html">8. Drivers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">9. Guardian</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">9.1. Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">9.2. 触发</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#triggersafetymode">9.3. TriggerSafetyMode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">9.4. 问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../localization/readme.html">10. Localization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../map/readme.html">11. Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../monitor/readme.html">12. Monitor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../perception/readme.html">13. Perception</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../planning/readme.html">14. Planning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prediction/readme.html">15. Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../routing/readme.html">16. Routing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../routing/readme.html#id5">17. Routing模块分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/readme.html">18. Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transform/readme.html">19. Transform</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../v2x/readme.html">20. V2X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">23. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">24. 论文</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">28. 常见问题</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
-  <div class="section" id="dig-into-apollo-guardian-github">
-<h1>Dig into Apollo - Guardian <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-guardian-github" title="Permalink to this headline">¶</a></h1>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">&lt;no title&gt;</a> &raquo;</li>
+      <li><span class="section-number">9. </span>Guardian</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/guardian/readme.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="guardian">
+<h1><span class="section-number">9. </span>Guardian<a class="headerlink" href="#guardian" title="Permalink to this headline"></a></h1>
 <blockquote>
 <div><p>人不知而不愠，不亦君子乎。</p>
 </div></blockquote>
 <div class="section" id="table-of-contents">
-<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">9.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
 <a name="introduction" />
 ## 简介
-Guardian模块的主要作用是监控自动驾驶系统状态，当出现模块为失败状态的时候，会主动切断控制命令输出，并且刹车。  
+Guardian模块的主要作用是监控自动驾驶系统状态，当出现模块为失败状态的时候，会主动切断控制命令输出，并且刹车。
 </div>
 <div class="section" id="id1">
-<h2>触发<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">9.2. </span>触发<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>guardian模块的触发条件主要有2个。</p>
 <ol class="arabic simple">
 <li><p>上报模块状态的消息间隔超过kSecondsTillTimeout（2.5秒）</p></li>
@@ -51,82 +126,45 @@ Guardian模块的主要作用是监控自动驾驶系统状态，当出现模块
 </ol>
 </div>
 <div class="section" id="triggersafetymode">
-<h2>TriggerSafetyMode<a class="headerlink" href="#triggersafetymode" title="Permalink to this headline">¶</a></h2>
-<p>安全模式的步骤分为2步骤，第一步状态消息中需要紧急刹车或者超声波检测到障碍物，如果检测到障碍物则说明车已经非常接近障碍物了，该检测被称为硬件触发的检测，因为已经发现模块故障，也非常接近障碍物所以刹车会加急。第二步是普通刹车，刹车没有那么急。 guardian为定时模块，所以该过程中会一直发送消息，直到车辆停车。<br />
+<h2><span class="section-number">9.3. </span>TriggerSafetyMode<a class="headerlink" href="#triggersafetymode" title="Permalink to this headline"></a></h2>
+<p>安全模式的步骤分为2步骤，第一步状态消息中需要紧急刹车或者超声波检测到障碍物，如果检测到障碍物则说明车已经非常接近障碍物了，该检测被称为硬件触发的检测，因为已经发现模块故障，也非常接近障碍物所以刹车会加急。第二步是普通刹车，刹车没有那么急。 guardian为定时模块，所以该过程中会一直发送消息，直到车辆停车。
 当前版本代码屏蔽了上述超声波检测。</p>
 </div>
 <div class="section" id="id2">
-<h2>问题<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">9.4. </span>问题<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <p>guardian模块的频率是10ms，因此最大会增加control命令的延时10ms。</p>
 </div>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../drivers/readme.html" class="btn btn-neutral float-left" title="8. Drivers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../localization/readme.html" class="btn btn-neutral float-right" title="10. Localization" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/modules/guardian/readme.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

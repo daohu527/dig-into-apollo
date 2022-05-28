@@ -1,14 +1,6 @@
-# Dig into Apollo - Questions ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
+# 常见问题
 
 > 非淡漠无以明德，非宁静无以致远。
-
-## 目录
-
-- [build](#build)
-- [map](#map)
-- [simulation](#simulation)
-- [planning](#planning)
-- [misc](#misc)
 
 
 <a name="build" />
@@ -93,16 +85,16 @@ python modules/tools/routing/debug_topo.py
 
 ## misc
 
-* What is the format of the config file in Apollo?  
+* What is the format of the config file in Apollo?
 The config file base by **protobuf** format, and read by `cyber::common::GetProtoFromFile()` method.
 
 * How to open the debug log?
 
 1. modify the "apollo/cyber/setup.bash"
 ```
- # for DEBUG log 
- export GLOG_v=4 
-```  
+ # for DEBUG log
+ export GLOG_v=4
+```
 2. Enable environment variables
 ```
 source cyber/setup.bash

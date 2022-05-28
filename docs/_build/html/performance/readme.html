@@ -1,61 +1,125 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dig into Apollo - Performance &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>21. 性能分析 &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-   
-  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="next" title="22. 仿真" href="../simulation/readme.html" />
+    <link rel="prev" title="20. V2X" href="../modules/v2x/readme.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">快速开始:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../what_is_apollo/readme.html">1. 什么是Apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_to_build/readme.html">2. 如何编译</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docker/readme.html">3. 启动容器</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../cyber/readme.html">1. Cyber</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/audio/readme.html">2. Audio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/bridge/readme.html">3. Bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/canbus/readme.html">4. Canbus</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/control/readme.html">5. Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data/readme.html">6. Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dreamview/readme.html">7. Dreamview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/drivers/readme.html">8. Drivers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/guardian/readme.html">9. Guardian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/localization/readme.html">10. Localization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/map/readme.html">11. Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/monitor/readme.html">12. Monitor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/perception/readme.html">13. Perception</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/planning/readme.html">14. Planning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/prediction/readme.html">15. Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/routing/readme.html">16. Routing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/routing/readme.html#id5">17. Routing模块分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/tools/readme.html">18. Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transform/readme.html">19. Transform</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/v2x/readme.html">20. V2X</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">21. 性能分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">21.1. 线程调度</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cgroups">21.2. Cgroups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cpu">21.3. CPU亲和性</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">21.4. 中断绑定</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#linux">21.5. linux性能优化</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#perf">21.5.1. perf安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">21.5.2. 火焰图</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#reference">21.6. Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../simulation/readme.html">22. 仿真</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library/readme.html">23. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../papers/readme.html">24. 论文</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../questions/readme.html">28. 常见问题</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
-  <div class="section" id="dig-into-apollo-performance-github">
-<h1>Dig into Apollo - Performance <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-performance-github" title="Permalink to this headline">¶</a></h1>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li><span class="section-number">21. </span>性能分析</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/performance/readme.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="id1">
+<h1><span class="section-number">21. </span>性能分析<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h1>
 <blockquote>
 <div><p>四方上下曰宇，往古来今曰宙。</p>
 </div></blockquote>
-<div class="section" id="table-of-contents">
-<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p><span class="xref myst">线程调度</span></p></li>
-<li><p><span class="xref myst">Cgroups</span></p></li>
-<li><p><span class="xref myst">CPU亲和性</span></p></li>
-<li><p><span class="xref myst">中断绑定</span></p></li>
-<li><p><span class="xref myst">linux性能优化</span></p>
-<ul>
-<li><p><span class="xref myst">Perf安装</span></p></li>
-<li><p><span class="xref myst">火焰图</span></p></li>
-</ul>
-</li>
-<li><p><span class="xref myst">Reference</span></p></li>
-</ul>
 <p>我们主要从以下几个方面来优化我们的系统，使得系统更加稳定，节省资源，同时能够又能保证任务的实时性。以下几个技术都是目前Apollo Cyber中采用的技术。</p>
 <a name="schedule" />
-</div>
-<div class="section" id="id1">
-<h2>线程调度<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<p>由于linux操作系统提供了控制线程的API接口，cyber通过系统提供的API对进程的优先级和使用的资源进行调节。首先cyber将要求比较高的进程设置为实时进程，linux操作系统中实时进程的优先级最高，实时进程可以抢占其它线程，好处是能够保证实时进程在一定的时间内返回结果，这在自动驾驶控制系统中非常关键，试想一下如果需要发送一条指令给汽车，系统没有在规定的时间内响应，或者响应有延迟，就有可能导致车祸。<br />
+<div class="section" id="id2">
+<h2><span class="section-number">21.1. </span>线程调度<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
+<p>由于linux操作系统提供了控制线程的API接口，cyber通过系统提供的API对进程的优先级和使用的资源进行调节。首先cyber将要求比较高的进程设置为实时进程，linux操作系统中实时进程的优先级最高，实时进程可以抢占其它线程，好处是能够保证实时进程在一定的时间内返回结果，这在自动驾驶控制系统中非常关键，试想一下如果需要发送一条指令给汽车，系统没有在规定的时间内响应，或者响应有延迟，就有可能导致车祸。
 linux对<strong>实时进程</strong>的调度有2种方式：</p>
 <ol class="arabic simple">
 <li><p>SCHED_FIFO - 先到的进程优先执行，后到的进程需要等之前的进程执行完成之后再开始执行。</p></li>
@@ -67,8 +131,8 @@ linux对<strong>实时进程</strong>的调度有2种方式：</p>
 <a name="cgroups" />
 </div>
 <div class="section" id="cgroups">
-<h2>Cgroups<a class="headerlink" href="#cgroups" title="Permalink to this headline">¶</a></h2>
-<p>cgroups，名称源自控制组群（control groups）的简写，是Linux内核的一个功能，用来限制、控制与分离一个进程组群的资源（如CPU、内存、磁盘输入输出等)。<br />
+<h2><span class="section-number">21.2. </span>Cgroups<a class="headerlink" href="#cgroups" title="Permalink to this headline"></a></h2>
+<p>cgroups，名称源自控制组群（control groups）的简写，是Linux内核的一个功能，用来限制、控制与分离一个进程组群的资源（如CPU、内存、磁盘输入输出等)。
 cgroups的一个设计目标是为不同的应用情况提供统一的接口，从控制单一进程（像nice）到操作系统层虚拟化（像OpenVZ，Linux-VServer，LXC）。cgroups提供：</p>
 <ul class="simple">
 <li><p>资源限制：组可以被设置不超过设定的内存限制；这也包括虚拟内存。</p></li>
@@ -82,9 +146,9 @@ cgroups的一个设计目标是为不同的应用情况提供统一的接口，�
 <a name="cpu" />
 </div>
 <div class="section" id="cpu">
-<h2>CPU亲和性<a class="headerlink" href="#cpu" title="Permalink to this headline">¶</a></h2>
-<p>CPU亲和性又叫Processor affinity或CPU pinning。现在的CPU都是多核心的，比如Apollo推荐的计算单元就是4核8线程，多核心CPU的好处是可以同时执行多个任务。现在假设多核CPU有以下场景，一个核上的任务很多，而另外的核心都是空闲状态，那么就会出现一个核累死，而其他的核都在等待的状态，这时候操作系统就想到了一种技术来解决这个问题，即CPU的负载均衡，当一个CPU核心上的任务很多，而其他CPU是空闲状态的时候，操作系统会把这个核上的任务迁移到其他核心，这样多核CPU的利用率就上来了。<br />
-对整个系统来说，CPU负载均衡是一个好技术，但是对单个线程来说，就不是那么好了。线程迁移会导致额外的开销，比如当前的CACHE需要重新刷新，而且把重要的任务绑定到单独的核心上，可以保证这个任务的高效执行而不被打断。<br />
+<h2><span class="section-number">21.3. </span>CPU亲和性<a class="headerlink" href="#cpu" title="Permalink to this headline"></a></h2>
+<p>CPU亲和性又叫Processor affinity或CPU pinning。现在的CPU都是多核心的，比如Apollo推荐的计算单元就是4核8线程，多核心CPU的好处是可以同时执行多个任务。现在假设多核CPU有以下场景，一个核上的任务很多，而另外的核心都是空闲状态，那么就会出现一个核累死，而其他的核都在等待的状态，这时候操作系统就想到了一种技术来解决这个问题，即CPU的负载均衡，当一个CPU核心上的任务很多，而其他CPU是空闲状态的时候，操作系统会把这个核上的任务迁移到其他核心，这样多核CPU的利用率就上来了。
+对整个系统来说，CPU负载均衡是一个好技术，但是对单个线程来说，就不是那么好了。线程迁移会导致额外的开销，比如当前的CACHE需要重新刷新，而且把重要的任务绑定到单独的核心上，可以保证这个任务的高效执行而不被打断。
 linux操作系统中通过”sched_setaffinity” API来设置线程的CPU亲和性，通过”sched_getaffinity”来获取线程的CPU亲和性。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define _GNU_SOURCE             /* See feature_test_macros(7) */</span>
 <span class="c1">#include &lt;sched.h&gt;</span>
@@ -98,9 +162,9 @@ linux操作系统中通过”sched_setaffinity” API来设置线程的CPU亲和
 </div>
 <a name="interrupt" />
 </div>
-<div class="section" id="id2">
-<h2>中断绑定<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
-<p>中断绑定又叫smp_affinity，通过”cat /proc/interrupts”可以列出系统中每个 I/O 设备中每个 CPU 的中断数，处理的中断数，中断类型，以及注册为接收中断的驱动程序列表。系统通过”smp_affinity”可以指定多核CPU是否会响应这个中断，这在频繁有中断的系统中相当有用，比如CAN总线会频繁通过中断来传递传感器消息，如果没有绑定中断，那么系统中每个核心都可能被打断，如果这个核心上有任务在运行，那么CPU就会打断当前任务的执行，而去处理中断程序，从而带来中断上下文切换开销。如果我们把中断绑定到一个单独的核心上，让这个CPU核心去处理中断，而其它CPU核心则不会被频繁打断。<br />
+<div class="section" id="id3">
+<h2><span class="section-number">21.4. </span>中断绑定<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h2>
+<p>中断绑定又叫smp_affinity，通过”cat /proc/interrupts”可以列出系统中每个 I/O 设备中每个 CPU 的中断数，处理的中断数，中断类型，以及注册为接收中断的驱动程序列表。系统通过”smp_affinity”可以指定多核CPU是否会响应这个中断，这在频繁有中断的系统中相当有用，比如CAN总线会频繁通过中断来传递传感器消息，如果没有绑定中断，那么系统中每个核心都可能被打断，如果这个核心上有任务在运行，那么CPU就会打断当前任务的执行，而去处理中断程序，从而带来中断上下文切换开销。如果我们把中断绑定到一个单独的核心上，让这个CPU核心去处理中断，而其它CPU核心则不会被频繁打断。
 smp_affinity 的默认值为 f，即可为系统中任意 CPU 提供 IRQ。将这个值设定为 1，如下，即表示只有 CPU 0 可以提供这个中断：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># echo 1 &gt;/proc/irq/32/smp_affinity</span>
 <span class="c1"># cat /proc/irq/32/smp_affinity</span>
@@ -110,19 +174,19 @@ smp_affinity 的默认值为 f，即可为系统中任意 CPU 提供 IRQ。将�
 <a name="linux" />
 </div>
 <div class="section" id="linux">
-<h2>linux性能优化<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">21.5. </span>linux性能优化<a class="headerlink" href="#linux" title="Permalink to this headline"></a></h2>
 <p>linux操作系统的”perf”命令可以采样一段时间内的系统调用，保存成文件之后再结合火焰图，可以查看当前系统各个进程对cpu的使用情况，火焰图中的横轴代表了CPU占用时间的比例，宽度越宽，代表该进程越耗时。火焰图的横轴是当前进程的调用栈，可以逐级查看每个调用栈和具体的耗时。</p>
 <a name="perf" />
 <div class="section" id="perf">
-<h3>perf安装<a class="headerlink" href="#perf" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">21.5.1. </span>perf安装<a class="headerlink" href="#perf" title="Permalink to this headline"></a></h3>
 <p>ubuntu下执行如下命令安装perf:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>apt-get install linux-tools-common linux-tools-generic linux-tools-`uname -r`
 </pre></div>
 </div>
 <a name="flame_graph" />
 </div>
-<div class="section" id="id3">
-<h3>火焰图<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id4">
+<h3><span class="section-number">21.5.2. </span>火焰图<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
 <p>安装成功之后可以执行”perf”命令来采样系统进程调用:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// 先找到需要统计的apollo进程
 sudo ps -ef  | grep apollo
@@ -146,7 +210,7 @@ sudo perf script &gt; out.perf
 
 </pre></div>
 </div>
-<p>最后把生成的”out.svg”文件在浏览器中打开，就可以点击并且查看对应的调用时间和调用栈，来分析系统耗时。火焰图如下，源文件在github上下载:<br />
+<p>最后把生成的”out.svg”文件在浏览器中打开，就可以点击并且查看对应的调用时间和调用栈，来分析系统耗时。火焰图如下，源文件在github上下载:
 <a class="reference external" href="https://github.com/daohu527/Dig-into-Apollo/blob/master/performance/Gregg4.svg"><img alt="Gregg4" src="https://github.com/daohu527/Dig-into-Apollo/blob/master/performance/Gregg4.svg" /></a></p>
 <blockquote>
 <div><p>图片引用自阮一峰《如何读懂火焰图？》</p>
@@ -155,84 +219,47 @@ sudo perf script &gt; out.perf
 </div>
 </div>
 <div class="section" id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="https://zh.wikipedia.org/wiki/Cgroups">cgroups</a><br />
-<a class="reference external" href="https://en.wikipedia.org/wiki/Processor_affinity">Processor affinity</a><br />
-<a class="reference external" href="https://linux.die.net/man/2/sched_setaffinity">sched_setaffinity</a><br />
-<a class="reference external" href="https://www.kernel.org/doc/Documentation/IRQ-affinity.txt">SMP IRQ affinity</a><br />
-<a class="reference external" href="https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/6/html/performance_tuning_guide/s-cpu-irq">4.3. 中断和 IRQ 调节</a><br />
-<a class="reference external" href="http://www.brendangregg.com/perf.html">perf</a><br />
-<a class="reference external" href="http://senlinzhan.github.io/2018/03/18/perf/">使用Perf和火焰图分析CPU性能</a><br />
+<h2><span class="section-number">21.6. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
+<p><a class="reference external" href="https://zh.wikipedia.org/wiki/Cgroups">cgroups</a>
+<a class="reference external" href="https://en.wikipedia.org/wiki/Processor_affinity">Processor affinity</a>
+<a class="reference external" href="https://linux.die.net/man/2/sched_setaffinity">sched_setaffinity</a>
+<a class="reference external" href="https://www.kernel.org/doc/Documentation/IRQ-affinity.txt">SMP IRQ affinity</a>
+<a class="reference external" href="https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/6/html/performance_tuning_guide/s-cpu-irq">4.3. 中断和 IRQ 调节</a>
+<a class="reference external" href="http://www.brendangregg.com/perf.html">perf</a>
+<a class="reference external" href="http://senlinzhan.github.io/2018/03/18/perf/">使用Perf和火焰图分析CPU性能</a>
 <a class="reference external" href="http://www.ruanyifeng.com/blog/2017/09/flame-graph.html">如何读懂火焰图？</a></p>
 </div>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../modules/v2x/readme.html" class="btn btn-neutral float-left" title="20. V2X" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../simulation/readme.html" class="btn btn-neutral float-right" title="22. 仿真" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../_sources/performance/readme.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

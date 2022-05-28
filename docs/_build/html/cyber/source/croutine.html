@@ -1,43 +1,84 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>croutine &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>croutine &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">Dig into Apollo - Library </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">Dig into Apollo - Papers </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">Dig into Apollo - Performance </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">Dig into Apollo - Questions </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">Dig into Apollo - Simulation </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">Dig into Apollo - Build </a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>croutine</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cyber/source/croutine.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <div class="section" id="croutine">
-<h1>croutine<a class="headerlink" href="#croutine" title="Permalink to this headline">¶</a></h1>
+<h1>croutine<a class="headerlink" href="#croutine" title="Permalink to this headline"></a></h1>
 </div>
 <div class="section" id="libco">
-<h1>libco<a class="headerlink" href="#libco" title="Permalink to this headline">¶</a></h1>
+<h1>libco<a class="headerlink" href="#libco" title="Permalink to this headline"></a></h1>
 <p>libco协程库分析</p>
 <div class="section" id="id1">
-<h2>目录<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2>目录<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>co_closure.h 定义了一些函数宏，具体的作用是什么？
 co_comm.h 可重入锁，lockguard
 co_epoll.h 网络接口
@@ -49,7 +90,7 @@ co_routine.h<br />
 coctx.h</p>
 </div>
 <div class="section" id="co-create">
-<h2>co_create<a class="headerlink" href="#co-create" title="Permalink to this headline">¶</a></h2>
+<h2>co_create<a class="headerlink" href="#co-create" title="Permalink to this headline"></a></h2>
 <p>创建协程</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">co_create</span><span class="p">(</span><span class="w"> </span><span class="n">stCoRoutine_t</span><span class="w"> </span><span class="o">**</span><span class="n">ppco</span><span class="p">,</span><span class="k">const</span><span class="w"> </span><span class="n">stCoRoutineAttr_t</span><span class="w"> </span><span class="o">*</span><span class="n">attr</span><span class="p">,</span><span class="n">pfn_co_routine_t</span><span class="w"> </span><span class="n">pfn</span><span class="p">,</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">arg</span><span class="w"> </span><span class="p">)</span><span class="w"></span>
 <span class="p">{</span><span class="w"></span>
@@ -65,7 +106,7 @@ coctx.h</p>
 </div>
 </div>
 <div class="section" id="co-resume">
-<h2>co_resume<a class="headerlink" href="#co-resume" title="Permalink to this headline">¶</a></h2>
+<h2>co_resume<a class="headerlink" href="#co-resume" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">co_resume</span><span class="p">(</span><span class="w"> </span><span class="n">stCoRoutine_t</span><span class="w"> </span><span class="o">*</span><span class="n">co</span><span class="w"> </span><span class="p">)</span><span class="w"></span>
 <span class="p">{</span><span class="w"></span>
 <span class="w">	</span><span class="n">stCoRoutineEnv_t</span><span class="w"> </span><span class="o">*</span><span class="n">env</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">co</span><span class="o">-&gt;</span><span class="n">env</span><span class="p">;</span><span class="w"></span>
@@ -84,7 +125,7 @@ coctx.h</p>
 </div>
 </div>
 <div class="section" id="co-yield">
-<h2>co_yield<a class="headerlink" href="#co-yield" title="Permalink to this headline">¶</a></h2>
+<h2>co_yield<a class="headerlink" href="#co-yield" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">co_yield_env</span><span class="p">(</span><span class="w"> </span><span class="n">stCoRoutineEnv_t</span><span class="w"> </span><span class="o">*</span><span class="n">env</span><span class="w"> </span><span class="p">)</span><span class="w"></span>
 <span class="p">{</span><span class="w"></span>
 <span class="w">	</span>
@@ -99,7 +140,7 @@ coctx.h</p>
 </div>
 </div>
 <div class="section" id="co-release">
-<h2>co_release<a class="headerlink" href="#co-release" title="Permalink to this headline">¶</a></h2>
+<h2>co_release<a class="headerlink" href="#co-release" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">co_release</span><span class="p">(</span><span class="w"> </span><span class="n">stCoRoutine_t</span><span class="w"> </span><span class="o">*</span><span class="n">co</span><span class="w"> </span><span class="p">)</span><span class="w"></span>
 <span class="p">{</span><span class="w"></span>
 <span class="w">    </span><span class="n">co_free</span><span class="p">(</span><span class="w"> </span><span class="n">co</span><span class="w"> </span><span class="p">);</span><span class="w"></span>
@@ -110,71 +151,31 @@ coctx.h</p>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/cyber/source/croutine.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

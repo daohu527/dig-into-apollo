@@ -1,4 +1,4 @@
-# Dig into Apollo - Localization ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)  
+# Localization
 
 > 虽千万人，吾往矣。
 
@@ -14,7 +14,7 @@
 ## Localization模块简介
 localization模块主要实现了以下2个功能：
 1. 输出车辆的位置信息（planning模块使用）
-2. 输出车辆的姿态，速度信息（control模块使用）  
+2. 输出车辆的姿态，速度信息（control模块使用）
 
 其中apollo代码中分别实现了3种定位方法：
 1. GNSS + IMU定位
@@ -27,7 +27,7 @@ localization模块主要实现了以下2个功能：
 <a name="content" />
 
 ## 代码目录
-下面是localization的目录结构，在查看具体的代码之前最好看下定位模块的readme文件:  
+下面是localization的目录结构，在查看具体的代码之前最好看下定位模块的readme文件:
 ```
 ├── common          // 声明配置(flags)，从conf目录中读取相应的值
 ├── conf            // 配置文件存放目录
@@ -63,7 +63,7 @@ localization模块主要实现了以下2个功能：
 ├── rtk                     // rtk定位
 └── testdata                // imu和gps的测试数据
 ```
-通过上述目录可以知道，定位模块主要实现了rtk，ndt，msf这3个定位方法，分别对应不同的目录。proto文件夹定义了消息的格式，common和conf主要是存放一些配置和消息TOPIC。下面我们逐个分析RTK定位、NDT定位和MSF定位。  
+通过上述目录可以知道，定位模块主要实现了rtk，ndt，msf这3个定位方法，分别对应不同的目录。proto文件夹定义了消息的格式，common和conf主要是存放一些配置和消息TOPIC。下面我们逐个分析RTK定位、NDT定位和MSF定位。
 
 
 <a name="rtk" />
@@ -91,7 +91,7 @@ class RTKLocalizationComponent final
   bool Proc(const std::shared_ptr<localization::Gps> &gps_msg) override;
 ```
 下面我们分别查看这2个函数。
-1. Init函数  
+1. Init函数
 Init函数实现比较简单，一是初始化配置信息，二是初始化IO。初始化配置信息主要是读取一些配置，例如一些topic信息等。下面主要看下初始化IO。
 ```c++
 bool RTKLocalizationComponent::InitIO() {
@@ -131,7 +131,7 @@ void RTKLocalization::GpsStatusCallback(
 }
 ```
 
-2. Proc  
+2. Proc
 在每次接收到"localization::Gps"消息后，触发执行"Proc"函数。这里注意如果需要接收多个消息，这里是3个消息，则选择最慢的消息作为触发，否则，如果选择比较快的消息作为触发，这样会导致作为触发的消息刷新了，而其它的消息还没有刷新。所以这里采用的是GPS消息作为触发消息，IMU的消息刷新快。下面我们看具体的实现。
 ```c++
 bool RTKLocalizationComponent::Proc(
@@ -161,9 +161,9 @@ bool RTKLocalizationComponent::Proc(
 }
 ```
 具体的执行过程如下图所示。
-![rtk](img/location_rtk.jpg)  
-主要的执行过程在"GpsCallback"中，然后通过"GetLocalization"和"GetLocalizationStatus"获取结果，最后发布对应的位置信息、位置转换信息和位置状态信息。  
-由于"GpsCallback"主要执行过程在"PrepareLocalizationMsg"中，因此我们主要分析"PrepareLocalizationMsg"的实现。  
+![rtk](img/location_rtk.jpg)
+主要的执行过程在"GpsCallback"中，然后通过"GetLocalization"和"GetLocalizationStatus"获取结果，最后发布对应的位置信息、位置转换信息和位置状态信息。
+由于"GpsCallback"主要执行过程在"PrepareLocalizationMsg"中，因此我们主要分析"PrepareLocalizationMsg"的实现。
 
 #### 获取定位信息
 PrepareLocalizationMsg函数的具体实现如下。
@@ -174,7 +174,7 @@ void RTKLocalization::PrepareLocalizationMsg(
   // find the matching gps and imu message
   double gps_time_stamp = gps_msg.header().timestamp_sec();
   CorrectedImu imu_msg;
-  // 1.寻找最匹配的IMU信息  
+  // 1.寻找最匹配的IMU信息
   FindMatchingIMU(gps_time_stamp, &imu_msg);
   // 2.根据GPS和IMU信息，给位置信息赋值
   ComposeLocalizationMsg(gps_msg, imu_msg, localization);
@@ -188,7 +188,7 @@ void RTKLocalization::PrepareLocalizationMsg(
 ```
 下面我们逐个分析上述4个过程。
 
-#### FindMatchingIMU  
+#### FindMatchingIMU
 在队列中找到最匹配的IMU消息，其中区分了队列的第一个，最后一个，以及如果在中间位置则进行插值。插值的时候根据距离最近的原则进行反比例插值。
 
 ```c++
@@ -259,8 +259,8 @@ bool RTKLocalization::FindMatchingIMU(const double gps_timestamp_sec,
   return true;
 }
 ```
-接下来我们看线性插值  
-1. InterpolateIMU  
+接下来我们看线性插值
+1. InterpolateIMU
 根据上述函数得到2个IMU消息分别对角速度、线性加速度、欧拉角进行插值。原则是根据比例，反比例进行插值。
 ```c++
 bool RTKLocalization::InterpolateIMU(const CorrectedImu &imu1,
@@ -304,7 +304,7 @@ bool RTKLocalization::InterpolateIMU(const CorrectedImu &imu1,
   return true;
 }
 ```
-2. InterpolateXYZ  
+2. InterpolateXYZ
 根据距离插值，反比例，即frac1越小，则越靠近p1，frac1越大，则越靠近p2
 ```c++
 template <class T>
@@ -445,6 +445,6 @@ bool RTKLocalization::FindNearestGpsStatus(const double gps_timestamp_sec,
 <a name="reference" />
 
 ## Reference
-[Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes](https://ieeexplore.ieee.org/document/8461224)  
+[Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes](https://ieeexplore.ieee.org/document/8461224)
 
 

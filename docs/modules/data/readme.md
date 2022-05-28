@@ -1,9 +1,9 @@
-# Dig into Apollo - Data ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)  
+# Data
 
-> 业精于勤，荒于嬉；行成于思，毁于随。  
+> 业精于勤，荒于嬉；行成于思，毁于随。
 
 ## Table of Contents
-- [data目录结构](#introduction)  
+- [data目录结构](#introduction)
 
 
 
@@ -60,7 +60,7 @@ reader->GetHeader()
 ```
 以上的原理是什么？？如果是文件则从文件读取，如果不是文件应该如何？？
 
-RecordViewer通过`Iterator`读取msg_buffer_中的消息，通过`FillBuffer`往msg_buffer_中写入消息，注意这里的"std::multimap"为什么要用map因为每次读取的时候是读取的1s内的reader消息，遍历多个reader的时候，那么时间顺序可能会打乱，因此这里采用红黑树的方式按照key进行排序，所以采用了multimap的结构。  
+RecordViewer通过`Iterator`读取msg_buffer_中的消息，通过`FillBuffer`往msg_buffer_中写入消息，注意这里的"std::multimap"为什么要用map因为每次读取的时候是读取的1s内的reader消息，遍历多个reader的时候，那么时间顺序可能会打乱，因此这里采用红黑树的方式按照key进行排序，所以采用了multimap的结构。
 
 每次在Update中更新消息，
 ```c++
@@ -150,7 +150,7 @@ bool Recorder::Start() {
 ```
 
 
-InitReadersImpl 
+InitReadersImpl
 ```c++
 bool Recorder::InitReadersImpl() {
   std::shared_ptr<ChannelManager> channel_manager =
@@ -174,7 +174,7 @@ bool Recorder::InitReadersImpl() {
 }
 ```
 
-InitReaderImpl 
+InitReaderImpl
 注册callback给reader，然后写入文件
 ```c++
 bool Recorder::InitReaderImpl(const std::string& channel_name,

@@ -1,42 +1,83 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ClassLoader &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClassLoader &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">Dig into Apollo - Library </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">Dig into Apollo - Papers </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">Dig into Apollo - Performance </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">Dig into Apollo - Questions </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">Dig into Apollo - Simulation </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">Dig into Apollo - Build </a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>ClassLoader</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cyber/source/classloader.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <div class="section" id="classloader">
-<h1>ClassLoader<a class="headerlink" href="#classloader" title="Permalink to this headline">¶</a></h1>
+<h1>ClassLoader<a class="headerlink" href="#classloader" title="Permalink to this headline"></a></h1>
 <p>每个ClassLoader加载一个路径，每个路径代表一个so库？load_ref_count_代表加载library引用计数。</p>
 <p>plugin_ref_count_代表创建类的引用计数？</p>
 </div>
 <div class="section" id="loadlibrary">
-<h1>loadLibrary<a class="headerlink" href="#loadlibrary" title="Permalink to this headline">¶</a></h1>
+<h1>loadLibrary<a class="headerlink" href="#loadlibrary" title="Permalink to this headline"></a></h1>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">ClassLoader::loadLibrary</span><span class="p">()</span><span class="w"></span>
 <span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">boost</span><span class="o">::</span><span class="n">recursive_mutex</span><span class="o">::</span><span class="n">scoped_lock</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">load_ref_count_mutex_</span><span class="p">);</span><span class="w"></span>
@@ -49,7 +90,7 @@
 </div>
 </div>
 <div class="section" id="islibraryloaded">
-<h1>isLibraryLoaded<a class="headerlink" href="#islibraryloaded" title="Permalink to this headline">¶</a></h1>
+<h1>isLibraryLoaded<a class="headerlink" href="#islibraryloaded" title="Permalink to this headline"></a></h1>
 <p>判断Library是否加载</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ClassLoader::isLibraryLoaded</span><span class="p">()</span><span class="w"></span>
 <span class="p">{</span><span class="w"></span>
@@ -59,7 +100,7 @@
 </div>
 </div>
 <div class="section" id="islibraryloadedbyanyclassloader">
-<h1>isLibraryLoadedByAnyClassloader<a class="headerlink" href="#islibraryloadedbyanyclassloader" title="Permalink to this headline">¶</a></h1>
+<h1>isLibraryLoadedByAnyClassloader<a class="headerlink" href="#islibraryloadedbyanyclassloader" title="Permalink to this headline"></a></h1>
 <p>判断Library是否被其它的classloader加载</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ClassLoader::isLibraryLoadedByAnyClassloader</span><span class="p">()</span><span class="w"></span>
 <span class="p">{</span><span class="w"></span>
@@ -69,7 +110,7 @@
 </div>
 </div>
 <div class="section" id="systemlibraryformat">
-<h1>systemLibraryFormat<a class="headerlink" href="#systemlibraryformat" title="Permalink to this headline">¶</a></h1>
+<h1>systemLibraryFormat<a class="headerlink" href="#systemlibraryformat" title="Permalink to this headline"></a></h1>
 <p>获取库的名称？</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="nf">systemLibraryFormat</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">library_name</span><span class="p">)</span><span class="w"></span>
 <span class="p">{</span><span class="w"></span>
@@ -79,11 +120,11 @@
 </div>
 </div>
 <div class="section" id="unloadlibrary">
-<h1>unloadLibrary<a class="headerlink" href="#unloadlibrary" title="Permalink to this headline">¶</a></h1>
+<h1>unloadLibrary<a class="headerlink" href="#unloadlibrary" title="Permalink to this headline"></a></h1>
 <p>卸载Library，先判断是否plugin_ref_count_，即是否有创建的类没有销毁，如果没有销毁则不能卸载，如果类已经销毁了，需要加载次数清零，保证加载和卸载次数相等。</p>
 </div>
 <div class="section" id="id1">
-<h1>创建类<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<h1>创建类<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h1>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span><span class="w"> </span><span class="nc">Base</span><span class="o">&gt;</span><span class="w"></span>
 <span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Base</span><span class="o">&gt;</span><span class="w"> </span><span class="n">createSharedInstance</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">derived_class_name</span><span class="p">)</span><span class="w"></span>
 <span class="w">  </span><span class="p">{</span><span class="w"></span>
@@ -95,7 +136,7 @@
 </div>
 </div>
 <div class="section" id="registerplugin">
-<h1>registerPlugin<a class="headerlink" href="#registerplugin" title="Permalink to this headline">¶</a></h1>
+<h1>registerPlugin<a class="headerlink" href="#registerplugin" title="Permalink to this headline"></a></h1>
 <p>申明静态变量<code class="docutils literal notranslate"><span class="pre">g_register_plugin_UniqueID</span></code></p>
 <p>注册类，这里是注册派生类到factoryMap，通过派生类可以找到对应的MetaObject&lt;Derived, Base&gt;，创建的时候创建派生类。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="c1">// Create factory</span>
@@ -110,7 +151,7 @@
 </div>
 </div>
 <div class="section" id="id2">
-<h1>总结<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<h1>总结<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h1>
 <ol class="arabic simple">
 <li><p>首先通过宏定义注册派生类和基类</p></li>
 </ol>
@@ -125,7 +166,7 @@
 同一个类可能被不同的ClassLoader加载，加载的路径当然也不一样，然后把classloader放到一个数组中。</p>
 </div>
 <div class="section" id="id3">
-<h1>程序链接几种方式<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h1>
+<h1>程序链接几种方式<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h1>
 <ol class="arabic simple">
 <li><p>静态链接</p></li>
 <li><p>动态链接</p></li>
@@ -134,13 +175,13 @@
 <p>前2种在编译阶段就要指定，后1种是程序运行过程中动态加载到内存。有插件的系统都采用动态加载的方式来设计。</p>
 </div>
 <div class="section" id="id4">
-<h1>工作原理<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h1>
+<h1>工作原理<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h1>
 <div class="section" id="linux">
-<h2>linux<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h2>
+<h2>linux<a class="headerlink" href="#linux" title="Permalink to this headline"></a></h2>
 <p>dlopen dlsysm dlclose</p>
 </div>
 <div class="section" id="elf">
-<h2>ELF文件<a class="headerlink" href="#elf" title="Permalink to this headline">¶</a></h2>
+<h2>ELF文件<a class="headerlink" href="#elf" title="Permalink to this headline"></a></h2>
 <p>文件格式
 INIT FIN
 ctor
@@ -150,13 +191,13 @@ readelf</p>
 </div>
 </div>
 <div class="section" id="id5">
-<h1>加载原理<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h1>
+<h1>加载原理<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h1>
 <div class="section" id="extern-c">
-<h2>extern c<a class="headerlink" href="#extern-c" title="Permalink to this headline">¶</a></h2>
+<h2>extern c<a class="headerlink" href="#extern-c" title="Permalink to this headline"></a></h2>
 <p>这样符号表的函数名称不会变化。</p>
 </div>
 <div class="section" id="id6">
-<h2>静态变量<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<h2>静态变量<a class="headerlink" href="#id6" title="Permalink to this headline"></a></h2>
 <p>静态变量加载的时候会动态初始化</p>
 <ol class="arabic simple">
 <li><p>elf文件中的init和ctor段，也可以用<code class="docutils literal notranslate"><span class="pre">__attribute__</span> </code>宏来实现启动的时候就执行，然后再把控制权交给main函数</p></li>
@@ -164,7 +205,7 @@ readelf</p>
 <p>全部类继承一个基类，实现了new object方法，然后再注册工厂类到全局变量，这样就可以创建变量了。</p>
 </div>
 <div class="section" id="id7">
-<h2>注册<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<h2>注册<a class="headerlink" href="#id7" title="Permalink to this headline"></a></h2>
 <ol class="arabic simple">
 <li><p>注册通过宏定义实现</p></li>
 <li><p>加载的时候动态构造，并且注册到全局变量</p></li>
@@ -172,18 +213,18 @@ readelf</p>
 </ol>
 </div>
 <div class="section" id="id8">
-<h2>创建<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<h2>创建<a class="headerlink" href="#id8" title="Permalink to this headline"></a></h2>
 <ol class="arabic simple">
 <li><p>找到对应的类，然后调用创建方法</p></li>
 <li><p>每次销毁的时候引用计数减1</p></li>
 </ol>
 </div>
 <div class="section" id="id9">
-<h2>加载<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<h2>加载<a class="headerlink" href="#id9" title="Permalink to this headline"></a></h2>
 <p>采用dlopen加载，可以反复加载，但是返回同一个指针，卸载的时候次数相等？classloader对原生重复加载做了拦截？</p>
 </div>
 <div class="section" id="id10">
-<h2>卸载<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<h2>卸载<a class="headerlink" href="#id10" title="Permalink to this headline"></a></h2>
 <ol class="arabic simple">
 <li><p>判断是否有引用计数，有对象存活则不能卸载</p></li>
 <li><p>没有对象存活，则卸载库，这里的引用计数看起来没什么用（采用bool型就可以解决）？</p></li>
@@ -192,7 +233,7 @@ readelf</p>
 </div>
 </div>
 <div class="section" id="id11">
-<h1>静态变量作用域<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h1>
+<h1>静态变量作用域<a class="headerlink" href="#id11" title="Permalink to this headline"></a></h1>
 <ol class="arabic simple">
 <li><p>file scope只作用在单个文件，全局变量的作用域，需要加上extern</p></li>
 <li><p>函数中的static变量作用域只在函数可见，并且在函数调用的时候初始化</p></li>
@@ -203,71 +244,31 @@ readelf</p>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/cyber/source/classloader.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

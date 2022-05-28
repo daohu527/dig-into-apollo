@@ -1,40 +1,106 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dig into Apollo - Cyber &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dig into Apollo - Cyber &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">快速开始:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">1. 什么是Apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">2. 如何编译</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">3. 启动容器</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">1. Cyber</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/audio/readme.html">2. Audio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/bridge/readme.html">3. Bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/canbus/readme.html">4. Canbus</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/control/readme.html">5. Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/data/readme.html">6. Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/dreamview/readme.html">7. Dreamview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/drivers/readme.html">8. Drivers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/guardian/readme.html">9. Guardian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/localization/readme.html">10. Localization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/map/readme.html">11. Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/monitor/readme.html">12. Monitor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/perception/readme.html">13. Perception</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/planning/readme.html">14. Planning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/prediction/readme.html">15. Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/routing/readme.html">16. Routing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/routing/readme.html#id5">17. Routing模块分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/tools/readme.html">18. Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/transform/readme.html">19. Transform</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/v2x/readme.html">20. V2X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">参考</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">1. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">2. 论文</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">3. 常见问题</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Dig into Apollo - Cyber </li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cyber/source/readme.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <div class="section" id="dig-into-apollo-cyber-github">
-<h1>Dig into Apollo - Cyber <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-cyber-github" title="Permalink to this headline">¶</a></h1>
+<h1>Dig into Apollo - Cyber <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-cyber-github" title="Permalink to this headline"></a></h1>
 <p>写在之前，之前的分析都是一些源码级别的分析，发现一开始就深入源码，很容易陷进去，特别是模块非常多的情况，需要看很多遍才能理解清楚。要写出更容易理解的文档，需要的不是事无巨细的分析代码，更主要的是能够把复杂的东西抽象出来，变为简单的东西。一个很简答的例子是画函数调用流程图很简单，但是要把流程图转换成框图却很难。</p>
 <div class="section" id="id1">
-<h2>数据处理流程<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2>数据处理流程<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>我们先看下cyber中整个的数据处理流程，通过理解数据流程中各个模块如何工作，来搞清楚每个模块的作用，然后我们再接着分析具体的模块。<br />
 <img alt="cyber数据流程" src="../../_images/data_progress.jpg" /></p>
 <p>如上图所示，cyber的数据流程可以分为6个过程。</p>
@@ -49,45 +115,45 @@
 <p>对数据流程有整体的认识之后，下面我们在分析具体的每个模块，我们还是按照功能划分。</p>
 </div>
 <div class="section" id="id2">
-<h2>整体介绍<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<h2>整体介绍<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <p>首先我们对cyber中各个模块做一个简单的介绍，之后再接着分析。实际上我们只要搞清楚了下面一些概念之间的关系，就基本上理解清楚了整个Cyber的数据流程。</p>
 <div class="section" id="componentnode">
-<h3>1.Component和Node的关系<a class="headerlink" href="#componentnode" title="Permalink to this headline">¶</a></h3>
+<h3>1.Component和Node的关系<a class="headerlink" href="#componentnode" title="Permalink to this headline"></a></h3>
 <p>Component是cyber中封装好的数据处理流程，对用户来说，对应自动驾驶中的Planning Component, Perception Component等，目的是帮助我们更方便的订阅和处理消息。实际上Component模块在加载之后会执行”Initialize()”函数，这是个隐藏的初始化过程，对用户不可见。在”Initialize”中，Component会创建一个Node节点，概念上对应ROS的节点，<strong>每个Component模块只能有一个Node节点</strong>，也就是说每个Component模块有且只能有一个节点，在Node节点中进行消息订阅和发布。</p>
 </div>
 <div class="section" id="nodereader-writer">
-<h3>2.Node和Reader\Writer的关系<a class="headerlink" href="#nodereader-writer" title="Permalink to this headline">¶</a></h3>
+<h3>2.Node和Reader\Writer的关系<a class="headerlink" href="#nodereader-writer" title="Permalink to this headline"></a></h3>
 <p>在Node节点中可以创建Reader订阅消息，也可以创建Writer发布消息，每个Node节点中可以创建多个Reader和Writer。</p>
 </div>
 <div class="section" id="readerreceiver-writertransmitter-channel">
-<h3>3.Reader和Receiver,Writer和Transmitter,Channel的关系<a class="headerlink" href="#readerreceiver-writertransmitter-channel" title="Permalink to this headline">¶</a></h3>
+<h3>3.Reader和Receiver,Writer和Transmitter,Channel的关系<a class="headerlink" href="#readerreceiver-writertransmitter-channel" title="Permalink to this headline"></a></h3>
 <p>一个Channel对应一个Topic，概念上对应ROS的消息通道，每个Topic都是唯一的。而Channel中包括一个发送器(Transmitter)和接收器(Receiver)，通过Receiver接收消息，通过Transmitter发送消息。<br />
 一个Reader只能订阅一个通道的消息，如果一个Node需要订阅多个通道的消息，需要创建多个Reader。同理一个Writer也只能发布一个通道的消息，如果需要发布多个消息，需要创建多个Writer。Reader中调用Receiver订阅消息，而Writer通过Transmitter发布消息。</p>
 </div>
 <div class="section" id="receiver-datadispatcherdatavisitor">
-<h3>4.Receiver, DataDispatcher和DataVisitor的关系<a class="headerlink" href="#receiver-datadispatcherdatavisitor" title="Permalink to this headline">¶</a></h3>
+<h3>4.Receiver, DataDispatcher和DataVisitor的关系<a class="headerlink" href="#receiver-datadispatcherdatavisitor" title="Permalink to this headline"></a></h3>
 <p>每一个Receiver接收到消息之后，都会触发回调，回调中触发DataDispather（消息分发器）发布消息，DataDispather是一个单例，所有的数据分发都在数据分发器中进行，DataDispather会把数据放到对应的缓存中，然后Notify(通知)对应的协程（实际上这里调用的是DataVisitor中注册的Notify）去处理消息。<br />
 DataVisitor（消息访问器）是一个辅助的类，<strong>一个数据处理过程对应一个DataVisitor，通过在DataVisitor中注册Notify（唤醒对应的协程，协程执行绑定的回调函数），并且注册对应的Buffer到DataDispather</strong>，这样在DataDispather的时候会通知对应的DataVisitor去唤醒对应的协程。<br />
 也就是说DataDispather（消息分发器）发布对应的消息到DataVisitor，DataVisitor（消息访问器）唤醒对应的协程，协程中执行绑定的数据处理回调函数。</p>
 </div>
 <div class="section" id="datavisitorcroutine">
-<h3>5.DataVisitor和Croutine的关系<a class="headerlink" href="#datavisitorcroutine" title="Permalink to this headline">¶</a></h3>
+<h3>5.DataVisitor和Croutine的关系<a class="headerlink" href="#datavisitorcroutine" title="Permalink to this headline"></a></h3>
 <p>实际上DataVisitor中的Notify是通过唤醒协程（为了方便理解也可以理解为线程，可以理解为你有一个线程池，通过线程池绑定数据处理函数，数据到来之后就唤醒对应的线程去执行任务），每个协程绑定了一个数据处理函数和一个DataVisitor，数据到达之后，通过DataVisitor中的Notify唤醒对应的协程，执行数据处理回调，执行完成之后协程进入休眠状态。</p>
 </div>
 <div class="section" id="scheduler-taskcroutine">
-<h3>6.Scheduler, Task和Croutine<a class="headerlink" href="#scheduler-taskcroutine" title="Permalink to this headline">¶</a></h3>
+<h3>6.Scheduler, Task和Croutine<a class="headerlink" href="#scheduler-taskcroutine" title="Permalink to this headline"></a></h3>
 <p>通过上述分析，<strong>数据处理的过程实际上就是通过协程完成的，每一个协程被称为一个Task，所有的Task(任务)都由Scheduler进行调度</strong>。从这里我们可以分析得出实际上Cyber的实时调度由协程去保障，并且可以灵活的通过协程去设置对应的调度策略，当然协程依赖于进程，Apollo在linux中设置进程的优先级为实时轮转，先保障进程的优先级最高，然后内部再通过协程实现对应的调度策略。<br />
 协程和线程的优缺点这里就不展开了，这里有一个疑问是协程不能被终止，除非协程主动退出，这里先留一个伏笔，后面我们再分析协程的调度问题。</p>
 <p>上述就是各个概念之间的关系，上述介绍对理解数据的流程非常有帮助，希望有时间的时候，大家可以画一下对应的数据流程图和关系。</p>
 </div>
 </div>
 <div class="section" id="component">
-<h2>Component介绍<a class="headerlink" href="#component" title="Permalink to this headline">¶</a></h2>
+<h2>Component介绍<a class="headerlink" href="#component" title="Permalink to this headline"></a></h2>
 <p>我们首先需要清楚一点，component实际上是cyber为了帮助我们特意实现的对象，component加载的时候会自动帮我们创建一个node，通过node来订阅和发布对应的消息，每个component有且只能对应一个node。<br />
 component对用户提供2个接口”Init()”和”Proc()”，用户在Init中进行初始化，在”Proc”中接收Topic执行具体的算法。对用户隐藏的部分包括component的”Initialize()”初始化，以及”Process()”调用执行。<br />
 component还可以动态的加载和卸载，这也可以对应到在dreamviewer上动态的打开关系模块。下面我们先大致介绍下component的工作流程，然后再具体介绍各个模块。</p>
 <div class="section" id="id3">
-<h3>component工作流程<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<h3>component工作流程<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
 <p>component的工作流程大致如下：</p>
 <ol class="arabic simple">
 <li><p>通过继承”cyber::Component”，用户自定义一个模块，并且实现”Init()”和”Proc()”函数。编译生成”.so”文件。</p></li>
@@ -97,7 +163,7 @@ component还可以动态的加载和卸载，这也可以对应到在dreamviewer
 </ol>
 </div>
 <div class="section" id="cyber">
-<h3>cyber入口<a class="headerlink" href="#cyber" title="Permalink to this headline">¶</a></h3>
+<h3>cyber入口<a class="headerlink" href="#cyber" title="Permalink to this headline"></a></h3>
 <p>cyber的入口在”cyber/mainboard/mainboard.cc”中，主函数中先进行cyber的初始化，然后启动cyber模块，然后运行，一直等到系统结束。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">**</span><span class="w"> </span><span class="n">argv</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 1. 解析参数</span>
@@ -125,7 +191,7 @@ component还可以动态的加载和卸载，这也可以对应到在dreamviewer
 </div>
 </div>
 <div class="section" id="id4">
-<h2>Cyber实现的功能<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<h2>Cyber实现的功能<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h2>
 <p>cyber提供的功能概括起来包括2方面：</p>
 <ol class="arabic simple">
 <li><p><strong>消息队列</strong> - 主要作用是接收和发送各个节点的消息，涉及到消息的发布、订阅以及消息的buffer缓存等。</p></li>
@@ -141,7 +207,7 @@ component还可以动态的加载和卸载，这也可以对应到在dreamviewer
 <p>下面我们开始分析整个cyber的代码流程。</p>
 </div>
 <div class="section" id="id5">
-<h2>cyber入口<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<h2>cyber入口<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h2>
 <p>cyber的入口在”cyber/mainboard”目录中：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── mainboard.cc           // 主函数
 ├── module_argument.cc     // 模块输入参数
@@ -188,7 +254,7 @@ component还可以动态的加载和卸载，这也可以对应到在dreamviewer
 </div>
 <p>上述是”mainboard.cc”的主函数，下面我们重点介绍下具体的过程。</p>
 <div class="section" id="id6">
-<h3>打印堆栈<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<h3>打印堆栈<a class="headerlink" href="#id6" title="Permalink to this headline"></a></h3>
 <p>在主函数中注册了信号量”SIGSEGV”和”SIGABRT”，当系统出现错误的时候（空指针，异常）等，这时候就会触发打印堆栈信息，也就是说系统报错的时候打印出错的堆栈，方便定位问题，<a class="reference external" href="https://www.runoob.com/cplusplus/cpp-signal-handling.html">参考</a>。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="c1">// 注册信号量，当出现系统错误时，打印堆栈信息</span>
 <span class="w">  </span><span class="n">signal</span><span class="p">(</span><span class="n">SIGSEGV</span><span class="p">,</span><span class="w"> </span><span class="n">SigProc</span><span class="p">);</span><span class="w"></span>
@@ -212,7 +278,7 @@ component还可以动态的加载和卸载，这也可以对应到在dreamviewer
 </div>
 </div>
 <div class="section" id="id7">
-<h3>解析参数<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<h3>解析参数<a class="headerlink" href="#id7" title="Permalink to this headline"></a></h3>
 <p>解析参数是在”ModuleArgument”类中实现的，主要是解析加载DAG文件时候带的参数。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">ModuleArgument::ParseArgument</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 二进制模块名称</span>
@@ -244,7 +310,7 @@ component还可以动态的加载和卸载，这也可以对应到在dreamviewer
 </div>
 </div>
 <div class="section" id="id8">
-<h3>模块加载<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<h3>模块加载<a class="headerlink" href="#id8" title="Permalink to this headline"></a></h3>
 <p>在”ModuleController”实现cyber模块的加载，在”ModuleController::Init()”中调用”LoadAll()”来加载所有模块，我们接着看cyber是如何加载模块。</p>
 <ol class="arabic simple">
 <li><p>首先是找到模块的路径</p></li>
@@ -295,7 +361,7 @@ cyber中其实也是实现了类型通过动态加载并且实例化类的功能
 </div>
 </div>
 <div class="section" id="class-loader">
-<h2>类加载器(class_loader)<a class="headerlink" href="#class-loader" title="Permalink to this headline">¶</a></h2>
+<h2>类加载器(class_loader)<a class="headerlink" href="#class-loader" title="Permalink to this headline"></a></h2>
 <p>类加载器的作用就是动态的加载动态库，然后实例化对象。我们先来解释下，首先apollo中的各个module都会编译为一个动态库，拿planning模块来举例子，在”planning/dag/planning.dag”中，会加载：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">module_config</span> <span class="p">{</span>
   <span class="n">module_library</span> <span class="p">:</span> <span class="s2">&quot;/apollo/bazel-bin/modules/planning/libplanning_component.so&quot;</span>
@@ -308,7 +374,7 @@ cyber中其实也是实现了类型通过动态加载并且实例化类的功能
 <li><p>如何初始化模块?</p></li>
 </ol>
 <div class="section" id="id9">
-<h3>目录结构<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<h3>目录结构<a class="headerlink" href="#id9" title="Permalink to this headline"></a></h3>
 <p>类加载器的实现在”cyber/class_loader”目录中，通过”Poco/SharedLibrary.h”库来实现动态库的加载，关于Poco动态库的加载可以<a class="reference external" href="https://pocoproject.org/docs/Poco.SharedLibrary.html">参考</a></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── BUILD                  // 编译文件
 ├── class_loader.cc        // 类加载器
@@ -325,7 +391,7 @@ cyber中其实也是实现了类型通过动态加载并且实例化类的功能
 </div>
 </div>
 <div class="section" id="classloader">
-<h3>类加载器(ClassLoader)<a class="headerlink" href="#classloader" title="Permalink to this headline">¶</a></h3>
+<h3>类加载器(ClassLoader)<a class="headerlink" href="#classloader" title="Permalink to this headline"></a></h3>
 <p>我们先从”class_loader.h”开始看起，首先我们分析下”class_loader”实现的具体方法：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ClassLoader</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -408,7 +474,7 @@ std::shared_ptr&lt;Base&gt; ClassLoader::CreateClassObj(
 <p>我们先简单的分析下ClassLoaderManager，最后再分析utility。</p>
 </div>
 <div class="section" id="classloadermanager">
-<h3>ClassLoaderManager<a class="headerlink" href="#classloadermanager" title="Permalink to this headline">¶</a></h3>
+<h3>ClassLoaderManager<a class="headerlink" href="#classloadermanager" title="Permalink to this headline"></a></h3>
 <p>类加载器管理实际上是管理不同的classloader，而不同的libpath对应不同的classloader。ClassLoaderManager主要的数据结构其实如下：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span><span class="w"> </span><span class="n">ClassLoader</span><span class="o">*&gt;</span><span class="w"> </span><span class="n">libpath_loader_map_</span><span class="p">;</span><span class="w"></span>
 </pre></div>
@@ -429,7 +495,7 @@ std::shared_ptr&lt;Base&gt; ClassLoader::CreateClassObj(
 <p>最后我们分析下utility具体的实现，utility分为2部分，一部分为ClassFactory，一部分为工具函数（class_loader_utility.cc）</p>
 </div>
 <div class="section" id="classfactory">
-<h3>ClassFactory<a class="headerlink" href="#classfactory" title="Permalink to this headline">¶</a></h3>
+<h3>ClassFactory<a class="headerlink" href="#classfactory" title="Permalink to this headline"></a></h3>
 <p>可以看到有如下继承关系”ClassFactory -&gt; AbstractClassFactory -&gt; AbstractClassFactoryBase”，其中”ClassFactory”和”AbstractClassFactory”为模板类，主要的实现在”AbstractClassFactoryBase”中，我们逐个分析：<br />
 首先是类初始化，指定了”relative_library_path_”, “base_class_name_”, “class_name_”</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">AbstractClassFactoryBase</span><span class="p">::</span><span class="n">AbstractClassFactoryBase</span><span class="p">(</span>
@@ -459,7 +525,7 @@ std::shared_ptr&lt;Base&gt; ClassLoader::CreateClassObj(
 <p>也是说ClassFactory能够生产一个路径下的所有类，一个ClassFactory可能有好几个ClassLoader，分为base_class_name和class_name。</p>
 </div>
 <div class="section" id="id10">
-<h3>工具函数<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<h3>工具函数<a class="headerlink" href="#id10" title="Permalink to this headline"></a></h3>
 <p>接下来我们看”class_loader_utility.cc”的实现，文件中实现了很多函数，这个分析如下：</p>
 <p>创建对象(CreateClassObj)的具体实现如下，先找到类对应的factory，然后通过factory创建对象。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">template</span> <span class="o">&lt;</span><span class="n">typename</span> <span class="n">Base</span><span class="o">&gt;</span>
@@ -591,10 +657,10 @@ std::shared_ptr&lt;Base&gt; ClassLoader::CreateClassObj(
 </div>
 </div>
 <div class="section" id="component-cyber">
-<h2>component(cyber组件)<a class="headerlink" href="#component-cyber" title="Permalink to this headline">¶</a></h2>
+<h2>component(cyber组件)<a class="headerlink" href="#component-cyber" title="Permalink to this headline"></a></h2>
 <p>我们先看下component的目录结构。</p>
 <div class="section" id="id11">
-<h3>目录结构<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<h3>目录结构<a class="headerlink" href="#id11" title="Permalink to this headline"></a></h3>
 <p>可以看到cyber组件分为2类： 普通组件和定时组件，而二者都继承至基础组件。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
 ├── BUILD
@@ -608,7 +674,7 @@ std::shared_ptr&lt;Base&gt; ClassLoader::CreateClassObj(
 </div>
 </div>
 <div class="section" id="id12">
-<h3>基础组件<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<h3>基础组件<a class="headerlink" href="#id12" title="Permalink to this headline"></a></h3>
 <p>我们先看下基础组件中实现了什么，也就是”component_base.h”中实现了什么？”component_base.h”实现了”ComponentBase”类，下面我们逐步分析”ComponentBase”类的public方法。</p>
 <p><strong>Initialize方法</strong><br />
 Initialize方法在派生类中重写了，这里有2个Initialize方法，分别对应上述所说的2种类型的组件。</p>
@@ -675,7 +741,7 @@ Initialize方法在派生类中重写了，这里有2个Initialize方法，分�
 <p>下面我们开始分析component组件，也就是Component类。</p>
 </div>
 <div class="section" id="id13">
-<h3>Component类<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<h3>Component类<a class="headerlink" href="#id13" title="Permalink to this headline"></a></h3>
 <p>Component类都需要实现”Initialize”和”Process”2个方法，所以planning,routing,perception等模块都需要实现这2个方法。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">M0</span><span class="o">&gt;</span><span class="w"></span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span><span class="w"> </span><span class="n">NullType</span><span class="p">,</span><span class="w"> </span><span class="n">NullType</span><span class="p">,</span><span class="w"> </span><span class="n">NullType</span><span class="o">&gt;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">ComponentBase</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -803,7 +869,7 @@ Initialize方法在派生类中重写了，这里有2个Initialize方法，分�
 </div>
 </div>
 <div class="section" id="id14">
-<h3>component动态加载<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<h3>component动态加载<a class="headerlink" href="#id14" title="Permalink to this headline"></a></h3>
 <p>cyber主函数在”ModuleController::Init()”进行模块的加载，具体的加载过程在”ModuleController::LoadModule”中。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ModuleController::LoadModule</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">DagConfig</span><span class="o">&amp;</span><span class="w"> </span><span class="n">dag_config</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">work_root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">WorkRoot</span><span class="p">();</span><span class="w"></span>
@@ -845,7 +911,7 @@ Initialize方法在派生类中重写了，这里有2个Initialize方法，分�
 <p>模块首先通过classloader加载到内存，然后创建对象，并且调用模块的初始化方法。component中每个模块都设计为可以动态加载和卸载，可以实时在线的开启和关闭模块，实现的方式是通过classloader来进行动态的加载动态库。</p>
 </div>
 <div class="section" id="id15">
-<h3>component初始化<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<h3>component初始化<a class="headerlink" href="#id15" title="Permalink to this headline"></a></h3>
 <p>component一共有4个模板类，分别对应接收0-3个消息，（这里有疑问为什么没有4个消息的模板类，是漏掉了吗？）我们这里主要分析2个消息的情况，其它的可以类推。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">M0</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">M1</span><span class="o">&gt;</span><span class="w"></span>
 <span class="kt">bool</span><span class="w"> </span><span class="n">Component</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span><span class="w"> </span><span class="n">M1</span><span class="p">,</span><span class="w"> </span><span class="n">NullType</span><span class="p">,</span><span class="w"> </span><span class="n">NullType</span><span class="o">&gt;::</span><span class="n">Initialize</span><span class="p">(</span><span class="w"></span>
@@ -920,7 +986,7 @@ Initialize方法在派生类中重写了，这里有2个Initialize方法，分�
 <p>因为之前对cyber数据的收发流程有了一个简单的介绍，这里我们会分别介绍如何创建协程、如何在scheduler注册任务并且绑定Notify。也就是说，为了方便理解，你可以认为数据通过DataDispatcher已经分发到了对应的DataVisitor中，<strong>接下来我们只分析如何从DataVisitor中取数据，并且触发对应的协程执行回调任务</strong>。</p>
 </div>
 <div class="section" id="id16">
-<h3>创建协程<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<h3>创建协程<a class="headerlink" href="#id16" title="Permalink to this headline"></a></h3>
 <p>创建协程对应上述代码</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">croutine</span><span class="o">::</span><span class="n">RoutineFactory</span><span class="w"> </span><span class="n">factory</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
 <span class="w">      </span><span class="n">croutine</span><span class="o">::</span><span class="n">CreateRoutineFactory</span><span class="o">&lt;</span><span class="n">M0</span><span class="p">,</span><span class="w"> </span><span class="n">M1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">func</span><span class="p">,</span><span class="w"> </span><span class="n">dv</span><span class="p">);</span><span class="w"></span>
@@ -962,7 +1028,7 @@ Initialize方法在派生类中重写了，这里有2个Initialize方法，分�
 </ol>
 </div>
 <div class="section" id="id17">
-<h3>创建调度任务<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<h3>创建调度任务<a class="headerlink" href="#id17" title="Permalink to this headline"></a></h3>
 <p>创建调度任务是在过程”Component::Initialize”中完成。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">sched</span><span class="o">-&gt;</span><span class="n">CreateTask</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span><span class="w"> </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">());</span><span class="w"></span>
 </pre></div>
@@ -998,7 +1064,7 @@ Initialize方法在派生类中重写了，这里有2个Initialize方法，分�
 </div>
 </div>
 <div class="section" id="timercomponent">
-<h3>TimerComponent<a class="headerlink" href="#timercomponent" title="Permalink to this headline">¶</a></h3>
+<h3>TimerComponent<a class="headerlink" href="#timercomponent" title="Permalink to this headline"></a></h3>
 <p>实际上Component分为2类：一类是上面介绍的消息驱动的Component，第二类是定时调用的TimerComponent。定时调度模块没有绑定消息收发，需要用户自己创建reader来读取消息，如果需要读取多个消息，可以创建多个reader。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">TimerComponent::Initialize</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TimerComponentConfig</span><span class="o">&amp;</span><span class="w"> </span><span class="n">config</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 1. 创建node</span>
@@ -1029,12 +1095,12 @@ Initialize方法在派生类中重写了，这里有2个Initialize方法，分�
 </div>
 </div>
 <div class="section" id="datavisitordatadispatcher">
-<h2>DataVisitor和DataDispatcher<a class="headerlink" href="#datavisitordatadispatcher" title="Permalink to this headline">¶</a></h2>
+<h2>DataVisitor和DataDispatcher<a class="headerlink" href="#datavisitordatadispatcher" title="Permalink to this headline"></a></h2>
 <p>DataDispather（消息分发器）发布消息，DataDispather是一个单例，所有的数据分发都在数据分发器中进行，DataDispather会把数据放到对应的缓存中，然后Notify(通知)对应的协程（实际上这里调用的是DataVisitor中注册的Notify）去处理消息。<br />
 DataVisitor（消息访问器）是一个辅助的类，<strong>一个数据处理过程对应一个DataVisitor，通过在DataVisitor中注册Notify（唤醒对应的协程，协程执行绑定的回调函数），并且注册对应的Buffer到DataDispather</strong>，这样在DataDispather的时候会通知对应的DataVisitor去唤醒对应的协程。<br />
 也就是说DataDispather（消息分发器）发布对应的消息到DataVisitor，DataVisitor（消息访问器）唤醒对应的协程，协程中执行绑定的数据处理回调函数。</p>
 <div class="section" id="datavisitor">
-<h3>DataVisitor数据访问器<a class="headerlink" href="#datavisitor" title="Permalink to this headline">¶</a></h3>
+<h3>DataVisitor数据访问器<a class="headerlink" href="#datavisitor" title="Permalink to this headline"></a></h3>
 <p>DataVisitor继承至DataVisitorBase类，先看DataVisitorBase类的实现。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">DataVisitorBase</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -1157,7 +1223,7 @@ DataVisitor（消息访问器）是一个辅助的类，<strong>一个数据处�
 </ol>
 </div>
 <div class="section" id="datadispatcher">
-<h3>DataDispatcher数据分发器<a class="headerlink" href="#datadispatcher" title="Permalink to this headline">¶</a></h3>
+<h3>DataDispatcher数据分发器<a class="headerlink" href="#datadispatcher" title="Permalink to this headline"></a></h3>
 <p>接下来我们看DataDispatcher的实现。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span><span class="w"></span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataDispatcher</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -1257,7 +1323,7 @@ bool ChannelBuffer&lt;T&gt;::Fetch(uint64_t* index,
 <p>疑问：这里获取的id是消息的累计数量，也就是说从开始到结束发送了多少的消息。如果消息大于最新的id，而不是等于最大值+1，则会返回错误的值？？？</p>
 </div>
 <div class="section" id="data">
-<h3>data目录总结<a class="headerlink" href="#data" title="Permalink to this headline">¶</a></h3>
+<h3>data目录总结<a class="headerlink" href="#data" title="Permalink to this headline"></a></h3>
 <p>通过上述的分析，实际上数据的访问都是通过”DataVisitor”来实现，数据的分发通过”DataDispatcher”来实现。reader中也是通过DataVisitor来访问数据，在reader中订阅对应的DataDispatcher。也就是说如果你要订阅一个通道，首先是在reader中注册消息的topic，绑定DataDispatcher，之后对应通道的消息到来之后，触发DataDispatcher分发消息，而DataDispatcher通过DataVisitor中的Notify唤醒协程，从DataVisitor中获取消息，并执行协程中绑定的回调函数，以上就是整个消息的收发过程。</p>
 <p>疑问： Reader中还拷贝了一份数据到Blocker中，实际上数据的处理过程并不需要缓存数据，参考”Planning”模块中的实现都是在回调函数中把数据拷贝到指针中。看注释是说Blocker是用来仿真的？？？后面需要确实下。以下是Planning模块中回调函数中拷贝数据的实现。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">traffic_light_reader_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateReader</span><span class="o">&lt;</span><span class="n">TrafficLightDetection</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
@@ -1274,20 +1340,20 @@ bool ChannelBuffer&lt;T&gt;::Fetch(uint64_t* index,
 </div>
 </div>
 <div class="section" id="node">
-<h2>Node介绍<a class="headerlink" href="#node" title="Permalink to this headline">¶</a></h2>
+<h2>Node介绍<a class="headerlink" href="#node" title="Permalink to this headline"></a></h2>
 <p>Node目录中包含了Node对象、Reader对象和Writer对象。Node对象主要对应Ros中的Node节点，在Node节点中可以创建Reader和Writer来订阅和发布消息，需要管理对应的通道注册。</p>
 <div class="section" id="id18">
-<h3>Node对象<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<h3>Node对象<a class="headerlink" href="#id18" title="Permalink to this headline"></a></h3>
 </div>
 <div class="section" id="reader">
-<h3>Reader对象<a class="headerlink" href="#reader" title="Permalink to this headline">¶</a></h3>
+<h3>Reader对象<a class="headerlink" href="#reader" title="Permalink to this headline"></a></h3>
 </div>
 <div class="section" id="writer">
-<h3>Writer对象<a class="headerlink" href="#writer" title="Permalink to this headline">¶</a></h3>
+<h3>Writer对象<a class="headerlink" href="#writer" title="Permalink to this headline"></a></h3>
 </div>
 </div>
 <div class="section" id="croutine">
-<h2>CRoutine协程<a class="headerlink" href="#croutine" title="Permalink to this headline">¶</a></h2>
+<h2>CRoutine协程<a class="headerlink" href="#croutine" title="Permalink to this headline"></a></h2>
 <p>协程是用户态的线程，由于进程切换需要用户态到内核态的切换，而协程不需要切换到内核态，因此协程的切换开销比线程低。实际上线程切换的过程如下：</p>
 <ol class="arabic simple">
 <li><p>保存当前线程的现场到堆栈，寄存器，栈指针</p></li>
@@ -1390,10 +1456,10 @@ bool ChannelBuffer&lt;T&gt;::Fetch(uint64_t* index,
 <p>下面总结一下CRoutine的切换流程。</p>
 </div>
 <div class="section" id="scheduler">
-<h2>Scheduler调度<a class="headerlink" href="#scheduler" title="Permalink to this headline">¶</a></h2>
+<h2>Scheduler调度<a class="headerlink" href="#scheduler" title="Permalink to this headline"></a></h2>
 <p>所谓的调度，一定是系统资源和运行任务的矛盾，如果系统资源足够多，那么就不需要调度了，也没有调度的必要。调度的作用就是在资源有限的情况下，合理利用系统资源，使系统的效率最高。</p>
 <div class="section" id="scheduler-instance">
-<h3>Scheduler* Instance()<a class="headerlink" href="#scheduler-instance" title="Permalink to this headline">¶</a></h3>
+<h3>Scheduler* Instance()<a class="headerlink" href="#scheduler-instance" title="Permalink to this headline"></a></h3>
 <p>在”scheduler_factory.cc”中实现了”Scheduler* Instance()”方法，该方法根据”conf”目录中的配置创建不同的调度策略。Cyber中有2种调度策略”SchedulerClassic”和”SchedulerChoreography”。要理解上述2种模型，可以参考go语言中的GPM模型。</p>
 <ol class="arabic simple">
 <li><p>SchedulerClassic 采用了协程池的概念，协程没有绑定到具体的Processor，所有的协程放在全局的优先级队列中，每次从最高优先级的任务开始执行。</p></li>
@@ -1402,10 +1468,10 @@ bool ChannelBuffer&lt;T&gt;::Fetch(uint64_t* index,
 </ol>
 </div>
 <div class="section" id="id19">
-<h3>基本概念<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<h3>基本概念<a class="headerlink" href="#id19" title="Permalink to this headline"></a></h3>
 </div>
 <div class="section" id="gpm">
-<h3>1.GPM模型<a class="headerlink" href="#gpm" title="Permalink to this headline">¶</a></h3>
+<h3>1.GPM模型<a class="headerlink" href="#gpm" title="Permalink to this headline"></a></h3>
 <p><a class="reference external" href="https://learnku.com/articles/41728">GPM模型</a>是go语言中的概念，G代表协程，P代表执行器，M代表线程。P代表协程执行的环境，一个P绑定一个线程M，协程G根据不同的上下文环境在P中执行，上述的设计解耦了协程和线程，线程和协程都只知道P中，在go语言中还有一个调度器，把具体的协程分配到不同的P中，这样就可以在用户态实现协程的调度，同时执行多个任务。<br />
 在go语言早期，只有一个全局的协程队列，每个P都会从全局队列中取任务，然后执行。因为多个P都会去全局队列中取任务，因此会带来并发访问，需要在全局队列中加锁。全局队列调度模型如图。<br />
 <img alt="scheduler_classic" src="../../_images/scheduler_classic.jpg" /></p>
@@ -1462,7 +1528,7 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 <p>一共有2种ProcessorContext上下文”ClassicContext”和”ChoreographyContext”上下文，分别对应不同的调度策略。后面分析Scheduler对象的时候，我们会接着分析。</p>
 </div>
 <div class="section" id="conf">
-<h3>3. conf配置文件<a class="headerlink" href="#conf" title="Permalink to this headline">¶</a></h3>
+<h3>3. conf配置文件<a class="headerlink" href="#conf" title="Permalink to this headline"></a></h3>
 <p>Scheduler调度的配置文件在”conf”目录中，配置文件中可以设置线程线程的CPU亲和性以及调度测量，也可以设置cgroup，还可以设置协程的优先级。下面以”example_sched_classic.conf”文件来举例子。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>scheduler_conf {
     // 1. 设置调度器策略
@@ -1530,11 +1596,11 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 <p>下面我们开始看调度器，上述已经简单的介绍了2种调度器，SchedulerClassic是基于全局优先队列的调度器。</p>
 </div>
 <div class="section" id="schedulerclassic">
-<h3>SchedulerClassic对象<a class="headerlink" href="#schedulerclassic" title="Permalink to this headline">¶</a></h3>
+<h3>SchedulerClassic对象<a class="headerlink" href="#schedulerclassic" title="Permalink to this headline"></a></h3>
 <p>我们知道协程实际上建立在线程之上，线程分时执行多个协程，看上去多个协程就是一起工作的。假如让你设计一个协程池，首先需要设置协程池中协程的个数，当协程超过协程池个数的时候需要把协程放入一个阻塞队列中，如果队列满了，还有协程到来，那么丢弃到来的协程，并且报错。（上述设计借鉴了线程池的思路）</p>
 </div>
 <div class="section" id="processor">
-<h3>创建Processor<a class="headerlink" href="#processor" title="Permalink to this headline">¶</a></h3>
+<h3>创建Processor<a class="headerlink" href="#processor" title="Permalink to this headline"></a></h3>
 <p>调度器中首先会创建Processor，并且绑定到线程。调度器根据”conf”目录中的cgroup配置初始化线程，根据”processor_num”的个数创建多个Processor，并且绑定到线程。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">SchedulerClassic::CreateProcessor</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">//  读取调度配置文件，参照conf目录</span>
@@ -1741,7 +1807,7 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 <p>关于SchedulerClassic我们就先介绍到这里，下面我们开始介绍另外一种调度器SchedulerChoreography。</p>
 </div>
 <div class="section" id="id20">
-<h3>SchedulerClassic调度器<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<h3>SchedulerClassic调度器<a class="headerlink" href="#id20" title="Permalink to this headline"></a></h3>
 <p>SchedulerChoreography创建Processor，会分2部分创建，一部分是有本地队列的Processor，一部分是协程池的Processor。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">SchedulerChoreography</span><span class="p">::</span><span class="n">CreateProcessor</span><span class="p">()</span> <span class="p">{</span>
   <span class="k">for</span> <span class="p">(</span><span class="n">uint32_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">proc_num_</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
@@ -1818,7 +1884,7 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 </ol>
 </div>
 <div class="section" id="choreographycontext">
-<h3>ChoreographyContext上下文<a class="headerlink" href="#choreographycontext" title="Permalink to this headline">¶</a></h3>
+<h3>ChoreographyContext上下文<a class="headerlink" href="#choreographycontext" title="Permalink to this headline"></a></h3>
 <p>ChoreographyContext中的调度就非常简单了。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>std::shared_ptr&lt;CRoutine&gt; ChoreographyContext::NextRoutine() {
   // 1. 从本地队列中取出协程
@@ -1841,7 +1907,7 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 <p>ChoreographyContext中”Wait”和”Notify”方法与ClassicContext类似，这里就不展开了。</p>
 </div>
 <div class="section" id="id21">
-<h3>总结<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<h3>总结<a class="headerlink" href="#id21" title="Permalink to this headline"></a></h3>
 <ol class="arabic simple">
 <li><p>SchedulerClassic 采用了协程池的概念，协程没有绑定到具体的Processor，所有的协程放在全局的优先级队列中，每次从最高优先级的任务开始执行。</p></li>
 <li><p>SchedulerChoreography 采用了本地队列和全局队列相结合的方式，通过”ChoreographyContext”运行本地队列的线程，通过”ClassicContext”来运行全局队列。</p></li>
@@ -1851,10 +1917,10 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 </div>
 </div>
 <div class="section" id="id22">
-<h2>异步调用<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h2>
+<h2>异步调用<a class="headerlink" href="#id22" title="Permalink to this headline"></a></h2>
 <p>在”task.h”中定义了异步调用的方法包括”Async”,”Yield”,”SleepFor”,”USleep”方法。下面我们逐个看下上述方法的实现。</p>
 <div class="section" id="async">
-<h3>Async方法<a class="headerlink" href="#async" title="Permalink to this headline">¶</a></h3>
+<h3>Async方法<a class="headerlink" href="#async" title="Permalink to this headline"></a></h3>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">F</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="p">...</span><span class="w"> </span><span class="n">Args</span><span class="o">&gt;</span><span class="w"></span>
 <span class="k">static</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">Async</span><span class="p">(</span><span class="n">F</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"></span>
 <span class="w">    </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">future</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">std</span><span class="o">::</span><span class="n">result_of</span><span class="o">&lt;</span><span class="n">F</span><span class="p">(</span><span class="n">Args</span><span class="p">...)</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -1934,7 +2000,7 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 <p>每次在任务队列中添加任务的时候，唤醒任务协程中所有的协程。</p>
 </div>
 <div class="section" id="yieldsleep">
-<h3>Yield和Sleep方法<a class="headerlink" href="#yieldsleep" title="Permalink to this headline">¶</a></h3>
+<h3>Yield和Sleep方法<a class="headerlink" href="#yieldsleep" title="Permalink to this headline"></a></h3>
 <p>Yield方法和Async类似，如果为协程则让出当前协程，如果为线程则让出线程。SleepFor和USleep方法类似，这里就不展开了。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="kr">inline</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">Yield</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">croutine</span><span class="o">::</span><span class="n">CRoutine</span><span class="o">::</span><span class="n">GetCurrentRoutine</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -1948,10 +2014,10 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 </div>
 </div>
 <div class="section" id="sysmo">
-<h2>SysMo系统监控<a class="headerlink" href="#sysmo" title="Permalink to this headline">¶</a></h2>
+<h2>SysMo系统监控<a class="headerlink" href="#sysmo" title="Permalink to this headline"></a></h2>
 <p>SysMo模块的用途主要是监控系统协程的运行状况。</p>
 <div class="section" id="start">
-<h3>Start<a class="headerlink" href="#start" title="Permalink to this headline">¶</a></h3>
+<h3>Start<a class="headerlink" href="#start" title="Permalink to this headline"></a></h3>
 <p>在start中单独启动一个线程去进行系统监控，这里没有设置线程的优先级，因此不能在”conf”文件中设置优先级？？？</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">SysMo::Start</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">sysmo_start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetEnv</span><span class="p">(</span><span class="s">&quot;sysmo_start&quot;</span><span class="p">);</span><span class="w"></span>
@@ -1964,7 +2030,7 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 </div>
 </div>
 <div class="section" id="checker">
-<h3>Checker<a class="headerlink" href="#checker" title="Permalink to this headline">¶</a></h3>
+<h3>Checker<a class="headerlink" href="#checker" title="Permalink to this headline"></a></h3>
 <p>每隔100ms调用一次Checker，获取调度信息。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">SysMo::Checker</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">cyber_unlikely</span><span class="p">(</span><span class="o">!</span><span class="n">shut_down_</span><span class="p">.</span><span class="n">load</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -2003,25 +2069,25 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 </div>
 </div>
 <div class="section" id="timer">
-<h2>Timer定时器<a class="headerlink" href="#timer" title="Permalink to this headline">¶</a></h2>
+<h2>Timer定时器<a class="headerlink" href="#timer" title="Permalink to this headline"></a></h2>
 <p>定时器提供在指定的时间触发执行的功能。定时器的应用非常普遍，比如定时触发秒杀活动、定时清理日志、定时发送心跳信息等。实现定时器的方法多种多样，古代有采用水漏或者沙漏的方式，近代有采用机械的方式（各种各样的时钟），数字脉冲，元素衰减等方式。<br />
 在计算机领域有2种形式，<strong>一种是硬件定时器，一种是软件定时器</strong>。硬件定时器的原理是计算时钟脉冲，当规定的时钟脉冲之后由硬件触发中断程序执行，硬件定时器一般是芯片自带的，硬件定时器时间比较精准但是数量有限，因此人们又发明了软件定时器。软件定时器由软件统计计算机时钟个数，然后触发对应的任务执行，由于是纯软件实现，理论上可以创建很多个，下面我们主要看下软件定时器的实现。</p>
 </div>
 <div class="section" id="id23">
-<h2>定时器的实现<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h2>
+<h2>定时器的实现<a class="headerlink" href="#id23" title="Permalink to this headline"></a></h2>
 <div class="section" id="id24">
-<h3>双向链表<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
+<h3>双向链表<a class="headerlink" href="#id24" title="Permalink to this headline"></a></h3>
 <p>首先我们想到的是把定时任务放入一个队列中，每隔固定的时间（一个tick）去检查队列中是否有超时的任务，如果有，则触发执行该任务。这样做的好处是实现简单，但是每次都需要轮询整个队列来找到谁需要被触发，当队列的长度很大时，每个固定时间都需要去轮询一次队列，时间开销比较大。当我们需要删除一个任务的时候，也需要轮询一遍队列找到需要删除的任务，实际上我们可以优化一下用双向链表去实现队列，这样删除的任务的时间复杂度就是O(1)了。总结一下就是采用双向链表实现队列，插入的时间复杂度是O(1)，删除的时间复杂度也是O(1)，但是查询的时间复杂度是O(n)。<br />
 <img alt="linklist" src="../../_images/linklist.jpg" /></p>
 </div>
 <div class="section" id="id25">
-<h3>最小堆<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
+<h3>最小堆<a class="headerlink" href="#id25" title="Permalink to this headline"></a></h3>
 <p>最小堆的实现方式是为了解决上述查找的时候需要遍历整个链表的问题，我们知道最小堆中堆顶的元素就是最小的元素，每次我们只需要检查堆顶的元素是否超时，超时则弹出执行，然后再检查新的堆顶元素是否超时，这样查找可执行任务的时间复杂度约等于O(1)，最小堆虽然提高了查找的时间，但是插入和删除任务的时间复杂度为O(log2n)。下面我们看一个例子。<br />
 堆中节点的值存放的是任务到期的时间，每隔1分钟判断下是否有任务需要执行，比如任务A是19:01分触发，周期为5分钟，任务B是19:02分触发，周期为10分钟，那么第一次最小堆弹出19:01，执行之后，在堆中重新插入19:06分的任务A，这时候任务B到了堆顶，1分钟之后检测需要执行任务B，执行完成后，在堆中重新插入19:12分的任务B。然后循环执行上述过程。每执行一次任务都需要重新插入任务到堆中，当任务频繁执行的时候，插入任务的开销也不容忽略。<br />
 <img alt="heap" src="../../_images/heap.jpg" /></p>
 </div>
 <div class="section" id="id26">
-<h3>时间轮<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h3>
+<h3>时间轮<a class="headerlink" href="#id26" title="Permalink to this headline"></a></h3>
 <p>最后，我们介绍一种插入、删除和触发执行都是O(1)的方法，由计算机科学家”George Varghese”等提出，在NetBSD(一种操作系统)上实现并替代了早期内核中的callout定时器实现。最原始的时间轮如下图。
 <img alt="timing_wheel" src="../../_images/timing_wheel.jpg" /><br />
 一共有8个bucket，每个bucket代表tick的时间，类似于时钟，每个1秒钟走一格，我们可以定义tick的时间为1秒钟，那么bucket[1]就代表第1秒，而bucket[8]就代表第8秒，然后循环进行上述步骤。一个bucket中可能有多个任务，每个任务采用链表的方式连接起来。下面通过一个例子来说明如何添加、删除和查找任务。<br />
@@ -2033,9 +2099,9 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 </div>
 </div>
 <div class="section" id="id27">
-<h2>Cyber定时器实现<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h2>
+<h2>Cyber定时器实现<a class="headerlink" href="#id27" title="Permalink to this headline"></a></h2>
 <div class="section" id="id28">
-<h3>用户接口<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
+<h3>用户接口<a class="headerlink" href="#id28" title="Permalink to this headline"></a></h3>
 <p>Timer对象是开放给用户的接口，主要实现了定时器的配置”TimerOption”，启动定时器和关闭定时器3个接口。我们首先看下定时器的配置。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">TimerOption</span><span class="p">(</span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">period</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">()</span><span class="o">&gt;</span><span class="w"> </span><span class="n">callback</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">oneshot</span><span class="p">)</span><span class="w"></span>
 <span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="n">period</span><span class="p">(</span><span class="n">period</span><span class="p">),</span><span class="w"> </span><span class="n">callback</span><span class="p">(</span><span class="n">callback</span><span class="p">),</span><span class="w"> </span><span class="n">oneshot</span><span class="p">(</span><span class="n">oneshot</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span><span class="w"></span>
@@ -2134,7 +2200,7 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 </ol>
 </div>
 <div class="section" id="timingwheel">
-<h3>TimingWheel时间轮<a class="headerlink" href="#timingwheel" title="Permalink to this headline">¶</a></h3>
+<h3>TimingWheel时间轮<a class="headerlink" href="#timingwheel" title="Permalink to this headline"></a></h3>
 <p>接下来看时间轮TimingWheel的实现，TimingWheel时间轮的配置如下：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">512</span><span class="n">个bucket</span>
 <span class="mi">64</span><span class="n">个round</span>    
@@ -2192,7 +2258,7 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 </ol>
 </div>
 <div class="section" id="tick">
-<h3>Tick<a class="headerlink" href="#tick" title="Permalink to this headline">¶</a></h3>
+<h3>Tick<a class="headerlink" href="#tick" title="Permalink to this headline"></a></h3>
 <p>接下来我们看下时间轮中的Tick是如何工作的。在上述”AddTask”中会调用”Start”函数启动一个线程，线程执行”TickFunc”。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">TimingWheel::TickFunc</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">Rate</span><span class="w"> </span><span class="n">rate</span><span class="p">(</span><span class="n">TIMER_RESOLUTION_MS</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000000</span><span class="p">);</span><span class="w">  </span><span class="c1">// ms to ns</span>
@@ -2229,7 +2295,7 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 </div>
 </div>
 <div class="section" id="id29">
-<h2>总结<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h2>
+<h2>总结<a class="headerlink" href="#id29" title="Permalink to this headline"></a></h2>
 <p>经过上述分析，介绍了Cyber中定时器的实现原理，这里还有2个疑问。</p>
 <ol class="arabic simple">
 <li><p>一是定时器是否为单线程，任务都是在单线程中的多个协程中执行？？？<br />
@@ -2238,109 +2304,62 @@ Processor执行器是协程的载体，对协程来说Processor就是逻辑的CP
 </ol>
 </div>
 <div class="section" id="data-fusion">
-<h2>data_fusion_<a class="headerlink" href="#data-fusion" title="Permalink to this headline">¶</a></h2>
+<h2>data_fusion_<a class="headerlink" href="#data-fusion" title="Permalink to this headline"></a></h2>
 <p>data_fusion_总是以第一个消息为基准，查找融合最新的消息。</p>
 </div>
 <div class="section" id="transport">
-<h2>Transport<a class="headerlink" href="#transport" title="Permalink to this headline">¶</a></h2>
+<h2>Transport<a class="headerlink" href="#transport" title="Permalink to this headline"></a></h2>
 <p>Transport 把消息通过 DataDispatcher 把消息放进buffer 并且触发 DataNotifier::Notify</p>
 <p>notify之后会触发 协程执行 而协程会调用DataVisitor::TryFetch 去取数据</p>
 <p>取到数据之后，调用process函数执行。</p>
 </div>
 <div class="section" id="listenerhandler-rtpsdispatcher">
-<h2>ListenerHandler 和 RtpsDispatcher<a class="headerlink" href="#listenerhandler-rtpsdispatcher" title="Permalink to this headline">¶</a></h2>
+<h2>ListenerHandler 和 RtpsDispatcher<a class="headerlink" href="#listenerhandler-rtpsdispatcher" title="Permalink to this headline"></a></h2>
 <p>是否为通知signal接收发送消息，对应一张线性表？？？</p>
 <p>RtpsDispatcher 用来分发消息，同时触发ListenerHandler？？？</p>
 </div>
 <div class="section" id="id30">
-<h2>Croutine调度<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h2>
+<h2>Croutine调度<a class="headerlink" href="#id30" title="Permalink to this headline"></a></h2>
 <p>什么时候采用协程，用协程做了哪些工作？？？</p>
 <div class="section" id="id31">
-<h3>scheduler, task和croutine<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
+<h3>scheduler, task和croutine<a class="headerlink" href="#id31" title="Permalink to this headline"></a></h3>
 <p>如果有一个新的任务需要处理，则调度器会创建一个任务，而任务又由协程去处理。
 创建任务的时候DataVisitorBase在调度器中注册回调，这个回调触发调度器根据任务id进行NotifyProcessor</p>
 <p>一个任务就是一个协程，协程负责调用reader enqueue读取消息，平时处于yeild状态，等到DataVisitor触发回调之后开始工作。</p>
 </div>
 </div>
 <div class="section" id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
 <p><a class="reference external" href="https://t.cj.sina.com.cn/articles/view/6080368657/16a6b101101900fpdw?sudaref=www.google.com&amp;display=0&amp;retcode=0">百度Apollo 3.5是如何设计Cyber RT计算框架的？</a></p>
 </div>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">Dig into Apollo - Library </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">Dig into Apollo - Papers </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">Dig into Apollo - Performance </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">Dig into Apollo - Questions </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">Dig into Apollo - Simulation </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">Dig into Apollo - Build </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/cyber/source/readme.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

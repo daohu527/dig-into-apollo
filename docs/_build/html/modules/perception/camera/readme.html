@@ -1,38 +1,79 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>camera &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
-    <script src="../../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>camera &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-   
-  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docker/readme.html">Dig into Apollo - Docker </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../library/readme.html">Dig into Apollo - Library </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../papers/readme.html">Dig into Apollo - Papers </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../performance/readme.html">Dig into Apollo - Performance </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../questions/readme.html">Dig into Apollo - Questions </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../simulation/readme.html">Dig into Apollo - Simulation </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_to_build/readme.html">Dig into Apollo - Build </a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>camera</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/modules/perception/camera/readme.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <a name="camera_module" />
 <div class="section" id="camera">
-<h1>camera<a class="headerlink" href="#camera" title="Permalink to this headline">¶</a></h1>
+<h1>camera<a class="headerlink" href="#camera" title="Permalink to this headline"></a></h1>
 <p>camera模块的结构和radar类似，目录如下：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
 ├── app        \\ 主程序
@@ -44,17 +85,17 @@
 </div>
 </div>
 <div class="section" id="lib">
-<h1>lib目录<a class="headerlink" href="#lib" title="Permalink to this headline">¶</a></h1>
+<h1>lib目录<a class="headerlink" href="#lib" title="Permalink to this headline"></a></h1>
 </div>
 <div class="section" id="traffic-light">
-<h1>traffic_light<a class="headerlink" href="#traffic-light" title="Permalink to this headline">¶</a></h1>
+<h1>traffic_light<a class="headerlink" href="#traffic-light" title="Permalink to this headline"></a></h1>
 <p>红绿灯的识别分为3个阶段，先预处理，然后识别，然后跟踪？
 preprocessor // 预处理
 detector - detection     // 检测
 - recognition   // 识别，通过上面的detection检测？？？
 tracker // 追踪红绿灯</p>
 <div class="section" id="preprocessor">
-<h2>preprocessor预处理<a class="headerlink" href="#preprocessor" title="Permalink to this headline">¶</a></h2>
+<h2>preprocessor预处理<a class="headerlink" href="#preprocessor" title="Permalink to this headline"></a></h2>
 <p>首先来看红绿灯预处理，主要有个文件”pose.cc”,”multi_camera_projection.cc”和”tl_preprocessor.cc”，先看”pose.cc”的实现。</p>
 <p>在”pose.cc”中实现了”CarPose”类，主要作用是获取车的位置和姿态，从而获取到相机的位置和姿态。在”CarPose”中定义了如下数据结构。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>  <span class="n">Eigen</span><span class="p">::</span><span class="n">Matrix4d</span> <span class="n">pose_</span><span class="p">;</span>  <span class="o">//</span> <span class="n">car</span><span class="p">(</span><span class="n">novatel</span><span class="p">)</span> <span class="n">to</span> <span class="n">world</span> <span class="n">pose</span>
@@ -516,7 +557,7 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="detector">
-<h2>detector 检测<a class="headerlink" href="#detector" title="Permalink to this headline">¶</a></h2>
+<h2>detector 检测<a class="headerlink" href="#detector" title="Permalink to this headline"></a></h2>
 <p>红绿灯的检测分为2部分，一部分为检测，一部分为识别，分别在”detection”和”recognition”2个目录中。我们先看”detection”的实现。</p>
 <p>在”cropbox.h”和”cropbox.cc”中获取裁剪框。首先是初始化裁切尺度”crop_scale”和最小裁切大小”min_crop_size”</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">CropBox::Init</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">crop_scale</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">min_crop_size</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -871,7 +912,7 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="tracker">
-<h2>tracker 追踪<a class="headerlink" href="#tracker" title="Permalink to this headline">¶</a></h2>
+<h2>tracker 追踪<a class="headerlink" href="#tracker" title="Permalink to this headline"></a></h2>
 <p>追踪功能在”SemanticReviser”类中实现的。先看下”SemanticReviser”类中的参数。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">traffic_light</span><span class="o">::</span><span class="n">tracker</span><span class="o">::</span><span class="n">SemanticReviseParam</span><span class="w"> </span><span class="n">semantic_param_</span><span class="p">;</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 1. 修订时间</span>
@@ -901,7 +942,7 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="init">
-<h2>Init初始化<a class="headerlink" href="#init" title="Permalink to this headline">¶</a></h2>
+<h2>Init初始化<a class="headerlink" href="#init" title="Permalink to this headline"></a></h2>
 <p>从配置文件中读取参数，其中”non_blink_threshold_s_”是”blink_threshold_s_”参数的2倍。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">SemanticReviser::Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TrafficLightTrackerInitOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">proto_path</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
@@ -924,7 +965,7 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="track">
-<h2>Track 追踪<a class="headerlink" href="#track" title="Permalink to this headline">¶</a></h2>
+<h2>Track 追踪<a class="headerlink" href="#track" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">SemanticReviser::Track</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">TrafficLightTrackerOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">,</span><span class="w"></span>
 <span class="w">                            </span><span class="n">CameraFrame</span><span class="w"> </span><span class="o">*</span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">time_stamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">frame</span><span class="o">-&gt;</span><span class="n">timestamp</span><span class="p">;</span><span class="w"></span>
@@ -1150,7 +1191,7 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="obstacle">
-<h1>obstacle障碍物<a class="headerlink" href="#obstacle" title="Permalink to this headline">¶</a></h1>
+<h1>obstacle障碍物<a class="headerlink" href="#obstacle" title="Permalink to this headline"></a></h1>
 <p>首先obstacle的目录结构如下</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
 ├── detector    // 检测
@@ -1162,7 +1203,7 @@ tracker // 追踪红绿灯</p>
 <p>下面我们分别分析下每个模块具体的实现。</p>
 </div>
 <div class="section" id="id1">
-<h1>detector检测<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<h1>detector检测<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h1>
 <p>障碍物检测用到的是YOLO深度学习模型，下面我们看下YoloObstacleDetector类的实现。<br />
 初始化Yolo网络</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">YoloObstacleDetector::Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ObstacleDetectorInitOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -1302,7 +1343,7 @@ tracker // 追踪红绿灯</p>
 <p>其中推理过程有GPU实现也有CPU实现。 通过”get_objects_gpu”获取物体的信息。</p>
 </div>
 <div class="section" id="id2">
-<h1>tracker追踪<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<h1>tracker追踪<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h1>
 <p>tracker追踪在”OMTObstacleTracker”类中实现。<br />
 初始化Init</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">OMTObstacleTracker::Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ObstacleTrackerInitOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -1624,7 +1665,7 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="postprocessor">
-<h1>postprocessor后处理<a class="headerlink" href="#postprocessor" title="Permalink to this headline">¶</a></h1>
+<h1>postprocessor后处理<a class="headerlink" href="#postprocessor" title="Permalink to this headline"></a></h1>
 <p>后处理的入口在”LocationRefinerObstaclePostprocessor”中，下面我们分析下具体实现。<br />
 是否在ROI区域</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">is_in_roi</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">pt</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">img_w</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">img_h</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">v</span><span class="p">,</span><span class="w"></span>
@@ -1974,7 +2015,7 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="transformer">
-<h1>transformer转换<a class="headerlink" href="#transformer" title="Permalink to this headline">¶</a></h1>
+<h1>transformer转换<a class="headerlink" href="#transformer" title="Permalink to this headline"></a></h1>
 <p>MultiCueObstacleTransformer类，实现对障碍物做转换。<br />
 初始化Init</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">MultiCueObstacleTransformer::Init</span><span class="p">(</span><span class="w"></span>
@@ -2224,7 +2265,7 @@ tracker // 追踪红绿灯</p>
 </pre></div>
 </div>
 <div class="section" id="objmapper">
-<h2>ObjMapper<a class="headerlink" href="#objmapper" title="Permalink to this headline">¶</a></h2>
+<h2>ObjMapper<a class="headerlink" href="#objmapper" title="Permalink to this headline"></a></h2>
 <p>ObjMapper找到3D框</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ObjMapper::Solve3dBbox</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ObjMapperOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">center</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="w"></span>
 <span class="w">                            </span><span class="kt">float</span><span class="w"> </span><span class="n">hwl</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">ry</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -2329,12 +2370,12 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="lane">
-<h1>lane车道线<a class="headerlink" href="#lane" title="Permalink to this headline">¶</a></h1>
+<h1>lane车道线<a class="headerlink" href="#lane" title="Permalink to this headline"></a></h1>
 </div>
 <div class="section" id="id3">
-<h1>postprocessor 后处理<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h1>
+<h1>postprocessor 后处理<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h1>
 <div class="section" id="process2d">
-<h2>Process2D<a class="headerlink" href="#process2d" title="Permalink to this headline">¶</a></h2>
+<h2>Process2D<a class="headerlink" href="#process2d" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">DarkSCNNLanePostprocessor::Process2D</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">LanePostprocessorOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">CameraFrame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 
@@ -2627,7 +2668,7 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="darkscnn">
-<h2>DarkSCNN<a class="headerlink" href="#darkscnn" title="Permalink to this headline">¶</a></h2>
+<h2>DarkSCNN<a class="headerlink" href="#darkscnn" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Produce laneline output in camera coordinates (optional)</span>
 <span class="kt">bool</span><span class="w"> </span><span class="nf">DarkSCNNLanePostprocessor::Process3D</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">LanePostprocessorOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">CameraFrame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -2706,21 +2747,21 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="id4">
-<h2>数据集<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<h2>数据集<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h2>
 <p><a class="reference external" href="https://xingangpan.github.io/projects/CULane.html">CULane Dataset</a><br />
 <a class="reference external" href="https://bdd-data.berkeley.edu/">bdd</a><br />
 <a class="reference external" href="https://github.com/TuSimple/tusimple-benchmark">tusimple</a></p>
 </div>
 <div class="section" id="id5">
-<h2>参考<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<h2>参考<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h2>
 <p><a class="reference external" href="https://github.com/amusi/awesome-lane-detection">awesome-lane-detection</a></p>
 </div>
 </div>
 <div class="section" id="calibration-service-calibrator">
-<h1>calibration_service &amp; calibrator<a class="headerlink" href="#calibration-service-calibrator" title="Permalink to this headline">¶</a></h1>
+<h1>calibration_service &amp; calibrator<a class="headerlink" href="#calibration-service-calibrator" title="Permalink to this headline"></a></h1>
 <p>首先看OnlineCalibrationService类的实现。</p>
 <div class="section" id="onlinecalibrationservice">
-<h2>OnlineCalibrationService<a class="headerlink" href="#onlinecalibrationservice" title="Permalink to this headline">¶</a></h2>
+<h2>OnlineCalibrationService<a class="headerlink" href="#onlinecalibrationservice" title="Permalink to this headline"></a></h2>
 <p>初始化Init</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">OnlineCalibrationService::Init</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">CalibrationServiceInitOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -2803,7 +2844,7 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="calibrator">
-<h2>calibrator<a class="headerlink" href="#calibrator" title="Permalink to this headline">¶</a></h2>
+<h2>calibrator<a class="headerlink" href="#calibrator" title="Permalink to this headline"></a></h2>
 <p>LaneLineCalibrator依赖LaneBasedCalibrator。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">LaneLineCalibrator::Calibrate</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">CalibratorOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">,</span><span class="w"></span>
 <span class="w">                                   </span><span class="kt">float</span><span class="w"> </span><span class="o">*</span><span class="n">pitch_angle</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -2932,7 +2973,7 @@ tracker // 追踪红绿灯</p>
 </div>
 </div>
 <div class="section" id="feature-extractor">
-<h1>feature_extractor<a class="headerlink" href="#feature-extractor" title="Permalink to this headline">¶</a></h1>
+<h1>feature_extractor<a class="headerlink" href="#feature-extractor" title="Permalink to this headline"></a></h1>
 <p>TrackingFeatureExtractor追踪特征提取器。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">TrackingFeatureExtractor::Init</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">FeatureExtractorInitOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">init_options</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -3172,71 +3213,31 @@ tracker // 追踪红绿灯</p>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../../_sources/modules/perception/camera/readme.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

@@ -1,9 +1,9 @@
-# Dig into Apollo - V2X ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)  
+# V2X
 
-> 业精于勤，荒于嬉；行成于思，毁于随。  
+> 业精于勤，荒于嬉；行成于思，毁于随。
 
 ## Table of Contents
-- [v2x目录结构](#introduction)  
+- [v2x目录结构](#introduction)
 - [v2x_proxy](#v2x_proxy)
   - [app](#app)
   - [TrafficLightTimer](#trafficlight_timer)
@@ -20,24 +20,24 @@
 <a name="introduction" />
 
 ## v2x目录结构
-v2x的目录结构如下。  
+v2x的目录结构如下。
 ```
 .
 ├── BUILD        // 编译
 ├── common       // 公共目录
 ├── conf         // 配置
-├── launch       
+├── launch
 ├── proto        // protobuf文件
 └── v2x_proxy    // v2x代理
 ```
 
-主要的实现在"v2x_proxy"中，无人驾驶车主要是OBU单元，和路侧RSU单元进行交互。  
+主要的实现在"v2x_proxy"中，无人驾驶车主要是OBU单元，和路侧RSU单元进行交互。
 
 
 <a name="v2x_proxy" />
 
 ## v2x_proxy
-v2x_proxy的目录结构如下。  
+v2x_proxy的目录结构如下。
 ```
 .
 ├── app
@@ -48,9 +48,9 @@ v2x_proxy的目录结构如下。
 <a name="app" />
 
 #### app
-v2x模块的入口函数在"app/main.cc"中，在主函数中读取参数并且初始化v2x proxy。在"v2x_proxy.h"和"v2x_proxy.cc"中实现了"V2xProxy"类。  
+v2x模块的入口函数在"app/main.cc"中，在主函数中读取参数并且初始化v2x proxy。在"v2x_proxy.h"和"v2x_proxy.cc"中实现了"V2xProxy"类。
 
-1. 初始化  
+1. 初始化
 首先我们看"V2xProxy"的初始化过程。
 ```c++
 V2xProxy::V2xProxy(std::shared_ptr<::apollo::hdmap::HDMap> hdmap)
@@ -59,7 +59,7 @@ V2xProxy::V2xProxy(std::shared_ptr<::apollo::hdmap::HDMap> hdmap)
   // 1. 读取高精度地图
   hdmap_ = std::make_shared<::apollo::hdmap::HDMap>();
   const auto hdmap_file = apollo::hdmap::BaseMapFile();
-  // 2. 
+  // 2.
   ::apollo::cyber::TimerOption v2x_car_status_timer_option;
   v2x_car_status_timer_option.period =
       static_cast<uint32_t>((1000 + FLAGS_v2x_car_status_timer_frequency - 1) /
@@ -96,13 +96,13 @@ V2xProxy::V2xProxy(std::shared_ptr<::apollo::hdmap::HDMap> hdmap)
   init_flag_ = true;
 }
 ```
-可以看到"V2xProxy"初始化了2个定时器，一个是RSU发送给车的红绿灯信息，一个是主动上报的车辆状态信息，另外还初始化了os接口和obu接口。  
+可以看到"V2xProxy"初始化了2个定时器，一个是RSU发送给车的红绿灯信息，一个是主动上报的车辆状态信息，另外还初始化了os接口和obu接口。
 
 
 Apollo 6.0中又增加了几种消息,并且通过定时器发布,下面我们来看V2xProxy中包含几种定时器.
 1. v2x_car_status_timer_ - OnV2xCarStatusTimer
-2. obu_status_timer_ - 
-3. rsu_whitelist_timer_ - 
+2. obu_status_timer_ -
+3. rsu_whitelist_timer_ -
 
 几个线程
 1. recv_thread_    RecvTrafficlight
@@ -189,7 +189,7 @@ void V2xProxy::RecvOsPlanning() {
 <a name="trafficlight_timer" />
 
 #### TrafficLightTimer
-交通灯的定时器会定时回调"OnX2vTrafficLightTimer"，下面我们看定时回调里面执行了什么？  
+交通灯的定时器会定时回调"OnX2vTrafficLightTimer"，下面我们看定时回调里面执行了什么？
 ```c++
 void V2xProxy::OnX2vTrafficLightTimer() {
   x2v_trafficlight_->Clear();
@@ -214,7 +214,7 @@ void V2xProxy::OnX2vTrafficLightTimer() {
   os_interface_->SendV2xTrafficLightToOs(x2v_trafficlight_);
 }
 ```
-下面是红绿灯的处理过程。先根据接收到的坐标信息查找前面一定距离的所有红绿灯，然后把当前范围内的所有红绿灯改为接收到的颜色。该过程可能较少的考虑到一些逻辑，估计后面会继续完善。  
+下面是红绿灯的处理过程。先根据接收到的坐标信息查找前面一定距离的所有红绿灯，然后把当前范围内的所有红绿灯改为接收到的颜色。该过程可能较少的考虑到一些逻辑，估计后面会继续完善。
 ```c++
 bool V2xProxy::TrafficLightProc(CurrentLaneTrafficLight* msg) {
   // 1. 获取rsu发送的红绿灯坐标
@@ -246,15 +246,15 @@ bool V2xProxy::TrafficLightProc(CurrentLaneTrafficLight* msg) {
   return true;
 }
 ```
-疑问：  
-1. 按照代码RSU只发送了一个信号灯状态，并且RSU没有高精度地图信息，不知道无人车中高精度地图的signal_id，所以一方面要填充signal_id信息，一方面找到多个红绿灯时候，需要把所有的红绿灯信息都修改为发送的状态。  
-2. RSU应该发送多个红绿灯的状态，而不仅仅只发送一个，这样就需要RSU侧也需要高精度地图，并且和车的高精度信息要同步。  
+疑问：
+1. 按照代码RSU只发送了一个信号灯状态，并且RSU没有高精度地图信息，不知道无人车中高精度地图的signal_id，所以一方面要填充signal_id信息，一方面找到多个红绿灯时候，需要把所有的红绿灯信息都修改为发送的状态。
+2. RSU应该发送多个红绿灯的状态，而不仅仅只发送一个，这样就需要RSU侧也需要高精度地图，并且和车的高精度信息要同步。
 
 
 <a name="onv2xcar_timer" />
 
 #### OnV2xCarStatusTimer
-发送本车的状态到RSU。  
+发送本车的状态到RSU。
 ```c++
 void V2xProxy::OnV2xCarStatusTimer() {
   v2x_carstatus_->Clear();
@@ -272,14 +272,14 @@ void V2xProxy::OnV2xCarStatusTimer() {
 }
 ```
 
-通过上述分析，我们可以清晰的了解到"V2xProxy"实际上相当于一个桥梁，通过"os_interface_"获取车的信息，通过"obu_interface_"发送消息。下面是流程图。  
-![v2x_proccess](img/v2x_proccess.jpg)  
+通过上述分析，我们可以清晰的了解到"V2xProxy"实际上相当于一个桥梁，通过"os_interface_"获取车的信息，通过"obu_interface_"发送消息。下面是流程图。
+![v2x_proccess](img/v2x_proccess.jpg)
 
 
 <a name="obu_interface" />
 
 ## OBU接口(ObuInterFaceGrpcImpl)
-OBU实际上是车和RSU的桥梁，当前OBU可能和车是单独的设备通过网络连接的，所以这里通过grpc实现调用。 主要实现了从OBU发送和接收障碍物信息，红绿灯信息。ObuInterFaceBase是纯虚类，定义了和OBU通信的接口。  
+OBU实际上是车和RSU的桥梁，当前OBU可能和车是单独的设备通过网络连接的，所以这里通过grpc实现调用。 主要实现了从OBU发送和接收障碍物信息，红绿灯信息。ObuInterFaceBase是纯虚类，定义了和OBU通信的接口。
 ```c++
 class ObuInterFaceGrpcImpl : public ObuInterFaceBase {
  public:
@@ -308,17 +308,17 @@ class ObuInterFaceGrpcImpl : public ObuInterFaceBase {
 };
 ```
 
-ObuInterFaceGrpcImpl中创建了一个grpc客户端和服务端，服务端监听OBU发送过来的消息，并且保存。grpc客户端则发送消息到OBU。  
+ObuInterFaceGrpcImpl中创建了一个grpc客户端和服务端，服务端监听OBU发送过来的消息，并且保存。grpc客户端则发送消息到OBU。
 
 
 <a name="grpc_interface" />
 
 #### 远程调用服务(grpc_interface)
-主要实现了grpc的客户端和服务端，后面看下grpc的介绍之后再详细介绍。  
-1. 其中GrpcServerImpl提供rpc服务，当OBU发送请求获取障碍物信息时候，返回无人车感知到的障碍物信息，反之同理。（OBU提供请求）  
-2. GrpcClientImpl向OBU发出请求，获取红绿灯和障碍物信息。（OBU提供grpc服务）  
+主要实现了grpc的客户端和服务端，后面看下grpc的介绍之后再详细介绍。
+1. 其中GrpcServerImpl提供rpc服务，当OBU发送请求获取障碍物信息时候，返回无人车感知到的障碍物信息，反之同理。（OBU提供请求）
+2. GrpcClientImpl向OBU发出请求，获取红绿灯和障碍物信息。（OBU提供grpc服务）
 
-上述过程中无人车客户端会启动2个定时器，通过rpc客户端去获取OBU提供的红绿灯和障碍物信息，这里又回到之前的问题，为什么需要红绿灯做同步？如果无人车和OBU的检测不一致，那么理论上应该听谁的？  
+上述过程中无人车客户端会启动2个定时器，通过rpc客户端去获取OBU提供的红绿灯和障碍物信息，这里又回到之前的问题，为什么需要红绿灯做同步？如果无人车和OBU的检测不一致，那么理论上应该听谁的？
 
 
 
@@ -331,7 +331,7 @@ OsInterFace中实现了2个模板，分别接收和发布消息给apollo，下�
 <a name="send_msg_to_os" />
 
 #### SendMsgToOs
-发布函数非常简单，就是通过reader发送指定的topic，**需要注意一定要对RSU发布的消息做融合了之后才能输出**，如果不做融合，一个简单的例子如果RSU发布的障碍物apollo没有看到，当RSU发布之后，Apollo的感知如果不做融合，下次发送的是apollo自己的感知结果，会出现一帧的障碍物存在，而下一帧不存在的情况，因此要对结果做融合。 另一个疑问是如何保证融合的时间戳一致，因为RSU的频率可能和激光雷达的时间戳不一致。  
+发布函数非常简单，就是通过reader发送指定的topic，**需要注意一定要对RSU发布的消息做融合了之后才能输出**，如果不做融合，一个简单的例子如果RSU发布的障碍物apollo没有看到，当RSU发布之后，Apollo的感知如果不做融合，下次发送的是apollo自己的感知结果，会出现一帧的障碍物存在，而下一帧不存在的情况，因此要对结果做融合。 另一个疑问是如何保证融合的时间戳一致，因为RSU的频率可能和激光雷达的时间戳不一致。
 ```c++
   template <typename MessageT>
   void SendMsgToOs(cyber::Writer<MessageT> *writer,
@@ -352,7 +352,7 @@ OsInterFace中实现了2个模板，分别接收和发布消息给apollo，下�
 <a name="get_msg_from_os" />
 
 #### GetMsgFromOs
-从Apollo系统接收消息，这部分的消息接收没有采用事件驱动的方式，而是采用定时发布的方式。  
+从Apollo系统接收消息，这部分的消息接收没有采用事件驱动的方式，而是采用定时发布的方式。
 ```c++
   template <typename MessageT>
   void GetMsgFromOs(const cyber::Reader<MessageT> *reader,
@@ -369,7 +369,7 @@ OsInterFace中实现了2个模板，分别接收和发布消息给apollo，下�
 
 
 ## 感知模块
-最后感知模块"trafficlights_perception_component.cc"会订阅"/apollo/v2x/traffic_light"这个TOPIC，然后把V2X获取到的结果放入buffer中再进行处理。  
+最后感知模块"trafficlights_perception_component.cc"会订阅"/apollo/v2x/traffic_light"这个TOPIC，然后把V2X获取到的结果放入buffer中再进行处理。
 ```c++
 int TrafficLightsPerceptionComponent::InitV2XListener() {
   typedef const std::shared_ptr<apollo::v2x::IntersectionTrafficLightData>
@@ -385,7 +385,7 @@ int TrafficLightsPerceptionComponent::InitV2XListener() {
 
 
 ## fusion模块
-Apollo6.0在v2x中新增加了fusion模块，fusion模块的输入是"/perception/vehicle/obstacles"，输出也是"/apollo/perception/obstacles".接收的是感知模块输出的感知信息,输出融合之后的障碍物信息.  
+Apollo6.0在v2x中新增加了fusion模块，fusion模块的输入是"/perception/vehicle/obstacles"，输出也是"/apollo/perception/obstacles".接收的是感知模块输出的感知信息,输出融合之后的障碍物信息.
 这个模块的启动也在感知模块的"dag_streaming_perception.dag"中,也就是说V2X模块的感知融合可能会合入感知模块中.
 
 输入:
@@ -405,7 +405,7 @@ bool V2XFusionComponent::V2XMessageFusionProcess(
   auto localization_msg = localization_reader_->GetLatestObserved();
   base::Object hv_obj;
   CarstatusPb2Object(*localization_msg, &hv_obj, "VEHICLE");
-  
+
   v2x_obstacles_reader_->Observe();
   auto v2x_obstacles_msg = v2x_obstacles_reader_->GetLatestObserved();
   // 2. 读取v2x的感知信息,如果没有,则直接输出感知模块的结果
@@ -423,7 +423,7 @@ bool V2XFusionComponent::V2XMessageFusionProcess(
     std::vector<Object> perception_objects;
     Pbs2Objects(*perception_obstacles, &perception_objects, "VEHICLE");
     perception_objects.push_back(hv_obj);
-    
+
     // 4. 合并新资源
     fusion_.CombineNewResource(perception_objects, &fused_objects,
                                &fusion_result);
@@ -555,7 +555,7 @@ KM匹配算法.
 
 ## trans_tools
 "trans_tools.cc"和"trans_tools.h"中主要是一些工具类,用来转换对象到proto和从proto到对象.
- 
+
 ```c++
 void Objects2Pbs(const std::vector<base::Object> &objects,
                  std::shared_ptr<PerceptionObstacles> obstacles) {
@@ -587,7 +587,7 @@ void Objects2Pbs(const std::vector<base::Object> &objects,
 * RSI - road side information
 
 目前Apollo中实现了RSI,SPAT,MAP 3种消息格式, RSM和BSM消息没有定义.Apollo中的BSM可能可以对应到CarStatus消息.每种消息的格式以及意义消息中都进行了明确的定义,并且对一些应用应该发什么消息,消息的频率和交互流程也做了定义.因此可以参考完成一些应用.
-由于网联车辆还是一个比较新的领域,里面的一些流程可能不一定能够完全照搬,所以应该参考消息的用意,而具体的流程可以适当做一些修改.  
+由于网联车辆还是一个比较新的领域,里面的一些流程可能不一定能够完全照搬,所以应该参考消息的用意,而具体的流程可以适当做一些修改.
 
 
 

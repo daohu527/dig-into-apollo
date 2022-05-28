@@ -1,42 +1,127 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dig into Apollo - Audio &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2. Audio &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="next" title="3. Bridge" href="../bridge/readme.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="../index.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">快速开始:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">1. 什么是Apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">2. 如何编译</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">3. 启动容器</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">1. Cyber</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">2. Audio</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">2.1. Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">2.2. Audio模块介绍</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">2.2.1. 输入输出</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">2.3. 目录结构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">2.3.1. 模块入口</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#messageprocess">2.3.2. 消息处理（MessageProcess）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sirendetection">2.4. 声音识别（SirenDetection）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#movingdetection">2.5. 移动检测(MovingDetection)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#directiondetection">2.6. 方向检测(DirectionDetection)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tools">2.7. 工具（tools）</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../bridge/readme.html">3. Bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../canbus/readme.html">4. Canbus</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../control/readme.html">5. Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data/readme.html">6. Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dreamview/readme.html">7. Dreamview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../drivers/readme.html">8. Drivers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guardian/readme.html">9. Guardian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../localization/readme.html">10. Localization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../map/readme.html">11. Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../monitor/readme.html">12. Monitor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../perception/readme.html">13. Perception</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../planning/readme.html">14. Planning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prediction/readme.html">15. Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../routing/readme.html">16. Routing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../routing/readme.html#id5">17. Routing模块分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/readme.html">18. Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transform/readme.html">19. Transform</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../v2x/readme.html">20. V2X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">23. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">24. 论文</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">28. 常见问题</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
-  <div class="section" id="dig-into-apollo-audio-github">
-<h1>Dig into Apollo - Audio <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-audio-github" title="Permalink to this headline">¶</a></h1>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">&lt;no title&gt;</a> &raquo;</li>
+      <li><span class="section-number">2. </span>Audio</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/audio/readme.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="audio">
+<h1><span class="section-number">2. </span>Audio<a class="headerlink" href="#audio" title="Permalink to this headline"></a></h1>
 <blockquote>
 <div><p>勤学如春起之苗，不见其增，日有所长。</p>
 </div></blockquote>
 <div class="section" id="table-of-contents">
-<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">2.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
 <ul class="simple">
 <li><p><span class="xref myst">Audio模块介绍</span></p>
 <ul>
@@ -56,20 +141,20 @@
 </ul>
 <a name="introduction" />
 </div>
-<div class="section" id="audio">
-<h2>Audio模块介绍<a class="headerlink" href="#audio" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h2><span class="section-number">2.2. </span>Audio模块介绍<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>audio模块是Apollo 6.0新增加的模块，主要的用途是通过声音来识别紧急车辆（警车，救护车，消防车）。目前的功能还相对比较简单，只能识别单个紧急车辆，同时需要环境风速低于20mph。下面我们会详细分析这个模块的原理以及实现。</p>
 <a name="input_output" />
-<div class="section" id="id1">
-<h3>输入输出<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h3><span class="section-number">2.2.1. </span>输入输出<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
 <p>audio模块的输入是<code class="docutils literal notranslate"><span class="pre">/apollo/sensor/microphone</span></code>，输入的消息来源于”drivers/microphone”，用到的硬件模块是”RESPEAKER”，目前有双通道和四通道，Apollo用到的硬件是四通道，关于硬件的相关介绍，会在”drivers/microphone”中进行说明。</p>
 <p>audio模块的输出是<code class="docutils literal notranslate"><span class="pre">/apollo/audio_detection</span></code>，输出的消息包括：是否检测到紧急车辆，检测到紧急车辆的移动类型（接近还是远离），位置以及角度。</p>
 <p>也就是说audio模块单纯的通过声音来识别有没有紧急车辆，以及紧急车辆的位置，为无人驾驶车的感知添加了新的维度。语音交互在车机智能里是非常好的交互方式，目前面临的主要难点是汽车里噪音的影响，这在通过声音进行感知的时候尤其重要。</p>
 <a name="content" />
 </div>
 </div>
-<div class="section" id="id2">
-<h2>目录结构<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h2><span class="section-number">2.3. </span>目录结构<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h2>
 <p>audio模块的目录结构如下，整体来说并不复杂，主要的逻辑在”inference”中。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── audio_component.cc
 ├── audio_component.h   // 模块入口
@@ -89,8 +174,8 @@
 audio模块的整体调用流程如图：
 <img alt="调用流程" src="../../_images/main.jpg" /></p>
 <a name="main_process" />
-<div class="section" id="id3">
-<h3>模块入口<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id4">
+<h3><span class="section-number">2.3.1. </span>模块入口<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
 <p>audio模块通过”Init()”进行初始化，主要是读取录音机的外参，并且创建”audio_writer_”用于发布消息。初始化好之后，接着通过”Proc”来处理消息。处理的过程通过”OnMicrophone”来完成。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">AudioComponent::Proc</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">AudioData</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">audio_data</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// TODO(all) remove GetSignals() multiple calls</span>
@@ -108,7 +193,7 @@ audio模块的整体调用流程如图：
 <a name="message_process" />
 </div>
 <div class="section" id="messageprocess">
-<h3>消息处理（MessageProcess）<a class="headerlink" href="#messageprocess" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">2.3.2. </span>消息处理（MessageProcess）<a class="headerlink" href="#messageprocess" title="Permalink to this headline"></a></h3>
 <p>MessageProcess类实际上是推理模块的一个集合，具体的任务实际上还是在”inference”目录中完成的，主要有3个类，分别为</p>
 <ul class="simple">
 <li><p><strong>SirenDetection</strong> - 通过深度学习的方法，判断是否是紧急车辆声音。</p></li>
@@ -120,7 +205,7 @@ audio模块的整体调用流程如图：
 </div>
 </div>
 <div class="section" id="sirendetection">
-<h2>声音识别（SirenDetection）<a class="headerlink" href="#sirendetection" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">2.4. </span>声音识别（SirenDetection）<a class="headerlink" href="#sirendetection" title="Permalink to this headline"></a></h2>
 <p>声音识别SirenDetection类中只有2个函数, LoadModel进行模型的加载，模型文件在”audio/data”目录中。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SirenDetection</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -135,7 +220,7 @@ audio模块的整体调用流程如图：
 <span class="w">  </span><span class="c1">// 1. 读取4个通道的数据，装入audio_tensor中</span>
 <span class="w">  </span><span class="n">torch</span><span class="o">::</span><span class="n">Tensor</span><span class="w"> </span><span class="n">audio_tensor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">torch</span><span class="o">::</span><span class="n">empty</span><span class="p">(</span><span class="mi">4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">72000</span><span class="p">);</span><span class="w"></span>
 <span class="w">  </span><span class="kt">float</span><span class="o">*</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">audio_tensor</span><span class="p">.</span><span class="n">data_ptr</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
-<span class="w">  </span>
+
 <span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">channel</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">signals</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">channel</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">      </span><span class="o">*</span><span class="n">data</span><span class="o">++</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">32767.0</span><span class="p">;</span><span class="w"></span>
@@ -170,7 +255,7 @@ audio模块的整体调用流程如图：
 <a name="moving_detection" />
 </div>
 <div class="section" id="movingdetection">
-<h2>移动检测(MovingDetection)<a class="headerlink" href="#movingdetection" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">2.5. </span>移动检测(MovingDetection)<a class="headerlink" href="#movingdetection" title="Permalink to this headline"></a></h2>
 <p>移动检测在”MovingDetection”类中实现，通过检测最近3帧的声音强度和声音频率，来判断紧急车辆是接近还是远离。MovingDetection中主要有3个函数。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="c1">// 1. 快速傅里叶变换</span>
 <span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">complex</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">fft1d</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">signals</span><span class="p">);</span><span class="w"></span>
@@ -234,8 +319,8 @@ audio模块的整体调用流程如图：
 <a name="direction_detection" />
 </div>
 <div class="section" id="directiondetection">
-<h2>方向检测(DirectionDetection)<a class="headerlink" href="#directiondetection" title="Permalink to this headline">¶</a></h2>
-<p>在”DirectionDetection”类中对紧急车辆的方向进行估计，通过2个通道的差异和声音的速度，就可以得到车辆的大概位置。<br />
+<h2><span class="section-number">2.6. </span>方向检测(DirectionDetection)<a class="headerlink" href="#directiondetection" title="Permalink to this headline"></a></h2>
+<p>在”DirectionDetection”类中对紧急车辆的方向进行估计，通过2个通道的差异和声音的速度，就可以得到车辆的大概位置。
 DirectionDetection类的主要实现在”EstimateSoundSource”函数中，下面我们来分析下具体的实现。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">Point3D</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">DirectionDetection</span><span class="o">::</span><span class="n">EstimateSoundSource</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;&amp;&amp;</span><span class="w"> </span><span class="n">channels_vec</span><span class="p">,</span><span class="w"></span>
@@ -330,12 +415,12 @@ DirectionDetection类的主要实现在”EstimateSoundSource”函数中，下�
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>Todo:<br />
+<p>Todo:
 关于上述过程的详细计算原理，之后需要做进一步的补充？？？</p>
 <a name="tools" />
 </div>
 <div class="section" id="tools">
-<h2>工具（tools）<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">2.7. </span>工具（tools）<a class="headerlink" href="#tools" title="Permalink to this headline"></a></h2>
 <p>tools目录提供了一些录制和调试工具。</p>
 <ul class="simple">
 <li><p><strong>audiosaver.py</strong> - 录制声音并且保存。</p></li>
@@ -347,71 +432,34 @@ DirectionDetection类的主要实现在”EstimateSoundSource”函数中，下�
 </div>
 
 
+           </div>
           </div>
-          
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="&lt;no title&gt;" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../bridge/readme.html" class="btn btn-neutral float-right" title="3. Bridge" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/modules/audio/readme.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

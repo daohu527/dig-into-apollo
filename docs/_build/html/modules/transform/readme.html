@@ -1,42 +1,124 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dig into Apollo - Transform &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>19. Transform &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="next" title="20. V2X" href="../v2x/readme.html" />
+    <link rel="prev" title="18. Tools" href="../tools/readme.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">快速开始:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">1. 什么是Apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">2. 如何编译</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">3. 启动容器</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">1. Cyber</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../audio/readme.html">2. Audio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bridge/readme.html">3. Bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../canbus/readme.html">4. Canbus</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../control/readme.html">5. Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data/readme.html">6. Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dreamview/readme.html">7. Dreamview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../drivers/readme.html">8. Drivers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guardian/readme.html">9. Guardian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../localization/readme.html">10. Localization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../map/readme.html">11. Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../monitor/readme.html">12. Monitor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../perception/readme.html">13. Perception</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../planning/readme.html">14. Planning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prediction/readme.html">15. Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../routing/readme.html">16. Routing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../routing/readme.html#id5">17. Routing模块分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/readme.html">18. Tools</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">19. Transform</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">19.1. Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">19.2. Transform模块简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">19.3. Transform(静态变换)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#transform-broadcaster">19.4. transform_broadcaster（广播）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#buffer">19.5. Buffer（接收缓存）</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">19.5.1. 缓存接口</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">19.5.2. 缓存实现</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">19.6. 总结</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reference">19.7. Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../v2x/readme.html">20. V2X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">23. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">24. 论文</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">28. 常见问题</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
-  <div class="section" id="dig-into-apollo-transform-github">
-<h1>Dig into Apollo - Transform <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-transform-github" title="Permalink to this headline">¶</a></h1>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">&lt;no title&gt;</a> &raquo;</li>
+      <li><span class="section-number">19. </span>Transform</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/transform/readme.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="transform">
+<h1><span class="section-number">19. </span>Transform<a class="headerlink" href="#transform" title="Permalink to this headline"></a></h1>
 <blockquote>
 <div><p>三人行，必有我师。</p>
 </div></blockquote>
 <div class="section" id="table-of-contents">
-<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">19.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
 <ul class="simple">
 <li><p><span class="xref myst">Transform模块简介</span></p></li>
 <li><p><span class="xref myst">Transform(静态变换)</span></p></li>
@@ -52,10 +134,10 @@
 </ul>
 <a name="introduction" />
 </div>
-<div class="section" id="transform">
-<h2>Transform模块简介<a class="headerlink" href="#transform" title="Permalink to this headline">¶</a></h2>
-<p>关于transform模块开始一直不知道是干啥的，一直看到一个”/tf”的TOPIC，还以为是tensorflow的缩写，想着是不是和神经网络有关系，后来才知道tf是transform的缩写，主要的用途是进行坐标转换，原型即是大名鼎鼎的”ros/tf2”库。那么为什么要进行坐标转换呢？<br />
-<img alt="tf2" src="../../_images/frames2.png" /><br />
+<div class="section" id="id1">
+<h2><span class="section-number">19.2. </span>Transform模块简介<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
+<p>关于transform模块开始一直不知道是干啥的，一直看到一个”/tf”的TOPIC，还以为是tensorflow的缩写，想着是不是和神经网络有关系，后来才知道tf是transform的缩写，主要的用途是进行坐标转换，原型即是大名鼎鼎的”ros/tf2”库。那么为什么要进行坐标转换呢？
+<img alt="tf2" src="../../_images/frames2.png" />
 在机器人系统中，经常需要用到坐标转换，比如一个机器人的手臂要去拿一个运动的物体，控制的时候我们需要手臂的当前坐标，同时还需要知道手臂和身体的坐标，这个时候就需要用到坐标转换，把手臂的坐标转换为身体的坐标系，这样控制起来就方便一点。当然这里是动态的情况，也存在静态的情况，比如机器人头顶的摄像头，转换到身体的坐标系，那么位置关系是相对固定的，所以可以一开始就写到固定的位置。这里就引入了以下几个问题：</p>
 <ol class="arabic simple">
 <li><p>有固定转换关系的文件放在哪里？如果都是集中放在一个地方，那么这个地方损坏会导致所有的转换关系失效，一个比较好的方法是各个节点自己广播自己的转换关系。而其实静态的转换关系只需要发送一次就可以了，因为不会变化。</p></li>
@@ -64,8 +146,8 @@
 </ol>
 <a name="static_transform" />
 </div>
-<div class="section" id="id1">
-<h2>Transform(静态变换)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h2><span class="section-number">19.3. </span>Transform(静态变换)<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <p>TransformComponent模块的入口在”static_transform_component.cc”和”static_transform_component.h”中。实现了”StaticTransformComponent”类，我们接下来看下它的实现。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">StaticTransformComponent</span><span class="w"> </span><span class="k">final</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">Component</span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -207,7 +289,7 @@
 <a name="no_static_transform" />
 </div>
 <div class="section" id="transform-broadcaster">
-<h2>transform_broadcaster（广播）<a class="headerlink" href="#transform-broadcaster" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">19.4. </span>transform_broadcaster（广播）<a class="headerlink" href="#transform-broadcaster" title="Permalink to this headline"></a></h2>
 <p><strong>各个模块通过广播的方式来发布动态变换，实际上就是各个模块通过调用transform_broadcaster的库函数来实现广播转换消息</strong>，我们接下来看下transform_broadcaster是如何实现的，transform_broadcaster做为一个lib库，入口在”transform_broadcaster.h”和”transform_broadcaster.cc”中。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TransformBroadcaster</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -238,7 +320,7 @@
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>创建writer并且往”/tf”发消息。这里可以看到，这里存在多个节点往一个topic发消息的情况。<br />
+<p>创建writer并且往”/tf”发消息。这里可以看到，这里存在多个节点往一个topic发消息的情况。
 发送消息比较简单，直接写对应的消息：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">TransformBroadcaster::SendTransform</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">TransformStamped</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">transforms</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -251,11 +333,11 @@
 <a name="buffer" />
 </div>
 <div class="section" id="buffer">
-<h2>Buffer（接收缓存）<a class="headerlink" href="#buffer" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">19.5. </span>Buffer（接收缓存）<a class="headerlink" href="#buffer" title="Permalink to this headline"></a></h2>
 <p>Buffer实际上提供了一个工具类给其它模块，它的主要作用是接收”/tf”和”/tf_static”的消息，并且保持在buffer中，提供给其它节点进行查找和转换到对应的坐标系，我们先看BufferInterface的实现：</p>
 <a name="buffer_interface" />
-<div class="section" id="id2">
-<h3>缓存接口<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h3><span class="section-number">19.5.1. </span>缓存接口<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
 <p>BufferInterface类定义了缓存需要实现的接口：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BufferInterface</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -354,8 +436,8 @@
 <p>BufferInterface实现的功能主要是查找转换关系，以及查看转换关系是否存在，以及做最后的转换。</p>
 <a name="buffer_class" />
 </div>
-<div class="section" id="id3">
-<h3>缓存实现<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id4">
+<h3><span class="section-number">19.5.2. </span>缓存实现<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
 <p>下面我们接着看buffer类的实现，可以看到buffer类继承了”BufferInterface”和”tf2::BufferCore”，其中”tf2::BufferCore”就是大名鼎鼎的ROS中的tf2库。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Buffer</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">BufferInterface</span><span class="p">,</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">tf2</span><span class="o">::</span><span class="n">BufferCore</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -523,89 +605,52 @@
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>接着是lookupTransform和canTransform分别调用tf2的库函数，实现查找转换和判断是否能够转换的实现，由于函数功能比较简单这里就不介绍了。<br />
+<p>接着是lookupTransform和canTransform分别调用tf2的库函数，实现查找转换和判断是否能够转换的实现，由于函数功能比较简单这里就不介绍了。
 可以看到主要的缓存实现都是在tf2的库函数中，后面有时间再分析下tf2具体的实现。</p>
 <a name="summary" />
 </div>
 </div>
-<div class="section" id="id4">
-<h2>总结<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
-<p>接下来我们用一张图来总结Apollo中的坐标变换关系，即静态坐标转换由”StaticTransform”模块提供，而动态转换由需要发布的模块自行发布如”NDTLocalization”,”RTKLocalization”和””Gnss，可以看到动态变换主要是世界坐标到本地坐标的转换，而静态转换主要是各个传感器之间的转换。最后转换关系统一由Buffer模块接收，并且提供查询。<br />
+<div class="section" id="id5">
+<h2><span class="section-number">19.6. </span>总结<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h2>
+<p>接下来我们用一张图来总结Apollo中的坐标变换关系，即静态坐标转换由”StaticTransform”模块提供，而动态转换由需要发布的模块自行发布如”NDTLocalization”,”RTKLocalization”和””Gnss，可以看到动态变换主要是世界坐标到本地坐标的转换，而静态转换主要是各个传感器之间的转换。最后转换关系统一由Buffer模块接收，并且提供查询。
 <img alt="all" src="../../_images/all.jpg" /></p>
 <a name="reference" />
 </div>
 <div class="section" id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">19.7. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
 <p><a class="reference external" href="http://wiki.ros.org/tf2">tf2</a></p>
 </div>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../tools/readme.html" class="btn btn-neutral float-left" title="18. Tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../v2x/readme.html" class="btn btn-neutral float-right" title="20. V2X" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/modules/transform/readme.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

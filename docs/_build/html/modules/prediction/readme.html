@@ -1,42 +1,174 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dig into Apollo - Prediction &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>15. Prediction &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="next" title="16. Routing" href="../routing/readme.html" />
+    <link rel="prev" title="14. Planning" href="../planning/readme.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">快速开始:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">1. 什么是Apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">2. 如何编译</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">3. 启动容器</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">1. Cyber</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../audio/readme.html">2. Audio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bridge/readme.html">3. Bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../canbus/readme.html">4. Canbus</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../control/readme.html">5. Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data/readme.html">6. Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dreamview/readme.html">7. Dreamview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../drivers/readme.html">8. Drivers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guardian/readme.html">9. Guardian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../localization/readme.html">10. Localization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../map/readme.html">11. Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../monitor/readme.html">12. Monitor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../perception/readme.html">13. Perception</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../planning/readme.html">14. Planning</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">15. Prediction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">15.1. Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">15.2. 介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">15.3. 目录结构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#predictioncomponent">15.4. 预测模块(PredictionComponent类)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#init">15.4.1. 初始化(Init())</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proc">15.4.2. 回调执行(Proc)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#containersubmoduleprocess">15.4.3. ContainerSubmoduleProcess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#predictionendtoendproc">15.4.4. PredictionEndToEndProc</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#messageprocess">15.5. 消息处理(MessageProcess)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">15.5.1. 初始化(Init)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">15.5.2. 消息处理</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#container">15.6. 容器(container)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">15.6.1. 容器基类(Container)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#containermanager">15.6.2. 容器管理(ContainerManager)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#posecontainer">15.6.3. 姿态容器(PoseContainer)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#adctrajectorycontainer">15.6.4. 规划轨迹容器(ADCTrajectoryContainer)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#storytellingcontainer">故事容器(StoryTellingContainer)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#obstaclescontainer">15.6.5. 障碍物容器(ObstaclesContainer)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#roadgraph">15.6.6. 道路图(RoadGraph)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#scenario">15.7. 场景(scenario)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#scenariomanager">15.7.1. 场景管理器(ScenarioManager)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#evaluator">15.8. 评估者(evaluator)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">15.8.1. 评估者基类(Evaluator)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#evaluatormanager">15.8.2. 评估者管理器(EvaluatorManager)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cyclistkeeplaneevaluator">15.8.3. 自行车评估者(CyclistKeepLaneEvaluator)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pedestrianinteractionevaluator">15.8.4. 行人互动评估者(PedestrianInteractionEvaluator)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#costevaluator">15.8.5. CostEvaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cruisemlpevaluator">15.8.6. CruiseMLPEvaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#junctionmapevaluator">15.8.7. JunctionMapEvaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#junctionmlpevaluator">15.8.8. JunctionMLPEvaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#laneaggregatingevaluator">15.8.9. LaneAggregatingEvaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lanescanningevaluator">15.8.10. LaneScanningEvaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mlpevaluator">15.8.11. MLPEvaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#semanticlstmevaluator">15.8.12. SemanticLSTMEvaluator</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#predictor">15.9. 预测器(predictor)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">15.9.1. 预测器基类(Predictor)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#predictormanager">15.9.2. 预测管理器(PredictorManager)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#emptypredictor">15.9.3. EmptyPredictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extrapolationpredictor">15.9.4. ExtrapolationPredictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#freemovepredictor">15.9.5. FreeMovePredictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#interactionpredictor">15.9.6. InteractionPredictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#junctionpredictor">15.9.7. JunctionPredictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lanesequencepredictor">15.9.8. LaneSequencePredictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#movesequencepredictor">15.9.9. MoveSequencePredictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sequencepredictor">15.9.10. SequencePredictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#singlelanepredictor">15.9.11. SingleLanePredictor</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#reference">15.10. Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../routing/readme.html">16. Routing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../routing/readme.html#id5">17. Routing模块分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/readme.html">18. Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transform/readme.html">19. Transform</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../v2x/readme.html">20. V2X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">23. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">24. 论文</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">28. 常见问题</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
-  <div class="section" id="dig-into-apollo-prediction-github">
-<h1>Dig into Apollo - Prediction <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-prediction-github" title="Permalink to this headline">¶</a></h1>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">&lt;no title&gt;</a> &raquo;</li>
+      <li><span class="section-number">15. </span>Prediction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/prediction/readme.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="prediction">
+<h1><span class="section-number">15. </span>Prediction<a class="headerlink" href="#prediction" title="Permalink to this headline"></a></h1>
 <blockquote>
 <div><p>悟已往之不谏,知来者之可追</p>
 </div></blockquote>
 <div class="section" id="table-of-contents">
-<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">15.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
 <ul class="simple">
 <li><p><span class="xref myst">介绍</span></p></li>
 <li><p><span class="xref myst">目录结构</span></p></li>
@@ -63,14 +195,14 @@
 <a name="introduction" />
 </div>
 <div class="section" id="id1">
-<h2>介绍<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<p>首先建议先阅读官方文档(readme.md)，里面说明了数据流向，也就是说预测模块是直接接收的感知模块给出的障碍物信息，这和CV领域的传统预测任务有区别，CV领域的预测任务不需要先识别物体，只需要根据物体的特征，对比前后2帧，然后得出物体的位置，也就说甚至不需要物体识别，业界之所以不这么做的原因是因为检测物体太耗时了。<br />
-当然也有先检测物体再做跟踪的，也就是说目前apollo中的物体检测实际上是采用的第二种方法，这也可以理解，反正感知模块一定会工作，而且一定要检测物体，所以何不把这个信息直接拿过来用呢？这和人类似，逐帧跟踪指定特征的对象，就是物体的轨迹，然后再根据现有的轨迹预测物体讲来的轨迹。<br />
+<h2><span class="section-number">15.2. </span>介绍<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
+<p>首先建议先阅读官方文档(readme.md)，里面说明了数据流向，也就是说预测模块是直接接收的感知模块给出的障碍物信息，这和CV领域的传统预测任务有区别，CV领域的预测任务不需要先识别物体，只需要根据物体的特征，对比前后2帧，然后得出物体的位置，也就说甚至不需要物体识别，业界之所以不这么做的原因是因为检测物体太耗时了。
+当然也有先检测物体再做跟踪的，也就是说目前apollo中的物体检测实际上是采用的第二种方法，这也可以理解，反正感知模块一定会工作，而且一定要检测物体，所以何不把这个信息直接拿过来用呢？这和人类似，逐帧跟踪指定特征的对象，就是物体的轨迹，然后再根据现有的轨迹预测物体讲来的轨迹。
 预测的轨迹和障碍物信息发送给规划(planning)模块使用。</p>
 <a name="directory" />
 </div>
 <div class="section" id="id2">
-<h2>目录结构<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">15.3. </span>目录结构<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <p>预测模块的目录结构如下：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
 ├── BUILD
@@ -105,8 +237,8 @@
 <a name="preciction_component" />
 </div>
 <div class="section" id="predictioncomponent">
-<h2>预测模块(PredictionComponent类)<a class="headerlink" href="#predictioncomponent" title="Permalink to this headline">¶</a></h2>
-<p>预测模块和其它模块一样，都是在cyber中注册，具体的实现在”prediction_component.h”和”prediction_component.cc”中，我们知道cyber模块有2种消息触发模式，一种是定时器触发，一种是消息触发，而预测为消息触发模式。<br />
+<h2><span class="section-number">15.4. </span>预测模块(PredictionComponent类)<a class="headerlink" href="#predictioncomponent" title="Permalink to this headline"></a></h2>
+<p>预测模块和其它模块一样，都是在cyber中注册，具体的实现在”prediction_component.h”和”prediction_component.cc”中，我们知道cyber模块有2种消息触发模式，一种是定时器触发，一种是消息触发，而预测为消息触发模式。
 预测模块的<strong>输入消息</strong>为：</p>
 <ol class="arabic simple">
 <li><p><strong>perception::PerceptionObstacles</strong> - 感知模块输出的障碍物信息</p></li>
@@ -120,7 +252,7 @@
 <p>预测模块和所有其它模块一样，都实现了”cyber::Component”基类中的”Init()”和”Proc()”方法，分别进行初始化和消息触发调用，调用由框架自动执行，关于cyber如何调用和执行每个模块，可以参考cyber模块的介绍，下面我们主要介绍这2个方法。</p>
 <a name="preciction_init" />
 <div class="section" id="init">
-<h3>初始化(Init())<a class="headerlink" href="#init" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.4.1. </span>初始化(Init())<a class="headerlink" href="#init" title="Permalink to this headline"></a></h3>
 <p>预测模块的初始化在”PredictionComponent::Init()”中进行，主要是注册消息读取和发送控制器，用来读取和发送消息，<strong>需要注意的是初始化过程中也对”MessageProcess”类进行了初始化，而”MessageProcess”实现了预测模块的整个消息处理流程</strong>。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>bool PredictionComponent::Init() {
   component_start_time_ = Clock::NowInSeconds();
@@ -129,7 +261,7 @@
   if (!MessageProcess::Init()) {
     return false;
   }
-  
+
   // 规划模块消息读取者
   planning_reader_ = node_-&gt;CreateReader&lt;ADCTrajectory&gt;(
       FLAGS_planning_trajectory_topic, nullptr);
@@ -162,7 +294,7 @@
 <a name="preciction_proc" />
 </div>
 <div class="section" id="proc">
-<h3>回调执行(Proc)<a class="headerlink" href="#proc" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.4.2. </span>回调执行(Proc)<a class="headerlink" href="#proc" title="Permalink to this headline"></a></h3>
 <p>回调执行函数会执行以下过程:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>bool PredictionComponent::Proc(
     const std::shared_ptr&lt;PerceptionObstacles&gt;&amp; perception_obstacles) {
@@ -179,7 +311,7 @@
 <a name="preciction_submodule" />
 </div>
 <div class="section" id="containersubmoduleprocess">
-<h3>ContainerSubmoduleProcess<a class="headerlink" href="#containersubmoduleprocess" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.4.3. </span>ContainerSubmoduleProcess<a class="headerlink" href="#containersubmoduleprocess" title="Permalink to this headline"></a></h3>
 <p>子过程的函数如下：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">PredictionComponent::ContainerSubmoduleProcess</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">PerceptionObstacles</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">perception_obstacles</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -241,7 +373,7 @@
 <a name="preciction_endtoend" />
 </div>
 <div class="section" id="predictionendtoendproc">
-<h3>PredictionEndToEndProc<a class="headerlink" href="#predictionendtoendproc" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.4.4. </span>PredictionEndToEndProc<a class="headerlink" href="#predictionendtoendproc" title="Permalink to this headline"></a></h3>
 <p>端到端的过程函数如下：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>bool PredictionComponent::PredictionEndToEndProc(
     const std::shared_ptr&lt;PerceptionObstacles&gt;&amp; perception_obstacles) {
@@ -291,7 +423,7 @@
   // Postprocess prediction obstacles message
   prediction_obstacles.set_start_timestamp(frame_start_time_);
   ...
-  
+
   common::util::FillHeader(node_-&gt;Name(), &amp;prediction_obstacles);
   prediction_writer_-&gt;Write(prediction_obstacles);
   return true;
@@ -302,11 +434,11 @@
 </div>
 </div>
 <div class="section" id="messageprocess">
-<h2>消息处理(MessageProcess)<a class="headerlink" href="#messageprocess" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">15.5. </span>消息处理(MessageProcess)<a class="headerlink" href="#messageprocess" title="Permalink to this headline"></a></h2>
 <p>可以看到上述过程都是在MessageProcess中处理完成的，那么我们先看下MessageProcess的执行过程。</p>
 <a name="message_init" />
 <div class="section" id="id3">
-<h3>初始化(Init)<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.5.1. </span>初始化(Init)<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
 <p>消息处理的初始化首先在”PredictionComponent::Init()”中调用，下面我们看下实现了哪些功能：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">MessageProcess::Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 1. 初始化容器</span>
@@ -330,12 +462,12 @@
 <a name="onperception" />
 </div>
 <div class="section" id="id4">
-<h3>消息处理<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.5.2. </span>消息处理<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
 <p>定位，规划和故事的消息处理相对比较简单，主要是向对应的容器中插入数据（每个容器都实现了Insert()方法），下面着重介绍感知模块消息的处理过程，该过程也输出了最后的结果。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">MessageProcess::OnPerception</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">perception</span><span class="o">::</span><span class="n">PerceptionObstacles</span><span class="o">&amp;</span><span class="w"> </span><span class="n">perception_obstacles</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">PredictionObstacles</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">prediction_obstacles</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="c1">// 1. 分析场景和处理容器中的数据  </span>
+<span class="w">  </span><span class="c1">// 1. 分析场景和处理容器中的数据</span>
 <span class="w">  </span><span class="n">ContainerProcess</span><span class="p">(</span><span class="n">perception_obstacles</span><span class="p">);</span><span class="w"></span>
 
 <span class="w">  </span><span class="c1">// 获取障碍物容器</span>
@@ -375,7 +507,7 @@
 <span class="w">  </span><span class="p">}</span><span class="w"></span>
 
 <span class="w">  </span><span class="c1">// Make evaluations</span>
-<span class="w">  </span><span class="c1">// 2. 进行评估  </span>
+<span class="w">  </span><span class="c1">// 2. 进行评估</span>
 <span class="w">  </span><span class="n">EvaluatorManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Run</span><span class="p">(</span><span class="n">ptr_obstacles_container</span><span class="p">);</span><span class="w"></span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_prediction_offline_mode</span><span class="w"> </span><span class="o">==</span><span class="w"></span>
 <span class="w">          </span><span class="n">PredictionConstants</span><span class="o">::</span><span class="n">kDumpDataForLearning</span><span class="w"> </span><span class="o">||</span><span class="w"></span>
@@ -384,28 +516,28 @@
 <span class="w">  </span><span class="p">}</span><span class="w"></span>
 
 <span class="w">  </span><span class="c1">// Make predictions</span>
-<span class="w">  </span><span class="c1">// 3. 进行预测  </span>
+<span class="w">  </span><span class="c1">// 3. 进行预测</span>
 <span class="w">  </span><span class="n">PredictorManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Run</span><span class="p">(</span><span class="n">perception_obstacles</span><span class="p">,</span><span class="w"></span>
 <span class="w">                                    </span><span class="n">ptr_ego_trajectory_container</span><span class="p">,</span><span class="w"></span>
 <span class="w">                                    </span><span class="n">ptr_obstacles_container</span><span class="p">);</span><span class="w"></span>
 
 <span class="w">  </span><span class="c1">// Get predicted obstacles</span>
-<span class="w">  </span><span class="c1">// 4. 输出预测结果  </span>
+<span class="w">  </span><span class="c1">// 4. 输出预测结果</span>
 <span class="w">  </span><span class="o">*</span><span class="n">prediction_obstacles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PredictorManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">prediction_obstacles</span><span class="p">();</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>上面的消息处理过程实际上是整个预测的过程，分为以下几个步骤：<br />
+<p>上面的消息处理过程实际上是整个预测的过程，分为以下几个步骤：
 <img alt="process" src="../../_images/process1.jpg" /></p>
 <p>下面主要分析各个模块的输入是什么，输出是什么？ 以及它们的作用？</p>
 <a name="container" />
 </div>
 </div>
 <div class="section" id="container">
-<h2>容器(container)<a class="headerlink" href="#container" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">15.6. </span>容器(container)<a class="headerlink" href="#container" title="Permalink to this headline"></a></h2>
 <p>容器的作用主要是存储对应类型的消息，用来给评估器(evaluator)使用。</p>
 <div class="section" id="id5">
-<h3>容器基类(Container)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.6.1. </span>容器基类(Container)<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h3>
 <p>首先介绍容器基类”Container”类，主要申明了”Insert”方法：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Container</span> <span class="p">{</span>
  <span class="n">public</span><span class="p">:</span>
@@ -420,7 +552,7 @@
 </div>
 </div>
 <div class="section" id="containermanager">
-<h3>容器管理(ContainerManager)<a class="headerlink" href="#containermanager" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.6.2. </span>容器管理(ContainerManager)<a class="headerlink" href="#containermanager" title="Permalink to this headline"></a></h3>
 <p>上述基类有4个扩展类：PoseContainer，ObstaclesContainer，ADCTrajectoryContainer和StoryTellingContainer，分别存储不同的消息类型，而这些容器的管理和注册在ContainerManager中，下面我们看下ContainerManager类的具体实现。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ContainerManager</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -463,13 +595,13 @@
 <span class="p">};</span><span class="w"></span>
 </pre></div>
 </div>
-<p>ContainerManager类的执行过程如下：<br />
-<img alt="container" src="../../_images/container.jpg" /><br />
-可以看到容器管理器在Init中根据配置文件创建并且注册对应类型的容器，并且放到”containers_”中，而”containers_”为map结构，其中key为容器的类型，而值为对应的容器。注册之后通过”GetContainer”获取对应类型的容器。<br />
+<p>ContainerManager类的执行过程如下：
+<img alt="container" src="../../_images/container.jpg" />
+可以看到容器管理器在Init中根据配置文件创建并且注册对应类型的容器，并且放到”containers_”中，而”containers_”为map结构，其中key为容器的类型，而值为对应的容器。注册之后通过”GetContainer”获取对应类型的容器。
 总结起来就是”ContainerManager”负责从配置文件注册并且管理对应的容器。</p>
 </div>
 <div class="section" id="posecontainer">
-<h3>姿态容器(PoseContainer)<a class="headerlink" href="#posecontainer" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.6.3. </span>姿态容器(PoseContainer)<a class="headerlink" href="#posecontainer" title="Permalink to this headline"></a></h3>
 <p>姿态容器主要是根据”localization::LocalizationEstimate”消息转换为障碍物(perception::PerceptionObstacle)信息，这其实是把本车转换为障碍物。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">PoseContainer</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">Container</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -503,7 +635,7 @@
 <p>姿态容器(PoseContainer)中主要注意”PoseContainer::Update”方法的实现，即把当前车辆转换为障碍物信息，由于该函数实现比较简单，这里就不展开了。</p>
 </div>
 <div class="section" id="adctrajectorycontainer">
-<h3>规划轨迹容器(ADCTrajectoryContainer)<a class="headerlink" href="#adctrajectorycontainer" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.6.4. </span>规划轨迹容器(ADCTrajectoryContainer)<a class="headerlink" href="#adctrajectorycontainer" title="Permalink to this headline"></a></h3>
 <p>ADCTrajectoryContainer类的具体实现如下：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ADCTrajectoryContainer</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">Container</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -591,7 +723,7 @@
 </div>
 <p>可以看到”Insert”函数主要实现了规划轨迹的赋值操作，也就是保存规划轨迹的信息，<strong>而其它函数的功能，主要用来场景(scenario)识别中</strong>，我们在看到具体的场景识别的时候再展开分析。</p>
 <div class="section" id="storytellingcontainer">
-<h4>故事容器(StoryTellingContainer)<a class="headerlink" href="#storytellingcontainer" title="Permalink to this headline">¶</a></h4>
+<h4>故事容器(StoryTellingContainer)<a class="headerlink" href="#storytellingcontainer" title="Permalink to this headline"></a></h4>
 <p>StoryTellingContainer类和其它上述容器的实现类似:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">StoryTellingContainer</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">Container</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -619,7 +751,7 @@
 </div>
 </div>
 <div class="section" id="obstaclescontainer">
-<h3>障碍物容器(ObstaclesContainer)<a class="headerlink" href="#obstaclescontainer" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.6.5. </span>障碍物容器(ObstaclesContainer)<a class="headerlink" href="#obstaclescontainer" title="Permalink to this headline"></a></h3>
 <p>我们最后介绍障碍物容器，实际上障碍物分为2块，一种是障碍物(Obstacle)，一种是障碍物簇(ObstacleClusters)，下面我们分别开始介绍：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ObstaclesContainer</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">Container</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -693,8 +825,8 @@
 <span class="p">};</span><span class="w"></span>
 </pre></div>
 </div>
-<p>可以看到障碍物容器主要是根据不同的障碍物测量保存障碍物信息，下面我们看下相应的流程图：<br />
-<img alt="obs_process" src="../../_images/obs_process.jpg" /><br />
+<p>可以看到障碍物容器主要是根据不同的障碍物测量保存障碍物信息，下面我们看下相应的流程图：
+<img alt="obs_process" src="../../_images/obs_process.jpg" />
 可以看到上述过程中的主要功能实现都在”Obstacle”类中，下面我们主要分析下”Obstacle”类中的几个函数。</p>
 <p>我们接着看”Obstacle”类的消息插入函数：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">Obstacle::Insert</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">PerceptionObstacle</span><span class="o">&amp;</span><span class="w"> </span><span class="n">perception_obstacle</span><span class="p">,</span><span class="w"></span>
@@ -848,7 +980,7 @@
 </div>
 </div>
 <div class="section" id="roadgraph">
-<h3>道路图(RoadGraph)<a class="headerlink" href="#roadgraph" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.6.6. </span>道路图(RoadGraph)<a class="headerlink" href="#roadgraph" title="Permalink to this headline"></a></h3>
 <p>道路图的实现在”road_graph.h”和”road_graph.cc”中，构建道路图在”BuildLaneGraph”方法中，而主要的实现则在”ConstructLaneSequence”中：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">RoadGraph::ConstructLaneSequence</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">search_forward_direction</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">accumulated_s</span><span class="p">,</span><span class="w"></span>
@@ -975,10 +1107,10 @@
 </div>
 </div>
 <div class="section" id="scenario">
-<h2>场景(scenario)<a class="headerlink" href="#scenario" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">15.7. </span>场景(scenario)<a class="headerlink" href="#scenario" title="Permalink to this headline"></a></h2>
 <p>根据本车的位置，和高精度地图，解析当前车辆所在的场景。</p>
 <div class="section" id="scenariomanager">
-<h3>场景管理器(ScenarioManager)<a class="headerlink" href="#scenariomanager" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.7.1. </span>场景管理器(ScenarioManager)<a class="headerlink" href="#scenariomanager" title="Permalink to this headline"></a></h3>
 <p>场景管理器只有2个函数，一个是Run，一个是输出当前场景scenario。下面我们分析如何获取当前场景：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">ScenarioManager</span><span class="p">::</span><span class="n">Run</span><span class="p">()</span> <span class="p">{</span>
   <span class="o">//</span> <span class="n">获取环境特征</span>
@@ -996,10 +1128,10 @@
 </div>
 </div>
 <div class="section" id="evaluator">
-<h2>评估者(evaluator)<a class="headerlink" href="#evaluator" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">15.8. </span>评估者(evaluator)<a class="headerlink" href="#evaluator" title="Permalink to this headline"></a></h2>
 <p>“Evaluator”类为基类，其它类继承至该类，而”EvaluatorManager”类做为管理类，负责管理三种评估者，分别为：自行车，行人，汽车。</p>
 <div class="section" id="id6">
-<h3>评估者基类(Evaluator)<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.1. </span>评估者基类(Evaluator)<a class="headerlink" href="#id6" title="Permalink to this headline"></a></h3>
 <p>在”Evaluator”基类中申明方法”Evaluate”，其它子类重新构造实现了上述方法。另外基类中还实现了2个辅助函数：</p>
 <ol class="arabic simple">
 <li><p>提供世界坐标到物体坐标转换</p></li>
@@ -1023,7 +1155,7 @@
 </div>
 </div>
 <div class="section" id="evaluatormanager">
-<h3>评估者管理器(EvaluatorManager)<a class="headerlink" href="#evaluatormanager" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.2. </span>评估者管理器(EvaluatorManager)<a class="headerlink" href="#evaluatormanager" title="Permalink to this headline"></a></h3>
 <p>评估者管理器主要是对评估器进行管理和注册。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">EvaluatorManager</span> <span class="p">{</span>
  <span class="n">public</span><span class="p">:</span>
@@ -1068,14 +1200,14 @@
 <p>下面我们分别查看3种不同的评估者： 自行车评估者，行人评估者和车辆评估者。</p>
 </div>
 <div class="section" id="cyclistkeeplaneevaluator">
-<h3>自行车评估者(CyclistKeepLaneEvaluator)<a class="headerlink" href="#cyclistkeeplaneevaluator" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.3. </span>自行车评估者(CyclistKeepLaneEvaluator)<a class="headerlink" href="#cyclistkeeplaneevaluator" title="Permalink to this headline"></a></h3>
 <p>自行车评估者主要是评估自行车保持当前车道的概率。评估主要是函数”Evaluate”中进行的，<strong>函数的参数”obstacles_container”没有使用，使用的只是”obstacle_ptr”障碍物指针</strong>。评估的过程主要是根据生成的”LaneGraph”计算自行车在lane中出现的概率。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">CyclistKeepLaneEvaluator::Evaluate</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="n">Obstacle</span><span class="o">*</span><span class="w"> </span><span class="n">obstacle_ptr</span><span class="p">,</span><span class="w"> </span><span class="n">ObstaclesContainer</span><span class="o">*</span><span class="w"> </span><span class="n">obstacles_container</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 设置评估者类型</span>
 <span class="w">  </span><span class="n">obstacle_ptr</span><span class="o">-&gt;</span><span class="n">SetEvaluatorType</span><span class="p">(</span><span class="n">evaluator_type_</span><span class="p">);</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 特征是否初始化，该方法为protobuf自带方法，确认required字段是否都已经赋值，看起来这里没必要判断？？？</span>
-<span class="w">  </span><span class="c1">// https://github.com/protocolbuffers/protobuf/issues/2900  </span>
+<span class="w">  </span><span class="c1">// https://github.com/protocolbuffers/protobuf/issues/2900</span>
 <span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">obstacle_ptr</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">();</span><span class="w"></span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">obstacle_ptr</span><span class="o">-&gt;</span><span class="n">latest_feature</span><span class="p">().</span><span class="n">IsInitialized</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"></span>
@@ -1125,7 +1257,7 @@
 </div>
 </div>
 <div class="section" id="pedestrianinteractionevaluator">
-<h3>行人互动评估者(PedestrianInteractionEvaluator)<a class="headerlink" href="#pedestrianinteractionevaluator" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.4. </span>行人互动评估者(PedestrianInteractionEvaluator)<a class="headerlink" href="#pedestrianinteractionevaluator" title="Permalink to this headline"></a></h3>
 <p>行人互动评估主要是估计行人的概率，采用了深度学习的LSTM模型，关于行人预测可以参考论文”Social LSTM:Human Trajectory Prediction in Crowded Spaces”，这里我们对代码进行分析。</p>
 <ol class="arabic simple">
 <li><p>首先初始化加载深度学习模型。</p></li>
@@ -1173,7 +1305,7 @@
 <span class="w">  </span><span class="c1">//  - if in online mode, pass it through trained model to evaluate.</span>
 <span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">feature_values</span><span class="p">;</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 这里只是把最新的行人时间戳和位置提取出来了，并且线性存储在数组中(把数据展开)，</span>
-<span class="w">  </span><span class="c1">// 也就是说数组的第一个元素是时间戳，第二为ID，第三和第四为位置。  </span>
+<span class="w">  </span><span class="c1">// 也就是说数组的第一个元素是时间戳，第二为ID，第三和第四为位置。</span>
 <span class="w">  </span><span class="n">ExtractFeatures</span><span class="p">(</span><span class="n">obstacle_ptr</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">feature_values</span><span class="p">);</span><span class="w"></span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">FLAGS_prediction_offline_mode</span><span class="w"> </span><span class="o">==</span><span class="w"></span>
 <span class="w">      </span><span class="n">PredictionConstants</span><span class="o">::</span><span class="n">kDumpDataForLearning</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -1329,159 +1461,122 @@
 <p>车辆评估者涉及的评估者模型比较多，下面我们逐个介绍。</p>
 </div>
 <div class="section" id="costevaluator">
-<h3>CostEvaluator<a class="headerlink" href="#costevaluator" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.5. </span>CostEvaluator<a class="headerlink" href="#costevaluator" title="Permalink to this headline"></a></h3>
 <p>评估车辆的横向偏移概率，通过计算当前车的宽度和车道的横向差值，然后通过”Sigmoid”函数映射到0-1的概率空间。</p>
 </div>
 <div class="section" id="cruisemlpevaluator">
-<h3>CruiseMLPEvaluator<a class="headerlink" href="#cruisemlpevaluator" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.6. </span>CruiseMLPEvaluator<a class="headerlink" href="#cruisemlpevaluator" title="Permalink to this headline"></a></h3>
 <p>MLP为”多层神经网络”，相比上述过程，新增加了lane相关的特征。</p>
 </div>
 <div class="section" id="junctionmapevaluator">
-<h3>JunctionMapEvaluator<a class="headerlink" href="#junctionmapevaluator" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.7. </span>JunctionMapEvaluator<a class="headerlink" href="#junctionmapevaluator" title="Permalink to this headline"></a></h3>
 <p>加入了语义地图，模型未知？？？</p>
 </div>
 <div class="section" id="junctionmlpevaluator">
-<h3>JunctionMLPEvaluator<a class="headerlink" href="#junctionmlpevaluator" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.8. </span>JunctionMLPEvaluator<a class="headerlink" href="#junctionmlpevaluator" title="Permalink to this headline"></a></h3>
 <p>路口多层神经网络，没有利用地图</p>
 </div>
 <div class="section" id="laneaggregatingevaluator">
-<h3>LaneAggregatingEvaluator<a class="headerlink" href="#laneaggregatingevaluator" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.9. </span>LaneAggregatingEvaluator<a class="headerlink" href="#laneaggregatingevaluator" title="Permalink to this headline"></a></h3>
 <p>道路合并评估器</p>
 </div>
 <div class="section" id="lanescanningevaluator">
-<h3>LaneScanningEvaluator<a class="headerlink" href="#lanescanningevaluator" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.10. </span>LaneScanningEvaluator<a class="headerlink" href="#lanescanningevaluator" title="Permalink to this headline"></a></h3>
 <p>道路扫描？？？</p>
 </div>
 <div class="section" id="mlpevaluator">
-<h3>MLPEvaluator<a class="headerlink" href="#mlpevaluator" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.11. </span>MLPEvaluator<a class="headerlink" href="#mlpevaluator" title="Permalink to this headline"></a></h3>
 <p>多层神经网络评估器？？？</p>
 </div>
 <div class="section" id="semanticlstmevaluator">
-<h3>SemanticLSTMEvaluator<a class="headerlink" href="#semanticlstmevaluator" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.8.12. </span>SemanticLSTMEvaluator<a class="headerlink" href="#semanticlstmevaluator" title="Permalink to this headline"></a></h3>
 <p>语义LSTM评估器</p>
 <p>评估器主要是用深度学习的方法进行预测对应的概率，而且依赖事先建好的图，所以弄清楚上述2个过程很关键。</p>
 <a name="predictor" />
 </div>
 </div>
 <div class="section" id="predictor">
-<h2>预测器(predictor)<a class="headerlink" href="#predictor" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">15.9. </span>预测器(predictor)<a class="headerlink" href="#predictor" title="Permalink to this headline"></a></h2>
 <p>“Predictor”类为基类，其它类继承至该类，而”PredictorManager”类作为管理类。最后通过预测器预测障碍物的轨迹。</p>
 <div class="section" id="id7">
-<h3>预测器基类(Predictor)<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.1. </span>预测器基类(Predictor)<a class="headerlink" href="#id7" title="Permalink to this headline"></a></h3>
 <p>预测者基类主要申明了”Predict”方法，在子预测器中重构。输入是评估器给出的概率(trajectory)，输出则是预测的轨迹。</p>
 </div>
 <div class="section" id="predictormanager">
-<h3>预测管理器(PredictorManager)<a class="headerlink" href="#predictormanager" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.2. </span>预测管理器(PredictorManager)<a class="headerlink" href="#predictormanager" title="Permalink to this headline"></a></h3>
 <p>预测管理器主要是对预测器进行创建，管理和注册。主要的实现在”PredictObstacle”中：</p>
 <p>下面我们分别介绍几种预测器。</p>
 </div>
 <div class="section" id="emptypredictor">
-<h3>EmptyPredictor<a class="headerlink" href="#emptypredictor" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.3. </span>EmptyPredictor<a class="headerlink" href="#emptypredictor" title="Permalink to this headline"></a></h3>
 <p>对静止的物体进行预测，没有任何轨迹输出。</p>
 </div>
 <div class="section" id="extrapolationpredictor">
-<h3>ExtrapolationPredictor<a class="headerlink" href="#extrapolationpredictor" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.4. </span>ExtrapolationPredictor<a class="headerlink" href="#extrapolationpredictor" title="Permalink to this headline"></a></h3>
 <p>外推法预测器，</p>
 </div>
 <div class="section" id="freemovepredictor">
-<h3>FreeMovePredictor<a class="headerlink" href="#freemovepredictor" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.5. </span>FreeMovePredictor<a class="headerlink" href="#freemovepredictor" title="Permalink to this headline"></a></h3>
 <p>自由移动？？？</p>
 </div>
 <div class="section" id="interactionpredictor">
-<h3>InteractionPredictor<a class="headerlink" href="#interactionpredictor" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.6. </span>InteractionPredictor<a class="headerlink" href="#interactionpredictor" title="Permalink to this headline"></a></h3>
 </div>
 <div class="section" id="junctionpredictor">
-<h3>JunctionPredictor<a class="headerlink" href="#junctionpredictor" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.7. </span>JunctionPredictor<a class="headerlink" href="#junctionpredictor" title="Permalink to this headline"></a></h3>
 </div>
 <div class="section" id="lanesequencepredictor">
-<h3>LaneSequencePredictor<a class="headerlink" href="#lanesequencepredictor" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.8. </span>LaneSequencePredictor<a class="headerlink" href="#lanesequencepredictor" title="Permalink to this headline"></a></h3>
 <p>生成曲线在”DrawLaneSequenceTrajectoryPoints”中实现。</p>
 </div>
 <div class="section" id="movesequencepredictor">
-<h3>MoveSequencePredictor<a class="headerlink" href="#movesequencepredictor" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.9. </span>MoveSequencePredictor<a class="headerlink" href="#movesequencepredictor" title="Permalink to this headline"></a></h3>
 </div>
 <div class="section" id="sequencepredictor">
-<h3>SequencePredictor<a class="headerlink" href="#sequencepredictor" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.10. </span>SequencePredictor<a class="headerlink" href="#sequencepredictor" title="Permalink to this headline"></a></h3>
 </div>
 <div class="section" id="singlelanepredictor">
-<h3>SingleLanePredictor<a class="headerlink" href="#singlelanepredictor" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">15.9.11. </span>SingleLanePredictor<a class="headerlink" href="#singlelanepredictor" title="Permalink to this headline"></a></h3>
 <p>上述所有评估器的过程都类似，都是找到lane之后对lane做一个平滑的曲线？？？最后都调用了”PredictionMap::SmoothPointFromLane”。</p>
 <a name="reference" />
 </div>
 </div>
 <div class="section" id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="https://www.cnblogs.com/liuzubing/p/11388485.html">Apollo 5.0 障碍物行为预测技术</a><br />
+<h2><span class="section-number">15.10. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
+<p><a class="reference external" href="https://www.cnblogs.com/liuzubing/p/11388485.html">Apollo 5.0 障碍物行为预测技术</a>
 <a class="reference external" href="https://cloud.tencent.com/developer/news/310036">Apollo自动驾驶入门课程第⑥讲—预测</a></p>
 </div>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../planning/readme.html" class="btn btn-neutral float-left" title="14. Planning" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../routing/readme.html" class="btn btn-neutral float-right" title="16. Routing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/modules/prediction/readme.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

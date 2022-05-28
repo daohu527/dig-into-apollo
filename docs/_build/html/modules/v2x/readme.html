@@ -1,42 +1,142 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dig into Apollo - V2X &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>20. V2X &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="next" title="21. 性能分析" href="../../performance/readme.html" />
+    <link rel="prev" title="19. Transform" href="../transform/readme.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">快速开始:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">1. 什么是Apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">2. 如何编译</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">3. 启动容器</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">1. Cyber</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../audio/readme.html">2. Audio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bridge/readme.html">3. Bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../canbus/readme.html">4. Canbus</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../control/readme.html">5. Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data/readme.html">6. Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dreamview/readme.html">7. Dreamview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../drivers/readme.html">8. Drivers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guardian/readme.html">9. Guardian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../localization/readme.html">10. Localization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../map/readme.html">11. Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../monitor/readme.html">12. Monitor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../perception/readme.html">13. Perception</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../planning/readme.html">14. Planning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prediction/readme.html">15. Prediction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../routing/readme.html">16. Routing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../routing/readme.html#id5">17. Routing模块分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/readme.html">18. Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transform/readme.html">19. Transform</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">20. V2X</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">20.1. Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">20.2. v2x目录结构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#v2x-proxy">20.3. v2x_proxy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#app">20.3.1. app</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#onv2xcarstatustimer">20.4. OnV2xCarStatusTimer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#recvtrafficlight">20.5. RecvTrafficlight</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#recvosplanning">20.6. RecvOsPlanning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#obs-thread">20.7. obs_thread_</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#trafficlighttimer">20.7.1. TrafficLightTimer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">20.7.2. OnV2xCarStatusTimer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#obu-obuinterfacegrpcimpl">20.8. OBU接口(ObuInterFaceGrpcImpl)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#grpc-interface">20.8.1. 远程调用服务(grpc_interface)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#osinterface">20.9. 系统接口(OsInterFace)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sendmsgtoos">20.9.1. SendMsgToOs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#getmsgfromos">20.9.2. GetMsgFromOs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">20.10. 感知模块</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fusion">20.11. fusion模块</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">20.12. Fusion类</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#kmkernal">20.13. KMkernal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#trans-tools">20.14. trans_tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">20.15. V2x消息</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">23. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">24. 论文</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">28. 常见问题</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
-  <div class="section" id="dig-into-apollo-v2x-github">
-<h1>Dig into Apollo - V2X <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-v2x-github" title="Permalink to this headline">¶</a></h1>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">&lt;no title&gt;</a> &raquo;</li>
+      <li><span class="section-number">20. </span>V2X</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/v2x/readme.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="v2x">
+<h1><span class="section-number">20. </span>V2X<a class="headerlink" href="#v2x" title="Permalink to this headline"></a></h1>
 <blockquote>
 <div><p>业精于勤，荒于嬉；行成于思，毁于随。</p>
 </div></blockquote>
 <div class="section" id="table-of-contents">
-<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">20.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
 <ul class="simple">
 <li><p><span class="xref myst">v2x目录结构</span></p></li>
 <li><p><span class="xref myst">v2x_proxy</span></p>
@@ -60,14 +160,14 @@
 </ul>
 <a name="introduction" />
 </div>
-<div class="section" id="v2x">
-<h2>v2x目录结构<a class="headerlink" href="#v2x" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h2><span class="section-number">20.2. </span>v2x目录结构<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>v2x的目录结构如下。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
 ├── BUILD        // 编译
 ├── common       // 公共目录
 ├── conf         // 配置
-├── launch       
+├── launch
 ├── proto        // protobuf文件
 └── v2x_proxy    // v2x代理
 </pre></div>
@@ -76,7 +176,7 @@
 <a name="v2x_proxy" />
 </div>
 <div class="section" id="v2x-proxy">
-<h2>v2x_proxy<a class="headerlink" href="#v2x-proxy" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">20.3. </span>v2x_proxy<a class="headerlink" href="#v2x-proxy" title="Permalink to this headline"></a></h2>
 <p>v2x_proxy的目录结构如下。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
 ├── app
@@ -86,10 +186,10 @@
 </div>
 <a name="app" />
 <div class="section" id="app">
-<h3>app<a class="headerlink" href="#app" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">20.3.1. </span>app<a class="headerlink" href="#app" title="Permalink to this headline"></a></h3>
 <p>v2x模块的入口函数在”app/main.cc”中，在主函数中读取参数并且初始化v2x proxy。在”v2x_proxy.h”和”v2x_proxy.cc”中实现了”V2xProxy”类。</p>
 <ol class="arabic simple">
-<li><p>初始化<br />
+<li><p>初始化
 首先我们看”V2xProxy”的初始化过程。</p></li>
 </ol>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">V2xProxy</span><span class="o">::</span><span class="n">V2xProxy</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;::</span><span class="n">apollo</span><span class="o">::</span><span class="n">hdmap</span><span class="o">::</span><span class="n">HDMap</span><span class="o">&gt;</span><span class="w"> </span><span class="n">hdmap</span><span class="p">)</span><span class="w"></span>
@@ -98,7 +198,7 @@
 <span class="w">  </span><span class="c1">// 1. 读取高精度地图</span>
 <span class="w">  </span><span class="n">hdmap_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;::</span><span class="n">apollo</span><span class="o">::</span><span class="n">hdmap</span><span class="o">::</span><span class="n">HDMap</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
 <span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">hdmap_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">hdmap</span><span class="o">::</span><span class="n">BaseMapFile</span><span class="p">();</span><span class="w"></span>
-<span class="w">  </span><span class="c1">// 2. </span>
+<span class="w">  </span><span class="c1">// 2.</span>
 <span class="w">  </span><span class="o">::</span><span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">TimerOption</span><span class="w"> </span><span class="n">v2x_car_status_timer_option</span><span class="p">;</span><span class="w"></span>
 <span class="w">  </span><span class="n">v2x_car_status_timer_option</span><span class="p">.</span><span class="n">period</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
 <span class="w">      </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="o">&gt;</span><span class="p">((</span><span class="mi">1000</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">FLAGS_v2x_car_status_timer_frequency</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"></span>
@@ -153,12 +253,12 @@
 </div>
 </div>
 <div class="section" id="onv2xcarstatustimer">
-<h2>OnV2xCarStatusTimer<a class="headerlink" href="#onv2xcarstatustimer" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">20.4. </span>OnV2xCarStatusTimer<a class="headerlink" href="#onv2xcarstatustimer" title="Permalink to this headline"></a></h2>
 <p>发送车的信息到OBU-&gt;RSU
 GetRsuInfo -&gt; SendCarStatusToObu</p>
 </div>
 <div class="section" id="recvtrafficlight">
-<h2>RecvTrafficlight<a class="headerlink" href="#recvtrafficlight" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">20.5. </span>RecvTrafficlight<a class="headerlink" href="#recvtrafficlight" title="Permalink to this headline"></a></h2>
 <p>接收OBU的红绿灯消息,并且进行处理</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">V2xProxy::RecvTrafficlight</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// get traffic light from obu</span>
@@ -190,7 +290,7 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 </div>
 </div>
 <div class="section" id="recvosplanning">
-<h2>RecvOsPlanning<a class="headerlink" href="#recvosplanning" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">20.6. </span>RecvOsPlanning<a class="headerlink" href="#recvosplanning" title="Permalink to this headline"></a></h2>
 <p>获取planning路线,并且根据红绿灯的剩余时间来调整线路?</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">V2xProxy::RecvOsPlanning</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">adc_trajectory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;::</span><span class="n">apollo</span><span class="o">::</span><span class="n">planning</span><span class="o">::</span><span class="n">ADCTrajectory</span><span class="o">&gt;</span><span class="p">();</span><span class="w"></span>
@@ -225,11 +325,11 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 </div>
 </div>
 <div class="section" id="obs-thread">
-<h2>obs_thread_<a class="headerlink" href="#obs-thread" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">20.7. </span>obs_thread_<a class="headerlink" href="#obs-thread" title="Permalink to this headline"></a></h2>
 <p>获取OBU发布的障碍物信息,然后发送到OS</p>
 <a name="trafficlight_timer" />
 <div class="section" id="trafficlighttimer">
-<h3>TrafficLightTimer<a class="headerlink" href="#trafficlighttimer" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">20.7.1. </span>TrafficLightTimer<a class="headerlink" href="#trafficlighttimer" title="Permalink to this headline"></a></h3>
 <p>交通灯的定时器会定时回调”OnX2vTrafficLightTimer”，下面我们看定时回调里面执行了什么？</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">V2xProxy::OnX2vTrafficLightTimer</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">x2v_trafficlight_</span><span class="o">-&gt;</span><span class="n">Clear</span><span class="p">();</span><span class="w"></span>
@@ -294,8 +394,8 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 </ol>
 <a name="onv2xcar_timer" />
 </div>
-<div class="section" id="id1">
-<h3>OnV2xCarStatusTimer<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h3><span class="section-number">20.7.2. </span>OnV2xCarStatusTimer<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
 <p>发送本车的状态到RSU。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">V2xProxy::OnV2xCarStatusTimer</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">v2x_carstatus_</span><span class="o">-&gt;</span><span class="n">Clear</span><span class="p">();</span><span class="w"></span>
@@ -313,13 +413,13 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>通过上述分析，我们可以清晰的了解到”V2xProxy”实际上相当于一个桥梁，通过”os_interface_”获取车的信息，通过”obu_interface_”发送消息。下面是流程图。<br />
+<p>通过上述分析，我们可以清晰的了解到”V2xProxy”实际上相当于一个桥梁，通过”os_interface_”获取车的信息，通过”obu_interface_”发送消息。下面是流程图。
 <img alt="v2x_proccess" src="../../_images/v2x_proccess.jpg" /></p>
 <a name="obu_interface" />
 </div>
 </div>
 <div class="section" id="obu-obuinterfacegrpcimpl">
-<h2>OBU接口(ObuInterFaceGrpcImpl)<a class="headerlink" href="#obu-obuinterfacegrpcimpl" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">20.8. </span>OBU接口(ObuInterFaceGrpcImpl)<a class="headerlink" href="#obu-obuinterfacegrpcimpl" title="Permalink to this headline"></a></h2>
 <p>OBU实际上是车和RSU的桥梁，当前OBU可能和车是单独的设备通过网络连接的，所以这里通过grpc实现调用。 主要实现了从OBU发送和接收障碍物信息，红绿灯信息。ObuInterFaceBase是纯虚类，定义了和OBU通信的接口。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ObuInterFaceGrpcImpl</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">ObuInterFaceBase</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -351,7 +451,7 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 <p>ObuInterFaceGrpcImpl中创建了一个grpc客户端和服务端，服务端监听OBU发送过来的消息，并且保存。grpc客户端则发送消息到OBU。</p>
 <a name="grpc_interface" />
 <div class="section" id="grpc-interface">
-<h3>远程调用服务(grpc_interface)<a class="headerlink" href="#grpc-interface" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">20.8.1. </span>远程调用服务(grpc_interface)<a class="headerlink" href="#grpc-interface" title="Permalink to this headline"></a></h3>
 <p>主要实现了grpc的客户端和服务端，后面看下grpc的介绍之后再详细介绍。</p>
 <ol class="arabic simple">
 <li><p>其中GrpcServerImpl提供rpc服务，当OBU发送请求获取障碍物信息时候，返回无人车感知到的障碍物信息，反之同理。（OBU提供请求）</p></li>
@@ -362,11 +462,11 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 </div>
 </div>
 <div class="section" id="osinterface">
-<h2>系统接口(OsInterFace)<a class="headerlink" href="#osinterface" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">20.9. </span>系统接口(OsInterFace)<a class="headerlink" href="#osinterface" title="Permalink to this headline"></a></h2>
 <p>OsInterFace中实现了2个模板，分别接收和发布消息给apollo，下面我们主要看下发布和订阅函数。</p>
 <a name="send_msg_to_os" />
 <div class="section" id="sendmsgtoos">
-<h3>SendMsgToOs<a class="headerlink" href="#sendmsgtoos" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">20.9.1. </span>SendMsgToOs<a class="headerlink" href="#sendmsgtoos" title="Permalink to this headline"></a></h3>
 <p>发布函数非常简单，就是通过reader发送指定的topic，<strong>需要注意一定要对RSU发布的消息做融合了之后才能输出</strong>，如果不做融合，一个简单的例子如果RSU发布的障碍物apollo没有看到，当RSU发布之后，Apollo的感知如果不做融合，下次发送的是apollo自己的感知结果，会出现一帧的障碍物存在，而下一帧不存在的情况，因此要对结果做融合。 另一个疑问是如何保证融合的时间戳一致，因为RSU的频率可能和激光雷达的时间戳不一致。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">MessageT</span><span class="o">&gt;</span><span class="w"></span>
 <span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="n">SendMsgToOs</span><span class="p">(</span><span class="n">cyber</span><span class="o">::</span><span class="n">Writer</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">writer</span><span class="p">,</span><span class="w"></span>
@@ -387,7 +487,7 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 <a name="get_msg_from_os" />
 </div>
 <div class="section" id="getmsgfromos">
-<h3>GetMsgFromOs<a class="headerlink" href="#getmsgfromos" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">20.9.2. </span>GetMsgFromOs<a class="headerlink" href="#getmsgfromos" title="Permalink to this headline"></a></h3>
 <p>从Apollo系统接收消息，这部分的消息接收没有采用事件驱动的方式，而是采用定时发布的方式。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">MessageT</span><span class="o">&gt;</span><span class="w"></span>
 <span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="n">GetMsgFromOs</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">Reader</span><span class="o">&lt;</span><span class="n">MessageT</span><span class="o">&gt;</span><span class="w"> </span><span class="o">*</span><span class="n">reader</span><span class="p">,</span><span class="w"></span>
@@ -404,8 +504,8 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 </div>
 </div>
 </div>
-<div class="section" id="id2">
-<h2>感知模块<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h2><span class="section-number">20.10. </span>感知模块<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h2>
 <p>最后感知模块”trafficlights_perception_component.cc”会订阅”/apollo/v2x/traffic_light”这个TOPIC，然后把V2X获取到的结果放入buffer中再进行处理。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span><span class="w"> </span><span class="nf">TrafficLightsPerceptionComponent::InitV2XListener</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">typedef</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">apollo</span><span class="o">::</span><span class="n">v2x</span><span class="o">::</span><span class="n">IntersectionTrafficLightData</span><span class="o">&gt;</span><span class="w"></span>
@@ -421,8 +521,8 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 </div>
 </div>
 <div class="section" id="fusion">
-<h2>fusion模块<a class="headerlink" href="#fusion" title="Permalink to this headline">¶</a></h2>
-<p>Apollo6.0在v2x中新增加了fusion模块，fusion模块的输入是”/perception/vehicle/obstacles”，输出也是”/apollo/perception/obstacles”.接收的是感知模块输出的感知信息,输出融合之后的障碍物信息.<br />
+<h2><span class="section-number">20.11. </span>fusion模块<a class="headerlink" href="#fusion" title="Permalink to this headline"></a></h2>
+<p>Apollo6.0在v2x中新增加了fusion模块，fusion模块的输入是”/perception/vehicle/obstacles”，输出也是”/apollo/perception/obstacles”.接收的是感知模块输出的感知信息,输出融合之后的障碍物信息.
 这个模块的启动也在感知模块的”dag_streaming_perception.dag”中,也就是说V2X模块的感知融合可能会合入感知模块中.</p>
 <p>输入:
 /perception/vehicle/obstacles
@@ -438,7 +538,7 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 <span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">localization_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">localization_reader_</span><span class="o">-&gt;</span><span class="n">GetLatestObserved</span><span class="p">();</span><span class="w"></span>
 <span class="w">  </span><span class="n">base</span><span class="o">::</span><span class="n">Object</span><span class="w"> </span><span class="n">hv_obj</span><span class="p">;</span><span class="w"></span>
 <span class="w">  </span><span class="n">CarstatusPb2Object</span><span class="p">(</span><span class="o">*</span><span class="n">localization_msg</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">hv_obj</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;VEHICLE&quot;</span><span class="p">);</span><span class="w"></span>
-<span class="w">  </span>
+
 <span class="w">  </span><span class="n">v2x_obstacles_reader_</span><span class="o">-&gt;</span><span class="n">Observe</span><span class="p">();</span><span class="w"></span>
 <span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">v2x_obstacles_msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">v2x_obstacles_reader_</span><span class="o">-&gt;</span><span class="n">GetLatestObserved</span><span class="p">();</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 2. 读取v2x的感知信息,如果没有,则直接输出感知模块的结果</span>
@@ -456,7 +556,7 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 <span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">perception_objects</span><span class="p">;</span><span class="w"></span>
 <span class="w">    </span><span class="n">Pbs2Objects</span><span class="p">(</span><span class="o">*</span><span class="n">perception_obstacles</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">perception_objects</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;VEHICLE&quot;</span><span class="p">);</span><span class="w"></span>
 <span class="w">    </span><span class="n">perception_objects</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">hv_obj</span><span class="p">);</span><span class="w"></span>
-<span class="w">    </span>
+
 <span class="w">    </span><span class="c1">// 4. 合并新资源</span>
 <span class="w">    </span><span class="n">fusion_</span><span class="p">.</span><span class="n">CombineNewResource</span><span class="p">(</span><span class="n">perception_objects</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">fused_objects</span><span class="p">,</span><span class="w"></span>
 <span class="w">                               </span><span class="o">&amp;</span><span class="n">fusion_result</span><span class="p">);</span><span class="w"></span>
@@ -473,8 +573,8 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="id3">
-<h2>Fusion类<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h2><span class="section-number">20.12. </span>Fusion类<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h2>
 <p>Fusion类的构造函数.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Fusion</span><span class="o">::</span><span class="n">Fusion</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">ft_config_manager_ptr_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FTConfigManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">();</span><span class="w"></span>
@@ -583,11 +683,11 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 </div>
 </div>
 <div class="section" id="kmkernal">
-<h2>KMkernal<a class="headerlink" href="#kmkernal" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">20.13. </span>KMkernal<a class="headerlink" href="#kmkernal" title="Permalink to this headline"></a></h2>
 <p>KM匹配算法.</p>
 </div>
 <div class="section" id="trans-tools">
-<h2>trans_tools<a class="headerlink" href="#trans-tools" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">20.14. </span>trans_tools<a class="headerlink" href="#trans-tools" title="Permalink to this headline"></a></h2>
 <p>“trans_tools.cc”和”trans_tools.h”中主要是一些工具类,用来转换对象到proto和从proto到对象.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">Objects2Pbs</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">base</span><span class="o">::</span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">objects</span><span class="p">,</span><span class="w"></span>
 <span class="w">                 </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">PerceptionObstacles</span><span class="o">&gt;</span><span class="w"> </span><span class="n">obstacles</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -608,8 +708,8 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="id4">
-<h2>V2x消息<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h2><span class="section-number">20.15. </span>V2x消息<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h2>
 <p>2017年9月中旬，中国智能网联汽车产业创新联盟正式发布《合作式智能交通系统 车用通信系统应用层及应用数据交互标准》.该标准是一个应用层的标准,下载<a class="reference external" href="http://www.sae-china.org/download/1745/%E5%90%88%E4%BD%9C%E5%BC%8F%E6%99%BA%E8%83%BD%E8%BF%90%E8%BE%93%E7%B3%BB%E7%BB%9F+%E8%BD%A6%E7%94%A8%E9%80%9A%E4%BF%A1%E7%B3%BB%E7%BB%9F%E5%BA%94%E7%94%A8%E5%B1%82%E5%8F%8A%E5%BA%94%E7%94%A8%E6%95%B0%E6%8D%AE%E4%BA%A4%E4%BA%92%E6%A0%87%E5%87%86.pdf">链接</a>.</p>
 <p>标准中规定了5大类消息:</p>
 <ul class="simple">
@@ -625,71 +725,34 @@ GetRsuInfo -&gt; SendCarStatusToObu</p>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../transform/readme.html" class="btn btn-neutral float-left" title="19. Transform" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../performance/readme.html" class="btn btn-neutral float-right" title="21. 性能分析" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/modules/v2x/readme.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

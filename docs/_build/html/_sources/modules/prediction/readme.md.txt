@@ -1,4 +1,4 @@
-# Dig into Apollo - Prediction ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
+# Prediction
 
 > 悟已往之不谏,知来者之可追
 
@@ -18,19 +18,19 @@
 - [场景(scenario)](#scenario)
 - [评估者(evaluator)](#evaluator)
 - [预测器(predictor)](#predictor)
-- [Reference](#reference)  
+- [Reference](#reference)
 
 <a name="introduction" />
 
 ## 介绍
-首先建议先阅读官方文档(readme.md)，里面说明了数据流向，也就是说预测模块是直接接收的感知模块给出的障碍物信息，这和CV领域的传统预测任务有区别，CV领域的预测任务不需要先识别物体，只需要根据物体的特征，对比前后2帧，然后得出物体的位置，也就说甚至不需要物体识别，业界之所以不这么做的原因是因为检测物体太耗时了。  
-当然也有先检测物体再做跟踪的，也就是说目前apollo中的物体检测实际上是采用的第二种方法，这也可以理解，反正感知模块一定会工作，而且一定要检测物体，所以何不把这个信息直接拿过来用呢？这和人类似，逐帧跟踪指定特征的对象，就是物体的轨迹，然后再根据现有的轨迹预测物体讲来的轨迹。  
-预测的轨迹和障碍物信息发送给规划(planning)模块使用。  
+首先建议先阅读官方文档(readme.md)，里面说明了数据流向，也就是说预测模块是直接接收的感知模块给出的障碍物信息，这和CV领域的传统预测任务有区别，CV领域的预测任务不需要先识别物体，只需要根据物体的特征，对比前后2帧，然后得出物体的位置，也就说甚至不需要物体识别，业界之所以不这么做的原因是因为检测物体太耗时了。
+当然也有先检测物体再做跟踪的，也就是说目前apollo中的物体检测实际上是采用的第二种方法，这也可以理解，反正感知模块一定会工作，而且一定要检测物体，所以何不把这个信息直接拿过来用呢？这和人类似，逐帧跟踪指定特征的对象，就是物体的轨迹，然后再根据现有的轨迹预测物体讲来的轨迹。
+预测的轨迹和障碍物信息发送给规划(planning)模块使用。
 
 <a name="directory" />
 
 ## 目录结构
-预测模块的目录结构如下：  
+预测模块的目录结构如下：
 ```
 .
 ├── BUILD
@@ -56,28 +56,28 @@
 ├── testdata               // 测试数据
 └── util                   // 工具类
 ```
-可以看到预测模块主要是分为2大块功能，一是实时的预测执行过程，一是工具类(离线验证？)：  
+可以看到预测模块主要是分为2大块功能，一是实时的预测执行过程，一是工具类(离线验证？)：
 * **在线预测流程** - container -> scenario -> evaluator -> predictor
 * **离线流程** - pipeline (util)提取bag包中的数据给离线测试用？
 
 <a name="preciction_component" />
 
 ## 预测模块(PredictionComponent类)
-预测模块和其它模块一样，都是在cyber中注册，具体的实现在"prediction_component.h"和"prediction_component.cc"中，我们知道cyber模块有2种消息触发模式，一种是定时器触发，一种是消息触发，而预测为消息触发模式。  
+预测模块和其它模块一样，都是在cyber中注册，具体的实现在"prediction_component.h"和"prediction_component.cc"中，我们知道cyber模块有2种消息触发模式，一种是定时器触发，一种是消息触发，而预测为消息触发模式。
 预测模块的**输入消息**为：
 1. **perception::PerceptionObstacles** - 感知模块输出的障碍物信息
 2. **planning::ADCTrajectory** - 规划模块输出的行驶路径
-3. **localization::LocalizationEstimate** - 车辆当前的位置  
+3. **localization::LocalizationEstimate** - 车辆当前的位置
 
-**输出消息**:  
-1. **prediction::PredictionObstacles** - 预测模块输出的障碍物信息  
+**输出消息**:
+1. **prediction::PredictionObstacles** - 预测模块输出的障碍物信息
 
-预测模块和所有其它模块一样，都实现了"cyber::Component"基类中的"Init()"和"Proc()"方法，分别进行初始化和消息触发调用，调用由框架自动执行，关于cyber如何调用和执行每个模块，可以参考cyber模块的介绍，下面我们主要介绍这2个方法。  
+预测模块和所有其它模块一样，都实现了"cyber::Component"基类中的"Init()"和"Proc()"方法，分别进行初始化和消息触发调用，调用由框架自动执行，关于cyber如何调用和执行每个模块，可以参考cyber模块的介绍，下面我们主要介绍这2个方法。
 
 <a name="preciction_init" />
 
 #### 初始化(Init())
-预测模块的初始化在"PredictionComponent::Init()"中进行，主要是注册消息读取和发送控制器，用来读取和发送消息，**需要注意的是初始化过程中也对"MessageProcess"类进行了初始化，而"MessageProcess"实现了预测模块的整个消息处理流程**。  
+预测模块的初始化在"PredictionComponent::Init()"中进行，主要是注册消息读取和发送控制器，用来读取和发送消息，**需要注意的是初始化过程中也对"MessageProcess"类进行了初始化，而"MessageProcess"实现了预测模块的整个消息处理流程**。
 ```
 bool PredictionComponent::Init() {
   component_start_time_ = Clock::NowInSeconds();
@@ -86,7 +86,7 @@ bool PredictionComponent::Init() {
   if (!MessageProcess::Init()) {
     return false;
   }
-  
+
   // 规划模块消息读取者
   planning_reader_ = node_->CreateReader<ADCTrajectory>(
       FLAGS_planning_trajectory_topic, nullptr);
@@ -115,11 +115,11 @@ bool PredictionComponent::Init() {
 }
 ```
 
-下面我们接着看消息回调执行函数  
+下面我们接着看消息回调执行函数
 
 <a name="preciction_proc" />
 
-#### 回调执行(Proc)  
+#### 回调执行(Proc)
 回调执行函数会执行以下过程:
 ```
 bool PredictionComponent::Proc(
@@ -133,12 +133,12 @@ bool PredictionComponent::Proc(
 }
 ```
 
-下面我们分别看下这2个过程有什么差异？我们先看  
+下面我们分别看下这2个过程有什么差异？我们先看
 
 <a name="preciction_submodule" />
 
 #### ContainerSubmoduleProcess
-子过程的函数如下：  
+子过程的函数如下：
 ```c++
 bool PredictionComponent::ContainerSubmoduleProcess(
     const std::shared_ptr<PerceptionObstacles>& perception_obstacles) {
@@ -195,12 +195,12 @@ bool PredictionComponent::ContainerSubmoduleProcess(
   return true;
 }
 ```
-看起来上述函数只是计算中间过程，并且发布消息到订阅节点。具体的用途需要结合业务来分析（具体的业务场景是什么？？？）。  
- 
+看起来上述函数只是计算中间过程，并且发布消息到订阅节点。具体的用途需要结合业务来分析（具体的业务场景是什么？？？）。
+
 <a name="preciction_endtoend" />
 
 #### PredictionEndToEndProc
-端到端的过程函数如下：  
+端到端的过程函数如下：
 ```
 bool PredictionComponent::PredictionEndToEndProc(
     const std::shared_ptr<PerceptionObstacles>& perception_obstacles) {
@@ -250,7 +250,7 @@ bool PredictionComponent::PredictionEndToEndProc(
   // Postprocess prediction obstacles message
   prediction_obstacles.set_start_timestamp(frame_start_time_);
   ...
-  
+
   common::util::FillHeader(node_->Name(), &prediction_obstacles);
   prediction_writer_->Write(prediction_obstacles);
   return true;
@@ -259,13 +259,13 @@ bool PredictionComponent::PredictionEndToEndProc(
 
 <a name="message_process" />
 
-## 消息处理(MessageProcess)  
-可以看到上述过程都是在MessageProcess中处理完成的，那么我们先看下MessageProcess的执行过程。  
+## 消息处理(MessageProcess)
+可以看到上述过程都是在MessageProcess中处理完成的，那么我们先看下MessageProcess的执行过程。
 
 <a name="message_init" />
 
-#### 初始化(Init)  
-消息处理的初始化首先在"PredictionComponent::Init()"中调用，下面我们看下实现了哪些功能：  
+#### 初始化(Init)
+消息处理的初始化首先在"PredictionComponent::Init()"中调用，下面我们看下实现了哪些功能：
 ```c++
 bool MessageProcess::Init() {
   // 1. 初始化容器
@@ -284,17 +284,17 @@ bool MessageProcess::Init() {
   return true;
 }
 ```
-上述子过程的初始化就是从配置文件读取配置，并且初始化对应的类，结构相对比较简单，这里就不一一介绍了。  
+上述子过程的初始化就是从配置文件读取配置，并且初始化对应的类，结构相对比较简单，这里就不一一介绍了。
 
 <a name="onperception" />
 
 #### 消息处理
-定位，规划和故事的消息处理相对比较简单，主要是向对应的容器中插入数据（每个容器都实现了Insert()方法），下面着重介绍感知模块消息的处理过程，该过程也输出了最后的结果。  
+定位，规划和故事的消息处理相对比较简单，主要是向对应的容器中插入数据（每个容器都实现了Insert()方法），下面着重介绍感知模块消息的处理过程，该过程也输出了最后的结果。
 ```c++
 void MessageProcess::OnPerception(
     const perception::PerceptionObstacles& perception_obstacles,
     PredictionObstacles* const prediction_obstacles) {
-  // 1. 分析场景和处理容器中的数据  
+  // 1. 分析场景和处理容器中的数据
   ContainerProcess(perception_obstacles);
 
   // 获取障碍物容器
@@ -334,7 +334,7 @@ void MessageProcess::OnPerception(
   }
 
   // Make evaluations
-  // 2. 进行评估  
+  // 2. 进行评估
   EvaluatorManager::Instance()->Run(ptr_obstacles_container);
   if (FLAGS_prediction_offline_mode ==
           PredictionConstants::kDumpDataForLearning ||
@@ -343,29 +343,29 @@ void MessageProcess::OnPerception(
   }
 
   // Make predictions
-  // 3. 进行预测  
+  // 3. 进行预测
   PredictorManager::Instance()->Run(perception_obstacles,
                                     ptr_ego_trajectory_container,
                                     ptr_obstacles_container);
 
   // Get predicted obstacles
-  // 4. 输出预测结果  
+  // 4. 输出预测结果
   *prediction_obstacles = PredictorManager::Instance()->prediction_obstacles();
 }
 ```
-上面的消息处理过程实际上是整个预测的过程，分为以下几个步骤：  
-![process](img/process.jpg)  
+上面的消息处理过程实际上是整个预测的过程，分为以下几个步骤：
+![process](img/process.jpg)
 
 
-下面主要分析各个模块的输入是什么，输出是什么？ 以及它们的作用？   
+下面主要分析各个模块的输入是什么，输出是什么？ 以及它们的作用？
 
 <a name="container" />
 
-## 容器(container)  
-容器的作用主要是存储对应类型的消息，用来给评估器(evaluator)使用。  
+## 容器(container)
+容器的作用主要是存储对应类型的消息，用来给评估器(evaluator)使用。
 
-#### 容器基类(Container)  
-首先介绍容器基类"Container"类，主要申明了"Insert"方法：  
+#### 容器基类(Container)
+首先介绍容器基类"Container"类，主要申明了"Insert"方法：
 ```
 class Container {
  public:
@@ -379,7 +379,7 @@ class Container {
 ```
 
 #### 容器管理(ContainerManager)
-上述基类有4个扩展类：PoseContainer，ObstaclesContainer，ADCTrajectoryContainer和StoryTellingContainer，分别存储不同的消息类型，而这些容器的管理和注册在ContainerManager中，下面我们看下ContainerManager类的具体实现。  
+上述基类有4个扩展类：PoseContainer，ObstaclesContainer，ADCTrajectoryContainer和StoryTellingContainer，分别存储不同的消息类型，而这些容器的管理和注册在ContainerManager中，下面我们看下ContainerManager类的具体实现。
 ```c++
 class ContainerManager {
  public:
@@ -421,13 +421,13 @@ class ContainerManager {
   DECLARE_SINGLETON(ContainerManager)
 };
 ```
-ContainerManager类的执行过程如下：  
-![container](img/container.jpg)  
-可以看到容器管理器在Init中根据配置文件创建并且注册对应类型的容器，并且放到"containers_"中，而"containers_"为map结构，其中key为容器的类型，而值为对应的容器。注册之后通过"GetContainer"获取对应类型的容器。  
-总结起来就是"ContainerManager"负责从配置文件注册并且管理对应的容器。  
+ContainerManager类的执行过程如下：
+![container](img/container.jpg)
+可以看到容器管理器在Init中根据配置文件创建并且注册对应类型的容器，并且放到"containers_"中，而"containers_"为map结构，其中key为容器的类型，而值为对应的容器。注册之后通过"GetContainer"获取对应类型的容器。
+总结起来就是"ContainerManager"负责从配置文件注册并且管理对应的容器。
 
-#### 姿态容器(PoseContainer)  
-姿态容器主要是根据"localization::LocalizationEstimate"消息转换为障碍物(perception::PerceptionObstacle)信息，这其实是把本车转换为障碍物。  
+#### 姿态容器(PoseContainer)
+姿态容器主要是根据"localization::LocalizationEstimate"消息转换为障碍物(perception::PerceptionObstacle)信息，这其实是把本车转换为障碍物。
 ```c++
 class PoseContainer : public Container {
  public:
@@ -457,10 +457,10 @@ class PoseContainer : public Container {
   std::unique_ptr<perception::PerceptionObstacle> obstacle_ptr_;
 };
 ```
-姿态容器(PoseContainer)中主要注意"PoseContainer::Update"方法的实现，即把当前车辆转换为障碍物信息，由于该函数实现比较简单，这里就不展开了。  
+姿态容器(PoseContainer)中主要注意"PoseContainer::Update"方法的实现，即把当前车辆转换为障碍物信息，由于该函数实现比较简单，这里就不展开了。
 
-#### 规划轨迹容器(ADCTrajectoryContainer)  
-ADCTrajectoryContainer类的具体实现如下：  
+#### 规划轨迹容器(ADCTrajectoryContainer)
+ADCTrajectoryContainer类的具体实现如下：
 ```c++
 class ADCTrajectoryContainer : public Container {
  public:
@@ -526,7 +526,7 @@ class ADCTrajectoryContainer : public Container {
   std::vector<std::string> adc_target_lane_seq_;
 };
 ```
-还是一样查看对应的"Insert"函数中实现了哪些功能？  
+还是一样查看对应的"Insert"函数中实现了哪些功能？
 ```c++
 void ADCTrajectoryContainer::Insert(
     const ::google::protobuf::Message& message) {
@@ -548,7 +548,7 @@ void ADCTrajectoryContainer::Insert(
 可以看到"Insert"函数主要实现了规划轨迹的赋值操作，也就是保存规划轨迹的信息，**而其它函数的功能，主要用来场景(scenario)识别中**，我们在看到具体的场景识别的时候再展开分析。
 
 ##### 故事容器(StoryTellingContainer)
-StoryTellingContainer类和其它上述容器的实现类似:  
+StoryTellingContainer类和其它上述容器的实现类似:
 ```c++
 class StoryTellingContainer : public Container {
  public:
@@ -571,10 +571,10 @@ class StoryTellingContainer : public Container {
   apollo::storytelling::CloseToJunction close_to_junction_;
 };
 ```
-StoryTellingContainer类实际上是接收"storytelling"模块的消息，来获取当前车和路口的距离。  
+StoryTellingContainer类实际上是接收"storytelling"模块的消息，来获取当前车和路口的距离。
 
 #### 障碍物容器(ObstaclesContainer)
-我们最后介绍障碍物容器，实际上障碍物分为2块，一种是障碍物(Obstacle)，一种是障碍物簇(ObstacleClusters)，下面我们分别开始介绍：  
+我们最后介绍障碍物容器，实际上障碍物分为2块，一种是障碍物(Obstacle)，一种是障碍物簇(ObstacleClusters)，下面我们分别开始介绍：
 ```c++
 class ObstaclesContainer : public Container {
  public:
@@ -647,11 +647,11 @@ class ObstaclesContainer : public Container {
   std::vector<int> curr_frame_considered_obstacle_ids_;
 };
 ```
-可以看到障碍物容器主要是根据不同的障碍物测量保存障碍物信息，下面我们看下相应的流程图：  
-![obs_process](img/obs_process.jpg)  
+可以看到障碍物容器主要是根据不同的障碍物测量保存障碍物信息，下面我们看下相应的流程图：
+![obs_process](img/obs_process.jpg)
 可以看到上述过程中的主要功能实现都在"Obstacle"类中，下面我们主要分析下"Obstacle"类中的几个函数。
 
-我们接着看"Obstacle"类的消息插入函数：  
+我们接着看"Obstacle"类的消息插入函数：
 ```c++
 bool Obstacle::Insert(const PerceptionObstacle& perception_obstacle,
                       const double timestamp,
@@ -699,10 +699,10 @@ bool Obstacle::Insert(const PerceptionObstacle& perception_obstacle,
   return true;
 }
 ```
-其中还用到了卡尔曼(KalmanFilter)滤波？？？  
+其中还用到了卡尔曼(KalmanFilter)滤波？？？
 
 
-我们接着看BuildLaneGraph函数：  
+我们接着看BuildLaneGraph函数：
 ```c++
 void Obstacle::BuildLaneGraph() {
 
@@ -805,7 +805,7 @@ void Obstacle::BuildLaneGraph() {
 ```
 
 #### 道路图(RoadGraph)
-道路图的实现在"road_graph.h"和"road_graph.cc"中，构建道路图在"BuildLaneGraph"方法中，而主要的实现则在"ConstructLaneSequence"中：  
+道路图的实现在"road_graph.h"和"road_graph.cc"中，构建道路图在"BuildLaneGraph"方法中，而主要的实现则在"ConstructLaneSequence"中：
 ```c++
 void RoadGraph::ConstructLaneSequence(
     const bool search_forward_direction, const double accumulated_s,
@@ -926,7 +926,7 @@ void RoadGraph::ConstructLaneSequence(
   }
 }
 ```
-上述道路图的作用是什么？？？如何构造道路图？？？  
+上述道路图的作用是什么？？？如何构造道路图？？？
 
 
 
@@ -936,7 +936,7 @@ void RoadGraph::ConstructLaneSequence(
 根据本车的位置，和高精度地图，解析当前车辆所在的场景。
 
 #### 场景管理器(ScenarioManager)
-场景管理器只有2个函数，一个是Run，一个是输出当前场景scenario。下面我们分析如何获取当前场景：  
+场景管理器只有2个函数，一个是Run，一个是输出当前场景scenario。下面我们分析如何获取当前场景：
 ```
 void ScenarioManager::Run() {
   // 获取环境特征
@@ -955,11 +955,11 @@ void ScenarioManager::Run() {
 <a name="evaluator" />
 
 ## 评估者(evaluator)
-"Evaluator"类为基类，其它类继承至该类，而"EvaluatorManager"类做为管理类，负责管理三种评估者，分别为：自行车，行人，汽车。  
+"Evaluator"类为基类，其它类继承至该类，而"EvaluatorManager"类做为管理类，负责管理三种评估者，分别为：自行车，行人，汽车。
 
 #### 评估者基类(Evaluator)
-在"Evaluator"基类中申明方法"Evaluate"，其它子类重新构造实现了上述方法。另外基类中还实现了2个辅助函数： 
-1. 提供世界坐标到物体坐标转换   
+在"Evaluator"基类中申明方法"Evaluate"，其它子类重新构造实现了上述方法。另外基类中还实现了2个辅助函数：
+1. 提供世界坐标到物体坐标转换
 ```
   std::pair<double, double> WorldCoordToObjCoord(
       std::pair<double, double> input_world_coord,
@@ -976,8 +976,8 @@ void ScenarioManager::Run() {
                                    const int output_num_col)
 ```
 
-#### 评估者管理器(EvaluatorManager)  
-评估者管理器主要是对评估器进行管理和注册。  
+#### 评估者管理器(EvaluatorManager)
+评估者管理器主要是对评估器进行管理和注册。
 ```
 class EvaluatorManager {
  public:
@@ -1020,16 +1020,16 @@ class EvaluatorManager {
 ```
 
 
-下面我们分别查看3种不同的评估者： 自行车评估者，行人评估者和车辆评估者。  
+下面我们分别查看3种不同的评估者： 自行车评估者，行人评估者和车辆评估者。
 #### 自行车评估者(CyclistKeepLaneEvaluator)
-自行车评估者主要是评估自行车保持当前车道的概率。评估主要是函数"Evaluate"中进行的，**函数的参数"obstacles_container"没有使用，使用的只是"obstacle_ptr"障碍物指针**。评估的过程主要是根据生成的"LaneGraph"计算自行车在lane中出现的概率。  
+自行车评估者主要是评估自行车保持当前车道的概率。评估主要是函数"Evaluate"中进行的，**函数的参数"obstacles_container"没有使用，使用的只是"obstacle_ptr"障碍物指针**。评估的过程主要是根据生成的"LaneGraph"计算自行车在lane中出现的概率。
 ```c++
 bool CyclistKeepLaneEvaluator::Evaluate(
     Obstacle* obstacle_ptr, ObstaclesContainer* obstacles_container) {
   // 设置评估者类型
   obstacle_ptr->SetEvaluatorType(evaluator_type_);
   // 特征是否初始化，该方法为protobuf自带方法，确认required字段是否都已经赋值，看起来这里没必要判断？？？
-  // https://github.com/protocolbuffers/protobuf/issues/2900  
+  // https://github.com/protocolbuffers/protobuf/issues/2900
   int id = obstacle_ptr->id();
   if (!obstacle_ptr->latest_feature().IsInitialized()) {
     return false;
@@ -1060,7 +1060,7 @@ bool CyclistKeepLaneEvaluator::Evaluate(
   return true;
 }
 ```
-下面我们看下概率计算是如何进行的？计算的过程也很简单，就是判断lane序列的第一条lane是否和当前lane相同，相同则返回1，不相同则返回0。  
+下面我们看下概率计算是如何进行的？计算的过程也很简单，就是判断lane序列的第一条lane是否和当前lane相同，相同则返回1，不相同则返回0。
 ```
 double CyclistKeepLaneEvaluator::ComputeProbability(
     const std::string& curr_lane_id, const LaneSequence& lane_sequence) {
@@ -1078,8 +1078,8 @@ double CyclistKeepLaneEvaluator::ComputeProbability(
 ```
 
 #### 行人互动评估者(PedestrianInteractionEvaluator)
-行人互动评估主要是估计行人的概率，采用了深度学习的LSTM模型，关于行人预测可以参考论文"Social LSTM:Human Trajectory Prediction in Crowded Spaces"，这里我们对代码进行分析。  
-1. 首先初始化加载深度学习模型。  
+行人互动评估主要是估计行人的概率，采用了深度学习的LSTM模型，关于行人预测可以参考论文"Social LSTM:Human Trajectory Prediction in Crowded Spaces"，这里我们对代码进行分析。
+1. 首先初始化加载深度学习模型。
 ```c++
 void PedestrianInteractionEvaluator::LoadModel() {
   // 设置线程数为1
@@ -1100,7 +1100,7 @@ void PedestrianInteractionEvaluator::LoadModel() {
       FLAGS_torch_pedestrian_interaction_prediction_layer_file, device_);
 }
 ```
-2. 评估行人行为，函数比较长，输入为障碍物，输出为行人轨迹"latest_feature_ptr->add_predicted_trajectory"，关于Feature的描述在"feature.proto"中。其中函数参数"obstacles_container"没有使用（原因为继承至基类的方法，重写的时候保存了参数），下面我们开始分析具体的代码：  
+2. 评估行人行为，函数比较长，输入为障碍物，输出为行人轨迹"latest_feature_ptr->add_predicted_trajectory"，关于Feature的描述在"feature.proto"中。其中函数参数"obstacles_container"没有使用（原因为继承至基类的方法，重写的时候保存了参数），下面我们开始分析具体的代码：
 ```c++
 bool PedestrianInteractionEvaluator::Evaluate(
     Obstacle* obstacle_ptr, ObstaclesContainer* obstacles_container) {
@@ -1122,7 +1122,7 @@ bool PedestrianInteractionEvaluator::Evaluate(
   //  - if in online mode, pass it through trained model to evaluate.
   std::vector<double> feature_values;
   // 这里只是把最新的行人时间戳和位置提取出来了，并且线性存储在数组中(把数据展开)，
-  // 也就是说数组的第一个元素是时间戳，第二为ID，第三和第四为位置。  
+  // 也就是说数组的第一个元素是时间戳，第二为ID，第三和第四为位置。
   ExtractFeatures(obstacle_ptr, &feature_values);
   if (FLAGS_prediction_offline_mode ==
       PredictionConstants::kDumpDataForLearning) {
@@ -1275,43 +1275,43 @@ bool PedestrianInteractionEvaluator::Evaluate(
 }
 ```
 
-车辆评估者涉及的评估者模型比较多，下面我们逐个介绍。  
+车辆评估者涉及的评估者模型比较多，下面我们逐个介绍。
 #### CostEvaluator
-评估车辆的横向偏移概率，通过计算当前车的宽度和车道的横向差值，然后通过"Sigmoid"函数映射到0-1的概率空间。  
+评估车辆的横向偏移概率，通过计算当前车的宽度和车道的横向差值，然后通过"Sigmoid"函数映射到0-1的概率空间。
 #### CruiseMLPEvaluator
-MLP为"多层神经网络"，相比上述过程，新增加了lane相关的特征。  
+MLP为"多层神经网络"，相比上述过程，新增加了lane相关的特征。
 #### JunctionMapEvaluator
-加入了语义地图，模型未知？？？  
+加入了语义地图，模型未知？？？
 #### JunctionMLPEvaluator
-路口多层神经网络，没有利用地图  
+路口多层神经网络，没有利用地图
 #### LaneAggregatingEvaluator
-道路合并评估器  
+道路合并评估器
 #### LaneScanningEvaluator
-道路扫描？？？  
+道路扫描？？？
 #### MLPEvaluator
-多层神经网络评估器？？？  
+多层神经网络评估器？？？
 #### SemanticLSTMEvaluator
-语义LSTM评估器  
+语义LSTM评估器
 
-评估器主要是用深度学习的方法进行预测对应的概率，而且依赖事先建好的图，所以弄清楚上述2个过程很关键。  
+评估器主要是用深度学习的方法进行预测对应的概率，而且依赖事先建好的图，所以弄清楚上述2个过程很关键。
 
 
 
 <a name="predictor" />
 
 ## 预测器(predictor)
-"Predictor"类为基类，其它类继承至该类，而"PredictorManager"类作为管理类。最后通过预测器预测障碍物的轨迹。  
+"Predictor"类为基类，其它类继承至该类，而"PredictorManager"类作为管理类。最后通过预测器预测障碍物的轨迹。
 
-#### 预测器基类(Predictor)  
-预测者基类主要申明了"Predict"方法，在子预测器中重构。输入是评估器给出的概率(trajectory)，输出则是预测的轨迹。  
+#### 预测器基类(Predictor)
+预测者基类主要申明了"Predict"方法，在子预测器中重构。输入是评估器给出的概率(trajectory)，输出则是预测的轨迹。
 
-#### 预测管理器(PredictorManager)  
-预测管理器主要是对预测器进行创建，管理和注册。主要的实现在"PredictObstacle"中：  
+#### 预测管理器(PredictorManager)
+预测管理器主要是对预测器进行创建，管理和注册。主要的实现在"PredictObstacle"中：
 
 
-下面我们分别介绍几种预测器。  
+下面我们分别介绍几种预测器。
 #### EmptyPredictor
-对静止的物体进行预测，没有任何轨迹输出。  
+对静止的物体进行预测，没有任何轨迹输出。
 #### ExtrapolationPredictor
 外推法预测器，
 #### FreeMovePredictor
@@ -1321,18 +1321,18 @@ MLP为"多层神经网络"，相比上述过程，新增加了lane相关的特�
 #### JunctionPredictor
 
 #### LaneSequencePredictor
-生成曲线在"DrawLaneSequenceTrajectoryPoints"中实现。  
+生成曲线在"DrawLaneSequenceTrajectoryPoints"中实现。
 
 #### MoveSequencePredictor
 #### SequencePredictor
 #### SingleLanePredictor
 
-上述所有评估器的过程都类似，都是找到lane之后对lane做一个平滑的曲线？？？最后都调用了"PredictionMap::SmoothPointFromLane"。  
+上述所有评估器的过程都类似，都是找到lane之后对lane做一个平滑的曲线？？？最后都调用了"PredictionMap::SmoothPointFromLane"。
 
 
 <a name="reference" />
 
 ## Reference
-[Apollo 5.0 障碍物行为预测技术](https://www.cnblogs.com/liuzubing/p/11388485.html)   
-[Apollo自动驾驶入门课程第⑥讲—预测](https://cloud.tencent.com/developer/news/310036)  
+[Apollo 5.0 障碍物行为预测技术](https://www.cnblogs.com/liuzubing/p/11388485.html)
+[Apollo自动驾驶入门课程第⑥讲—预测](https://cloud.tencent.com/developer/news/310036)
 

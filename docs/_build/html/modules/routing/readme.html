@@ -1,42 +1,142 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dig into Apollo - Routing &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>16. Routing &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="next" title="18. Tools" href="../tools/readme.html" />
+    <link rel="prev" title="15. Prediction" href="../prediction/readme.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">快速开始:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">1. 什么是Apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">2. 如何编译</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">3. 启动容器</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">1. Cyber</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../audio/readme.html">2. Audio</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bridge/readme.html">3. Bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../canbus/readme.html">4. Canbus</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../control/readme.html">5. Control</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data/readme.html">6. Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dreamview/readme.html">7. Dreamview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../drivers/readme.html">8. Drivers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guardian/readme.html">9. Guardian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../localization/readme.html">10. Localization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../map/readme.html">11. Map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../monitor/readme.html">12. Monitor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../perception/readme.html">13. Perception</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../planning/readme.html">14. Planning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prediction/readme.html">15. Prediction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">16. Routing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">16.1. Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">16.2. Routing模块简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">16.3. 基础知识</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#demo">16.3.1. Demo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">16.3.2. 地图</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">16.3.3. 最短距离</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#id5">17. Routing模块分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id6">17.1. 创建Routing地图</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">17.1.1. 建图流程</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">17.1.2. 创建节点</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">17.1.3. 创建边</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">17.2. Routing主流程</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id11">17.2.1. Routing类</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">17.2.2. 导航</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">17.2.3. 子节点</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">17.2.4. 节点切分</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">17.2.5. 生成子图</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#astar">17.2.6. Astar算法</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id16">17.3. 调试工具</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id17">17.4. 问题</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#osm">17.5. OSM数据查找</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reference">17.6. Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/readme.html">18. Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transform/readme.html">19. Transform</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../v2x/readme.html">20. V2X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">参考</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">1. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">2. 论文</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">3. 常见问题</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
-  <div class="section" id="dig-into-apollo-routing-github">
-<h1>Dig into Apollo - Routing <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-routing-github" title="Permalink to this headline">¶</a></h1>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">&lt;no title&gt;</a> &raquo;</li>
+      <li><span class="section-number">16. </span>Routing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/routing/readme.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="routing">
+<h1><span class="section-number">16. </span>Routing<a class="headerlink" href="#routing" title="Permalink to this headline"></a></h1>
 <blockquote>
 <div><p>青，取之于蓝而青于蓝；冰，水为之而寒于水。</p>
 </div></blockquote>
 <div class="section" id="table-of-contents">
-<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">16.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
 <ul class="simple">
 <li><p><span class="xref myst">Routing模块简介</span></p></li>
 <li><p><span class="xref myst">基础知识</span></p>
@@ -74,8 +174,8 @@
 </ul>
 <a name="introduction" />
 </div>
-<div class="section" id="routing">
-<h2>Routing模块简介<a class="headerlink" href="#routing" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h2><span class="section-number">16.2. </span>Routing模块简介<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>Routing类似于现在开车时用到的导航模块，通常考虑的是起点到终点的最优路径（通常是最短路径），Routing考虑的是起点到终点的最短路径，而Planning则是行驶过程中，当前一小段时间如何行驶，需要考虑当前路况，是否有障碍物。Routing模块则不需要考虑这些信息，只需要做一个长期的规划路径即可，过程如下：</p>
 <p><img alt="introduction" src="../../_images/introduction.png" /></p>
 <p>这也和我们开车类似，上车之后，首先搜索目的地，打开导航（Routing所做的事情），而开始驾车之后，则会根据当前路况，行人车辆信息来适当调整直到到达目的地（Planning所做的事情）。</p>
@@ -85,13 +185,13 @@
 </ul>
 <a name="base" />
 </div>
-<div class="section" id="id1">
-<h2>基础知识<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h2><span class="section-number">16.3. </span>基础知识<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <a name="demo" />
 <div class="section" id="demo">
-<h3>Demo<a class="headerlink" href="#demo" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference external" href="https://daohu527.github.io/">演示地址</a><br />
-我们通过”OSM Pathfinding”作为例子，来详细讲解整个过程，感谢&#64;mplewis。<br />
+<h3><span class="section-number">16.3.1. </span>Demo<a class="headerlink" href="#demo" title="Permalink to this headline"></a></h3>
+<p><a class="reference external" href="https://daohu527.github.io/">演示地址</a>
+我们通过”OSM Pathfinding”作为例子，来详细讲解整个过程，感谢&#64;mplewis。
 首先我们通过如下的视频演示看下Routing寻找路径的过程，查找的是深圳南山区的地图：
 <img alt="" src="../../_images/routing" /></p>
 <ol class="arabic simple">
@@ -112,18 +212,18 @@
 <p>下面我们先介绍上面的例子是如何工作的。
 <a name="map" /></p>
 </div>
-<div class="section" id="id2">
-<h3>地图<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h3><span class="section-number">16.3.2. </span>地图<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
 <p>首先我们以openstreetmap为例来介绍下地图是如何组成的。<a class="reference external" href="https://www.openstreetmap.org/">开放街道地图</a>（英语：OpenStreetMap，缩写为OSM）是一个建构自由内容之网上地图协作计划，目标是创造一个内容自由且能让所有人编辑的世界地图，并且让一般的移动设备有方便的导航方案。因为这个地图是一个开源地图，所以可以灵活和自由的获取地图资源。
 接着看下openstreetmap的基本元素：
-<strong>Node</strong><img alt="node" src="../../_images/30px-Osm_element_node.svg.png" /><br />
+<strong>Node</strong><img alt="node" src="../../_images/30px-Osm_element_node.svg.png" />
 节点表示由其纬度和经度定义的地球表面上的特定点。每个节点至少包括id号和一对坐标。节点也可用于定义独立点功能。例如，节点可以代表公园长椅或水井。节点也可以定义道路(Way)的形状，节点是一切形状的基础。</p>
 <div class="highlight-javascipt notranslate"><div class="highlight"><pre><span></span>&lt;node id=&quot;25496583&quot; lat=&quot;51.5173639&quot; lon=&quot;-0.140043&quot; version=&quot;1&quot; changeset=&quot;203496&quot; user=&quot;80n&quot; uid=&quot;1238&quot; visible=&quot;true&quot; timestamp=&quot;2007-01-28T11:40:26Z&quot;&gt;
     &lt;tag k=&quot;highway&quot; v=&quot;traffic_signals&quot;/&gt;
 &lt;/node&gt;
 </pre></div>
 </div>
-<p><strong>Way</strong><img alt="way" src="../../_images/30px-Osm_element_way.svg.png" /><img alt="way" src="../../_images/30px-Osm_element_closedway.svg.png" /><img alt="way" src="../../_images/30px-Osm_element_area.svg.png" /><br />
+<p><strong>Way</strong><img alt="way" src="../../_images/30px-Osm_element_way.svg.png" /><img alt="way" src="../../_images/30px-Osm_element_closedway.svg.png" /><img alt="way" src="../../_images/30px-Osm_element_area.svg.png" />
 道路是包含2到2,000个有序节点的折线组成，用于表示线性特征，例如河流和道路。道路也可以表示区域（实心多边形）的边界，例如建筑物或森林。在这种情况下，道路的第一个和最后一个节点将是相同的。这被称为“封闭的方式”。</p>
 <div class="highlight-javascipt notranslate"><div class="highlight"><pre><span></span>  &lt;way id=&quot;5090250&quot; visible=&quot;true&quot; timestamp=&quot;2009-01-19T19:07:25Z&quot; version=&quot;8&quot; changeset=&quot;816806&quot; user=&quot;Blumpsy&quot; uid=&quot;64226&quot;&gt;
     &lt;nd ref=&quot;822403&quot;/&gt;
@@ -142,16 +242,16 @@
   &lt;/way&gt;
 </pre></div>
 </div>
-<p><strong>Relation</strong><img alt="relation" src="../../_images/30px-Osm_element_relation.svg.png" /><br />
+<p><strong>Relation</strong><img alt="relation" src="../../_images/30px-Osm_element_relation.svg.png" />
 关系是记录两个或更多个数据元素（节点，方式和/或其他关系）之间的关系的多用途数据结构。例子包括：</p>
 <ul class="simple">
 <li><p>路线关系，列出形成主要（编号）高速公路，自行车路线或公交路线的方式。</p></li>
 <li><p>转弯限制，表示你无法从一种方式转向另一种方式。</p></li>
 <li><p>描述具有孔的区域（其边界是“外部方式”）的多面体（“内部方式”）。</p></li>
 </ul>
-<p><strong>Tag</strong><img alt="tag" src="../../_images/30px-Osm_element_tag.svg.png" /><br />
+<p><strong>Tag</strong><img alt="tag" src="../../_images/30px-Osm_element_tag.svg.png" />
 所有类型的数据元素（节点，方式和关系）以及变更集都可以包含标签。标签描述了它们所附着的特定元素的含义。标签由两个自由格式文本字段组成; ‘Key’和’Vaule’。例如，“高速公路”=“住宅”定义了一条道路。元素不能有2个带有相同“key”的标签，“key”必须是唯一的。例如，您不能将元素标记为amenity = restaurant和amenity = bar。</p>
-<p>我们看到的地图，实际上是由一些Node和Way组成，需要展示地图时候，通过读取地图中的Node和Way的数据实时画(渲染)出来，例如2个Node组成了一条道路，那么就在这两点之间画一条直线，并且标记为道路，如果是封闭区域，并且根据数据，画出一个多边形，并把它标记为湖泊或者公园。<br />
+<p>我们看到的地图，实际上是由一些Node和Way组成，需要展示地图时候，通过读取地图中的Node和Way的数据实时画(渲染)出来，例如2个Node组成了一条道路，那么就在这两点之间画一条直线，并且标记为道路，如果是封闭区域，并且根据数据，画出一个多边形，并把它标记为湖泊或者公园。
 有很多地图渲染引擎，以下是openstreet推荐的地图引擎：</p>
 <ol class="arabic simple">
 <li><p>Osmarender: 一个基于可扩展样式表语言转换 (XSLT) 的渲染器,能够创建可缩放矢量图形(SVG), SVG可以用浏览器观看或转换成位图.</p></li>
@@ -159,10 +259,10 @@
 </ol>
 <a name="shortest_path" />
 </div>
-<div class="section" id="id3">
-<h3>最短距离<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
-<p>我们先看一下经典的例子：最短路径。<br />
-在图论中，最短路径问题是在图中的两个顶点之间找到路径，使得其边的权重之和最小化的问题。而在地图上找到两个点之间最短路径的问题可以被建模为图中最短路径问题的特殊情况，其中顶点对应于交叉点并且边缘对应于路段，每个路段对应于路段的长度。<br />
+<div class="section" id="id4">
+<h3><span class="section-number">16.3.3. </span>最短距离<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
+<p>我们先看一下经典的例子：最短路径。
+在图论中，最短路径问题是在图中的两个顶点之间找到路径，使得其边的权重之和最小化的问题。而在地图上找到两个点之间最短路径的问题可以被建模为图中最短路径问题的特殊情况，其中顶点对应于交叉点并且边缘对应于路段，每个路段对应于路段的长度。
 <img alt="shortest_path" src="../../_images/375px-Shortest_path_with_direct_weights.svg.png" /></p>
 <p>最短路径算法：</p>
 <ul class="simple">
@@ -174,7 +274,7 @@
 <li><p>Johnson算法</p></li>
 <li><p>Bi-Direction BFS算法</p></li>
 </ul>
-<p>在地图上查找两个点之间的最短距离，我们就可以把道路的长度当做边，路口当做节点，通过把道路抽象为一个有向图，然后通过上述算法，查找到当前2点之间的最短路径，并且输出，这就是每次我们查找起点和终点的过程。<br />
+<p>在地图上查找两个点之间的最短距离，我们就可以把道路的长度当做边，路口当做节点，通过把道路抽象为一个有向图，然后通过上述算法，查找到当前2点之间的最短路径，并且输出，这就是每次我们查找起点和终点的过程。
 所以要查找起点到终点之间的路径，需要经过以下几个步骤：</p>
 <ol class="arabic simple">
 <li><p>获取地图的原始数据，节点和道路信息。</p></li>
@@ -182,18 +282,18 @@
 <li><p>采用最短路径算法，找到2点之间的最短距离。</p></li>
 </ol>
 <blockquote>
-<div><p>实际上，真实场景的地图导航，查找2点之间的路径，可能不是实时计算出来的，假设有100个人在查询“北京机场”到“天安门”的路线，第一个人的路线可能是实时计算得到的，而其他99个人都是用的缓存的数据，在第一个人查到之后，后面的99个人就不需要重复计算了。<br />
-对于频繁查找的路线，也可以在晚上统一计算，然后保存起来，可以利用存储换速度，除非道路有变化（新修路或者道路维修，桥断了），然后再重新计算。<br />
-多样化的需求，比如可以选择高速优先还是不走高速，地铁优先，少换乘等，这些都需要构建层次和结构化的信息。<br />
-根据用户的反馈实时的更新路况，比如路上有10个人在用地图导航，发现在某一段大家都开的很慢，或者有用户反馈堵车，就更新当前路况。<br />
+<div><p>实际上，真实场景的地图导航，查找2点之间的路径，可能不是实时计算出来的，假设有100个人在查询“北京机场”到“天安门”的路线，第一个人的路线可能是实时计算得到的，而其他99个人都是用的缓存的数据，在第一个人查到之后，后面的99个人就不需要重复计算了。
+对于频繁查找的路线，也可以在晚上统一计算，然后保存起来，可以利用存储换速度，除非道路有变化（新修路或者道路维修，桥断了），然后再重新计算。
+多样化的需求，比如可以选择高速优先还是不走高速，地铁优先，少换乘等，这些都需要构建层次和结构化的信息。
+根据用户的反馈实时的更新路况，比如路上有10个人在用地图导航，发现在某一段大家都开的很慢，或者有用户反馈堵车，就更新当前路况。
 所以地图是一个强者越强的市场，用户越多，数据就更新的就越快，地图就越准确，用的人就越多；用的人越少，数据更新的就越慢，假设一条路上只有一个用户，一个人开的慢，并不能反馈当前道路拥堵，用该地图的其它用户过去之后，发现堵车，就导致用户体验很差，下次就不会再用这个地图了。所以地图必须需要一定的用户量才能活下去，而且强者越强。</p>
 </div></blockquote>
 <a name="routing" />
 </div>
 </div>
 </div>
-<div class="section" id="id4">
-<h1>Routing模块分析<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id5">
+<h1><span class="section-number">17. </span>Routing模块分析<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h1>
 <p>分析Routing模块之前，我们只需要能够解决以下几个问题，就算是把routing模块掌握清楚了。</p>
 <ol class="arabic simple">
 <li><p>如何从A点到B点</p></li>
@@ -202,17 +302,17 @@
 <li><p>如何设置固定线路，而且不会变？最后routing输出的结果是什么？固定成文件的形式。</p></li>
 </ol>
 <a name="create_routing_map" />
-<div class="section" id="id5">
-<h2>创建Routing地图<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
-<p>通过上面的介绍可以知道，routing需要的是一个拓扑结构的图，要想做routing，第一步就是要把原始的地图转换成包含拓扑结构的图，apollo中也实现了类似的操作，把base_map转换为routing_map，这里的base_map就是高精度地图，而routing_map则是导航地图，routing_map的结构为一个有向图。对应的例子在”modules/map/data/demo”中，这个例子比较简陋，因为routing_map.txt中只包含一个节点(Node)，没有边(Edge)信息。<br />
-apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图中的节点和上面介绍的传统的节点不一样，我们前面的例子中，节点就是路的起点和终点，边就是路，而自动驾驶中的道路是车道线级别的，原来的这种定义点和边的方式就不适用了（定义不了车道），所以apollo中引用的新的概念，apollo中的点就是一条车道，而边则是车道和车道之间的连接，点对应具体的车道，而边则是一个虚拟的概念，表示车道之间的关系。下面我们可以先看下apollo中道路(road)和车道(lane)的概念。<br />
-<img alt="lane" src="../../_images/lane.png" /><br />
+<div class="section" id="id6">
+<h2><span class="section-number">17.1. </span>创建Routing地图<a class="headerlink" href="#id6" title="Permalink to this headline"></a></h2>
+<p>通过上面的介绍可以知道，routing需要的是一个拓扑结构的图，要想做routing，第一步就是要把原始的地图转换成包含拓扑结构的图，apollo中也实现了类似的操作，把base_map转换为routing_map，这里的base_map就是高精度地图，而routing_map则是导航地图，routing_map的结构为一个有向图。对应的例子在”modules/map/data/demo”中，这个例子比较简陋，因为routing_map.txt中只包含一个节点(Node)，没有边(Edge)信息。
+apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图中的节点和上面介绍的传统的节点不一样，我们前面的例子中，节点就是路的起点和终点，边就是路，而自动驾驶中的道路是车道线级别的，原来的这种定义点和边的方式就不适用了（定义不了车道），所以apollo中引用的新的概念，apollo中的点就是一条车道，而边则是车道和车道之间的连接，点对应具体的车道，而边则是一个虚拟的概念，表示车道之间的关系。下面我们可以先看下apollo中道路(road)和车道(lane)的概念。
+<img alt="lane" src="../../_images/lane.png" />
 可以看到一条道路(road)，包含多个车道(lane)，图中一条道路分成了2段，每一段包含3条车道(lane)，车道的信息见图中，主要标识了车道唯一id，左边界，右边界，参考线，长度，前车道，后车道，左边相邻的车道，右边相邻的车道等，通过这些结构化的信息，我们就知道车道之间的相互关系，也就知道了我们能否到达下一个车道，从而规划出一条到达目的地的车道线级别的路线，Planning模块在根据规划好的线路进行行驶，因为已经到车道线级别了，所以相对规划起来就简单很多。最后我们会建立一张如下的图，其中<strong>节点是一个个的lane，而边则代表lane之间的连接</strong>。
-<img alt="graph" src="../../_images/graph.jpg" /><br />
+<img alt="graph" src="../../_images/graph.jpg" />
 其中节点和边的结构在protobuf中定义，在文件”modules/routing/proto/topo_graph.proto”中，其中：</p>
 <ul class="simple">
 <li><p><strong>NODE</strong> - 包括车道唯一id，长度，左边出口，右边出口（这里的出口对应车道虚线的部分，或者自己定义的一段允许变道的路段），路段代价（限速或者拐弯的路段会增加成本，代价系数在routing_config.pb.txt中定义)，中心线（虚拟的，用于生成参考线），是否可见，车道所属的道路id。</p></li>
-<li><p><strong>EDGE</strong> - 则包括起始车道id，到达车道id，切换代价，方向（向前，向左，向右）。<br />
+<li><p><strong>EDGE</strong> - 则包括起始车道id，到达车道id，切换代价，方向（向前，向左，向右）。
 我们以上图中的例子来说明：</p></li>
 </ul>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// 以lane2举例子</span>
@@ -239,12 +339,12 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 </pre></div>
 </div>
 <a name="create_map_main" />
-<div class="section" id="id6">
-<h3>建图流程<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id7">
+<h3><span class="section-number">17.1.1. </span>建图流程<a class="headerlink" href="#id7" title="Permalink to this headline"></a></h3>
 <p>可以看到对比map结构中的lane，graph中的节点和边省去了很多信息，主要关注的是lane之间的关系。在理解了上述数据结构之后，理解建图的过程就轻松多了，下面我们结合代码来分析具体的建图流程。建图的代码目录为”routing/topo_creator”，其文件结构如下：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
 ├── BUILD
-├── edge_creator.cc            // 建边 
+├── edge_creator.cc            // 建边
 ├── edge_creator.h
 ├── graph_creator.cc           // 建图
 ├── graph_creator.h
@@ -304,11 +404,11 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="w">      </span><span class="n">ADEBUG</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;The u-turn lane radius is too small for the vehicle to turn&quot;</span><span class="p">;</span><span class="w"></span>
 <span class="w">      </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
 <span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span>
+
 <span class="w">    </span><span class="c1">// 存储图中节点index和lane_id的关系，因为通过node可以找到lane，</span>
 <span class="w">    </span><span class="c1">// 而通过lane_id需要遍历节点才能找到节点index。</span>
 <span class="w">    </span><span class="n">node_index_map_</span><span class="p">[</span><span class="n">lane_id</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graph_</span><span class="p">.</span><span class="n">node_size</span><span class="p">();</span><span class="w"></span>
-<span class="w">    </span>
+
 <span class="w">    </span><span class="c1">// 如果从road_id_map_中找到lane_id，则把创建节点的时候指定道路id，</span>
 <span class="w">    </span><span class="c1">// 如果没有找到那么road_id则为空。</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">iter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">road_id_map_</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">lane_id</span><span class="p">);</span><span class="w"></span>
@@ -321,7 +421,7 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="w">    </span><span class="p">}</span><span class="w"></span>
 <span class="w">  </span><span class="p">}</span><span class="w"></span>
 
-<span class="w">  </span>
+
 <span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">edge_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">;</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 遍历base_map中的lane，并且创建边。</span>
 <span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">lane</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">pbmap_</span><span class="p">.</span><span class="n">lane</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -332,13 +432,13 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="w">             </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; because its type is NOT CITY_DRIVING.&quot;</span><span class="p">;</span><span class="w"></span>
 <span class="w">      </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
 <span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span>
+
 <span class="w">    </span><span class="c1">// 这里就是通过上面所说的通过lane_id找到node的index，得到节点，</span>
 <span class="w">    </span><span class="c1">// 如果不保存，则需要遍历所有节点通过lane_id来查找节点，原因为node中有lane_id，</span>
 <span class="w">    </span><span class="c1">// 而lane结构中没有node_id。</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">from_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">graph_</span><span class="p">.</span><span class="n">node</span><span class="p">(</span><span class="n">node_index_map_</span><span class="p">[</span><span class="n">lane_id</span><span class="p">]);</span><span class="w"></span>
 
-<span class="w">    </span><span class="c1">// 添加一条该节点到下一个节点的边，注意这里没有换道，所以方向为前。  </span>
+<span class="w">    </span><span class="c1">// 添加一条该节点到下一个节点的边，注意这里没有换道，所以方向为前。</span>
 <span class="w">    </span><span class="n">AddEdge</span><span class="p">(</span><span class="n">from_node</span><span class="p">,</span><span class="w"> </span><span class="n">lane</span><span class="p">.</span><span class="n">successor_id</span><span class="p">(),</span><span class="w"> </span><span class="n">Edge</span><span class="o">::</span><span class="n">FORWARD</span><span class="p">);</span><span class="w"></span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">lane</span><span class="p">.</span><span class="n">length</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">FLAGS_min_length_for_lane_change</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">      </span><span class="k">continue</span><span class="p">;</span><span class="w"></span>
@@ -355,7 +455,7 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="w">  </span><span class="p">}</span><span class="w"></span>
 
 <span class="w">  </span><span class="p">...</span><span class="w"></span>
-<span class="w">  </span>
+
 <span class="w">  </span><span class="c1">// 保存routing_map文件，有2种格式txt和bin</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">common</span><span class="o">::</span><span class="n">util</span><span class="o">::</span><span class="n">SetProtoToASCIIFile</span><span class="p">(</span><span class="n">graph_</span><span class="p">,</span><span class="w"> </span><span class="n">txt_file</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">    </span><span class="n">AERROR</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to dump topo data into file &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">txt_file</span><span class="p">;</span><span class="w"></span>
@@ -374,8 +474,8 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <p>小结一下创建的图的流程，首先是从base_map中读取道路信息，之后遍历道路，先创建节点，然后创建节点的边，之后把图(点和边的信息)保存到routing_map中，所以routing_map中就是graph_protobuf格式的固化，后面routing模块会读取创建好的routing_map通过astar算法来进行路径规划。</p>
 <a name="create_node" />
 </div>
-<div class="section" id="id7">
-<h3>创建节点<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id8">
+<h3><span class="section-number">17.1.2. </span>创建节点<a class="headerlink" href="#id8" title="Permalink to this headline"></a></h3>
 <p>接下来看下创建节点的过程，在函数”GetPbNode()”中:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">GetPbNode</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">hdmap</span><span class="o">::</span><span class="n">Lane</span><span class="o">&amp;</span><span class="w"> </span><span class="n">lane</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">road_id</span><span class="p">,</span><span class="w"></span>
 <span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">RoutingConfig</span><span class="o">&amp;</span><span class="w"> </span><span class="n">routingconfig</span><span class="p">,</span><span class="w"> </span><span class="n">Node</span><span class="o">*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">node</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -440,8 +540,8 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 </div>
 <a name="create_edge" />
 </div>
-<div class="section" id="id8">
-<h3>创建边<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id9">
+<h3><span class="section-number">17.1.3. </span>创建边<a class="headerlink" href="#id9" title="Permalink to this headline"></a></h3>
 <p>接下来分析如何创建边，创建边的流程在函数”GetPbEdge()”中</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">GetPbEdge</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Node</span><span class="o">&amp;</span><span class="w"> </span><span class="n">node_from</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Node</span><span class="o">&amp;</span><span class="w"> </span><span class="n">node_to</span><span class="p">,</span><span class="w"></span>
 <span class="w">               </span><span class="k">const</span><span class="w"> </span><span class="n">Edge</span><span class="o">::</span><span class="n">DirectionType</span><span class="o">&amp;</span><span class="w"> </span><span class="n">type</span><span class="p">,</span><span class="w"></span>
@@ -471,16 +571,16 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>我们可以看下edge cost的曲线，因为”changing_area_length / routing_config.base_changing_length() &lt; 1”，这个函数最小值为1，最大值为无穷。<br />
+<p>我们可以看下edge cost的曲线，因为”changing_area_length / routing_config.base_changing_length() &lt; 1”，这个函数最小值为1，最大值为无穷。
 <img alt="edge_cost" src="../../_images/edge_cost.png" /></p>
 <p>到这里制作routing_map的流程就结束了，建图的主要目的是把base结构的map转换为graph结构的map，从而利用图结构来查找最佳路径，下面会分析如何通过routing_map得到规划好的路线。</p>
 <a name="routing_main" />
 </div>
 </div>
-<div class="section" id="id9">
-<h2>Routing主流程<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
-<p>Routing模块的流程相对比较简单，主流程见下图：<br />
-<img alt="main" src="../../_images/main2.jpg" /><br />
+<div class="section" id="id10">
+<h2><span class="section-number">17.2. </span>Routing主流程<a class="headerlink" href="#id10" title="Permalink to this headline"></a></h2>
+<p>Routing模块的流程相对比较简单，主流程见下图：
+<img alt="main" src="../../_images/main2.jpg" />
 把一些主要的流程摘要如下：</p>
 <ol class="arabic simple">
 <li><p>在cyber中注册component，接收request请求，响应请求结果response</p></li>
@@ -523,7 +623,7 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="n">CYBER_REGISTER_COMPONENT</span><span class="p">(</span><span class="n">RoutingComponent</span><span class="p">)</span><span class="w"></span>
 </pre></div>
 </div>
-<p>routing模块都按照cyber的模块申明和注册，cyber框架负责调用Init进行初始化，并且收到消息时候触发Proc执行。<br />
+<p>routing模块都按照cyber的模块申明和注册，cyber框架负责调用Init进行初始化，并且收到消息时候触发Proc执行。
 我们先看下”Init”函数:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RoutingComponent::Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 设置消息qos，控制流量，创建消息发布response_writer_</span>
@@ -540,7 +640,7 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="w">  </span><span class="p">...</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 历史消息发布，和response_writer_类似</span>
 <span class="w">  </span><span class="n">response_history_writer_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">node_</span><span class="o">-&gt;</span><span class="n">CreateWriter</span><span class="o">&lt;</span><span class="n">RoutingResponse</span><span class="o">&gt;</span><span class="p">(</span><span class="n">attr_history</span><span class="p">);</span><span class="w"></span>
-<span class="w">  </span>
+
 <span class="w">  </span><span class="c1">// 创建定时器</span>
 <span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">weak_ptr</span><span class="o">&lt;</span><span class="n">RoutingComponent</span><span class="o">&gt;</span><span class="w"> </span><span class="n">self</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
 <span class="w">      </span><span class="n">std</span><span class="o">::</span><span class="n">dynamic_pointer_cast</span><span class="o">&lt;</span><span class="n">RoutingComponent</span><span class="o">&gt;</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">());</span><span class="w"></span>
@@ -591,8 +691,8 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 </ol>
 <p>接下来我们来看routing的具体实现。</p>
 <a name="routing_class" />
-<div class="section" id="id10">
-<h3>Routing类<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id11">
+<h3><span class="section-number">17.2.1. </span>Routing类<a class="headerlink" href="#id11" title="Permalink to this headline"></a></h3>
 <p>“Routing”类的实现在”routing.h”和”routing.cc”中，首先看下”Routing”类引用的头文件：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;modules/common/monitor_log/monitor_log_buffer.h&quot;</span><span class="cp"></span>
 <span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;modules/common/status/status.h&quot;</span><span class="cp"></span>
@@ -634,8 +734,8 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <p>上述的过程总结一下就是，首先读取routing_map并初始化Navigator类，接着遍历routing_request，因为routing_request请求为一个个的点，所以先查看routing_request的点是否在路上，不在路上则找到最近的路，并且补充信息（不在路上的点则过不去），最后调用”navigator_ptr_-&gt;SearchRoute”返回routing响应。</p>
 <a name="navigator_class" />
 </div>
-<div class="section" id="id11">
-<h3>导航<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id12">
+<h3><span class="section-number">17.2.2. </span>导航<a class="headerlink" href="#id12" title="Permalink to this headline"></a></h3>
 <p>Navigator初始化</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">Navigator::Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">RoutingRequest</span><span class="o">&amp;</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">TopoGraph</span><span class="o">*</span><span class="w"> </span><span class="n">graph</span><span class="p">,</span><span class="w"></span>
 <span class="w">                     </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">TopoNode</span><span class="o">*&gt;*</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">way_nodes</span><span class="p">,</span><span class="w"></span>
@@ -651,7 +751,7 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<p>在routing请求中可以指定黑名单路和车道，这样routing请求将不会计算这些车道。应用场景是需要避开拥堵路段，这需要能够根据情况实时请求，在routing_request中可以设置黑名单也刚好可以满足上面的需求，如果直接把黑名单路段固定，则是一个比较蠢的设计。<br />
+<p>在routing请求中可以指定黑名单路和车道，这样routing请求将不会计算这些车道。应用场景是需要避开拥堵路段，这需要能够根据情况实时请求，在routing_request中可以设置黑名单也刚好可以满足上面的需求，如果直接把黑名单路段固定，则是一个比较蠢的设计。
 剩下的一些过程比较简单，我们直接看主函数”SearchRouteByStrategy”:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">Navigator::SearchRouteByStrategy</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">TopoGraph</span><span class="o">*</span><span class="w"> </span><span class="n">graph</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">TopoNode</span><span class="o">*&gt;&amp;</span><span class="w"> </span><span class="n">way_nodes</span><span class="p">,</span><span class="w"></span>
@@ -677,7 +777,7 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="w">    </span><span class="c1">// 因为对车道做了分割，这里会创建子图，比如一个车道分成2个子节点，</span>
 <span class="w">    </span><span class="c1">// 2个子节点会创建一张子图。</span>
 <span class="w">    </span><span class="n">SubTopoGraph</span><span class="w"> </span><span class="n">sub_graph</span><span class="p">(</span><span class="n">full_range_manager</span><span class="p">.</span><span class="n">RangeMap</span><span class="p">());</span><span class="w"></span>
-<span class="w">    </span>
+
 <span class="w">    </span><span class="c1">// 获取起点</span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">*</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sub_graph</span><span class="p">.</span><span class="n">GetSubNodeWithS</span><span class="p">(</span><span class="n">way_start</span><span class="p">,</span><span class="w"> </span><span class="n">way_start_s</span><span class="p">);</span><span class="w"></span>
 
@@ -705,22 +805,22 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 </div>
 <a name="subnode" />
 </div>
-<div class="section" id="id12">
-<h3>子节点<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id13">
+<h3><span class="section-number">17.2.3. </span>子节点<a class="headerlink" href="#id13" title="Permalink to this headline"></a></h3>
 <p>下面我们把子图的概念讲解一下，”AddBlackMapFromTerminal”中会把节点(这里的节点就是lane)切分，切分之后的数据保存在”TopoRangeManager”中，而”SubTopoGraph”会根据”TopoRangeManager”中的数据初始化子图。我们先理解下子节点的概念，节点就是一条lane，而子节点是对lane做了切割，把一条lane根据黑名单区域，生成几个子节点。用图来说明很形象：</p>
 <a name="generate_subnode" />
 </div>
-<div class="section" id="id13">
-<h3>节点切分<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
-<p>节点的切分是根据TopoRangeManager生成好的区间，然后进行切分生成子节点。我们先看下如何生成”TopoRangeManager”，在”AddBlackMapFromTerminal”<strong>输入参数为routing_request的开始lane，结束的lane，开始位置，结束位置，输出参数为分段好的区间(range)</strong>，在”range_map_”中保存lane和lane中range的关系，其中key为节点，value为区间(range)。我们还是先看一张图，来描述这个过程：<br />
-<img alt="range" src="../../_images/range.jpg" /><br />
+<div class="section" id="id14">
+<h3><span class="section-number">17.2.4. </span>节点切分<a class="headerlink" href="#id14" title="Permalink to this headline"></a></h3>
+<p>节点的切分是根据TopoRangeManager生成好的区间，然后进行切分生成子节点。我们先看下如何生成”TopoRangeManager”，在”AddBlackMapFromTerminal”<strong>输入参数为routing_request的开始lane，结束的lane，开始位置，结束位置，输出参数为分段好的区间(range)</strong>，在”range_map_”中保存lane和lane中range的关系，其中key为节点，value为区间(range)。我们还是先看一张图，来描述这个过程：
+<img alt="range" src="../../_images/range.jpg" />
 可以看到上图中有2条lane，lane1为[0, length1]，lan2为[0, length2]，routing_request的起点为start_s，终点为end_s（注意这里的起点和终点都是在对应lane中的位置，而不是整条路的长度）。之后会生成一个range_map，其中的键为node即对应的lane，值为切分好的range，只是这里的range比较特殊，拿lane1举例子，这里range的起点和终点都是start_s。之后再通过”GetSortedValidRange”找到合法的区间，这里就看到找到range为[0,start_s],[start_s,length1]。这样这个节点就切分成2个子节点。
-实际上上述特殊的例子只是为了把routing请求的起点和终点对lane做切分，这样做的好处可能是模块的功能能够统一，方便计算节点的代价。实际上真正的功能没用到，我们还是根据图来解释这个过程：<br />
-<img alt="range_rank" src="../../_images/range_rank.jpg" /><br />
+实际上上述特殊的例子只是为了把routing请求的起点和终点对lane做切分，这样做的好处可能是模块的功能能够统一，方便计算节点的代价。实际上真正的功能没用到，我们还是根据图来解释这个过程：
+<img alt="range_rank" src="../../_images/range_rank.jpg" />
 上述的过程是根据一段range[a,b]，即[a,b]为黑名单，或者禁止停车区域，那么最后生成的range_map，其中的键为node即对应的lane，值为黑名单的range[a,b]，和上面的例子不一样的地方在于，这里起点和终点不是一个点，而是一个range，这样生成的valid_range则为[0,a],[b,length1]，生成的2个子节点就是可以通过的区域，而这2个节点不是连续的，不能直接通过。也就是说routing_request是这种情况的特例，即黑名单range的起点和终点都是一个点，生成的2个子节点也就是连续的。apollo的代码做了冗余设计，但是实际没有用到，我们在总结下2种添加黑名单的设计:</p>
 <ol class="arabic simple">
 <li><p><strong>GenerateBlackMapFromRequest</strong> - 通过request请求传入黑名单lane和road，每次直接屏蔽一整条road或者lane。</p></li>
-<li><p><strong>AddBlackMapFromTerminal</strong> - 虽然range_manager支持传入range，但是这种场景只是针对routing_request传入的点对lane做切割，方便计算，每次切割的区间的起点和终点重合，是一个特殊场景，后续应该有用到比如在一条lane里，有某一段不能行驶的功能。<br />
+<li><p><strong>AddBlackMapFromTerminal</strong> - 虽然range_manager支持传入range，但是这种场景只是针对routing_request传入的点对lane做切割，方便计算，每次切割的区间的起点和终点重合，是一个特殊场景，后续应该有用到比如在一条lane里，有某一段不能行驶的功能。
 接下来看具体的实现：</p></li>
 </ol>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">BlackListRangeGenerator::AddBlackMapFromTerminal</span><span class="p">(</span><span class="w"></span>
@@ -736,12 +836,12 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="w">  </span><span class="c1">// 把平行的节点也按照比例做相同的切分</span>
 <span class="w">  </span><span class="n">AddBlackMapFromOutParallel</span><span class="p">(</span><span class="n">src_node</span><span class="p">,</span><span class="w"> </span><span class="n">start_cut_s</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">start_length</span><span class="p">,</span><span class="w"></span>
 <span class="w">                             </span><span class="n">range_manager</span><span class="p">);</span><span class="w"></span>
-<span class="w">  </span>
+
 <span class="w">  </span><span class="c1">// 注意这里range的起点和终点是同一个点，为routing的终点</span>
 <span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">end_cut_s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MoveSForward</span><span class="p">(</span><span class="n">end_s</span><span class="p">,</span><span class="w"> </span><span class="n">end_length</span><span class="p">);</span><span class="w"></span>
 <span class="w">  </span><span class="n">range_manager</span><span class="o">-&gt;</span><span class="n">Add</span><span class="p">(</span><span class="n">dest_node</span><span class="p">,</span><span class="w"> </span><span class="n">end_cut_s</span><span class="p">,</span><span class="w"> </span><span class="n">end_cut_s</span><span class="p">);</span><span class="w"></span>
 <span class="w">  </span><span class="n">AddBlackMapFromInParallel</span><span class="p">(</span><span class="n">dest_node</span><span class="p">,</span><span class="w"> </span><span class="n">end_cut_s</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">end_length</span><span class="p">,</span><span class="w"> </span><span class="n">range_manager</span><span class="p">);</span><span class="w"></span>
-<span class="w">  </span>
+
 <span class="w">  </span><span class="c1">// 排序并且合并</span>
 <span class="w">  </span><span class="n">range_manager</span><span class="o">-&gt;</span><span class="n">SortAndMerge</span><span class="p">();</span><span class="w"></span>
 <span class="p">}</span><span class="w"></span>
@@ -763,7 +863,7 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="w">    </span><span class="n">all_value</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">range</span><span class="p">.</span><span class="n">EndS</span><span class="p">());</span><span class="w"></span>
 <span class="w">  </span><span class="p">}</span><span class="w"></span>
 <span class="w">  </span><span class="n">all_value</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">end_s</span><span class="p">);</span><span class="w"></span>
-<span class="w">  </span>
+
 <span class="w">  </span><span class="c1">// **核心在这里，每次i+2，即跳过balck_range，生成valid_range**</span>
 <span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">all_value</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">    </span><span class="n">NodeSRange</span><span class="w"> </span><span class="n">new_range</span><span class="p">(</span><span class="n">all_value</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">all_value</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">]);</span><span class="w"></span>
@@ -774,10 +874,10 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 </div>
 <a name="generate_subgraph" />
 </div>
-<div class="section" id="id14">
-<h3>生成子图<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
-<p>然后我们再回过头去看下如何生成子图，生成子图的流程如下：<br />
-<img alt="black_map" src="../../_images/black_map.jpg" /><br />
+<div class="section" id="id15">
+<h3><span class="section-number">17.2.5. </span>生成子图<a class="headerlink" href="#id15" title="Permalink to this headline"></a></h3>
+<p>然后我们再回过头去看下如何生成子图，生成子图的流程如下：
+<img alt="black_map" src="../../_images/black_map.jpg" />
 生成子图主要在构造函数中：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">SubTopoGraph</span><span class="o">::</span><span class="n">SubTopoGraph</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">unordered_map</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">TopoNode</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">NodeSRange</span><span class="o">&gt;&gt;&amp;</span><span class="w"></span>
@@ -831,7 +931,7 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <a name="astar" />
 </div>
 <div class="section" id="astar">
-<h3>Astar算法<a class="headerlink" href="#astar" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">17.2.6. </span>Astar算法<a class="headerlink" href="#astar" title="Permalink to this headline"></a></h3>
 <p>最后根据生成好的子图，通过Astar算法来查找最佳路径，实现在”routing/strategy”目录。可以看到strategy中实现了一个”Strategy”的基类，也就是说后面可以扩展其他的查找策略。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Strategy</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -847,7 +947,7 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="o">=</span><span class="n">g</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="o">+</span><span class="n">h</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>这个公式遵循以下特性：<br />
+<p>这个公式遵循以下特性：
 如果g(n)为0，即只计算任意顶点n到目标的评估函数h(n)，而不计算起点到顶点n的距离，则算法转化为使用贪心策略的最良优先搜索，速度最快，但可能得不出最优解；
 如果h(n)不大于顶点n到目标顶点的实际距离，则一定可以求出最优解，而且h(n)越小，需要计算的节点越多，算法效率越低，常见的评估函数有——欧几里得距离、曼哈顿距离、切比雪夫距离；
 如果h(n)为0，即只需求出起点到任意顶点n的最短路径g(n)，而不计算任何评估函数h(n)，则转化为单源最短路径问题，即Dijkstra算法，此时需要计算最多的顶点；</p>
@@ -856,8 +956,8 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <a name="tools" />
 </div>
 </div>
-<div class="section" id="id15">
-<h2>调试工具<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id16">
+<h2><span class="section-number">17.3. </span>调试工具<a class="headerlink" href="#id16" title="Permalink to this headline"></a></h2>
 <p>在routing/tools目录实现了如下3个功能：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">routing_cast</span><span class="p">.</span><span class="n">cc</span><span class="w"> </span><span class="c1">// 定时发送routing response响应</span>
 <span class="n">routing_dump</span><span class="p">.</span><span class="n">cc</span><span class="w"> </span><span class="c1">// 保存routing请求</span>
@@ -866,14 +966,14 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 </div>
 <a name="question" />
 </div>
-<div class="section" id="id16">
-<h2>问题<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h2>
-<p>如果是曲线转弯，并且需要变道的情况，是否可以规划？比如在十字路口，左转中途有车挡住，这时候需要变道，就是edge左转，再加上node是曲线的情况，是否能够实现，这应该是planning应该考虑的情况？<br />
+<div class="section" id="id17">
+<h2><span class="section-number">17.4. </span>问题<a class="headerlink" href="#id17" title="Permalink to this headline"></a></h2>
+<p>如果是曲线转弯，并且需要变道的情况，是否可以规划？比如在十字路口，左转中途有车挡住，这时候需要变道，就是edge左转，再加上node是曲线的情况，是否能够实现，这应该是planning应该考虑的情况？
 答： 可以实现，lane有直道和弯道的区别，edge有左转和右转的区别，在转弯过程中如果需要左转，继续左转就可以了，这里只描述了道路的信息，不关注是直道还是弯道。</p>
 <a name="osm_find" />
 </div>
 <div class="section" id="osm">
-<h2>OSM数据查找<a class="headerlink" href="#osm" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">17.5. </span>OSM数据查找<a class="headerlink" href="#osm" title="Permalink to this headline"></a></h2>
 <p>通过下面的链接，替换掉网址最后的id，就可以查找到对应的way，node和relation。</p>
 <ul class="simple">
 <li><p>If it’s a polygon, then it’s a closed way in the OSM database. You can find ways by id as simple as this: http://www.openstreetmap.org/way/305293190</p></li>
@@ -887,91 +987,47 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <a name="reference" />
 </div>
 <div class="section" id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<h2><span class="section-number">17.6. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
 <p><a class="reference external" href="https://blog.csdn.net/scy411082514/article/details/7484497">OSM地图介绍</a>
-<a class="reference external" href="https://wiki.openstreetmap.org/wiki/Routing">OSM Routing</a><br />
+<a class="reference external" href="https://wiki.openstreetmap.org/wiki/Routing">OSM Routing</a>
 <a class="reference external" href="https://github.com/daohu527/osm-pathfinding">OSM Pathfinding</a>
-<a class="reference external" href="https://www.openstreetmap.org/">OpenstreetMap</a><br />
-<a class="reference external" href="https://wiki.openstreetmap.org/wiki/Elements">OpenstreetMap Elements</a><br />
-<a class="reference external" href="https://wiki.openstreetmap.org/wiki/Zh-hans:Beginners_Guide_1.5">OpenstreetMap地图渲染</a><br />
-<a class="reference external" href="https://en.wikipedia.org/wiki/Shortest_path_problem">最短路径问题</a><br />
+<a class="reference external" href="https://www.openstreetmap.org/">OpenstreetMap</a>
+<a class="reference external" href="https://wiki.openstreetmap.org/wiki/Elements">OpenstreetMap Elements</a>
+<a class="reference external" href="https://wiki.openstreetmap.org/wiki/Zh-hans:Beginners_Guide_1.5">OpenstreetMap地图渲染</a>
+<a class="reference external" href="https://en.wikipedia.org/wiki/Shortest_path_problem">最短路径问题</a>
 <a class="reference external" href="https://zh.wikipedia.org/wiki/A*%E6%90%9C%E5%B0%8B%E6%BC%94%E7%AE%97%E6%B3%95">A*搜索算法</a></p>
 </div>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../prediction/readme.html" class="btn btn-neutral float-left" title="15. Prediction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../tools/readme.html" class="btn btn-neutral float-right" title="18. Tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">Dig into Apollo - Library </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">Dig into Apollo - Papers </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">Dig into Apollo - Performance </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">Dig into Apollo - Questions </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">Dig into Apollo - Simulation </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">Dig into Apollo - Build </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/modules/routing/readme.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

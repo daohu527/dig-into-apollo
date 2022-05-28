@@ -1,4 +1,4 @@
-# Dig into Apollo - Dreamview ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
+# Dreamview
 
 > 草木有本心，何求美人折。
 

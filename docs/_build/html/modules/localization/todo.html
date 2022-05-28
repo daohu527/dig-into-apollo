@@ -1,44 +1,85 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RTKLocalization &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RTKLocalization &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">Dig into Apollo - Library </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">Dig into Apollo - Papers </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">Dig into Apollo - Performance </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">Dig into Apollo - Questions </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">Dig into Apollo - Simulation </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">Dig into Apollo - Build </a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>RTKLocalization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/localization/todo.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <div class="section" id="rtklocalization">
-<h1>RTKLocalization<a class="headerlink" href="#rtklocalization" title="Permalink to this headline">¶</a></h1>
+<h1>RTKLocalization<a class="headerlink" href="#rtklocalization" title="Permalink to this headline"></a></h1>
 <p>RTKLocalization类的主要功能是实现RTK定位，然后用IMU做插值。</p>
 <ol class="arabic simple">
 <li><p>只是通过GPS得到了位置，但是IMU的融合还没有进行计算？？？</p></li>
 <li><p>姿态解算是如何进行的？？？</p></li>
 </ol>
 <div class="section" id="initconfig">
-<h2>InitConfig<a class="headerlink" href="#initconfig" title="Permalink to this headline">¶</a></h2>
+<h2>InitConfig<a class="headerlink" href="#initconfig" title="Permalink to this headline"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">RTKLocalization</span><span class="p">::</span><span class="n">InitConfig</span><span class="p">(</span><span class="n">const</span> <span class="n">rtk_config</span><span class="p">::</span><span class="n">Config</span> <span class="o">&amp;</span><span class="n">config</span><span class="p">)</span> <span class="p">{</span>
   <span class="o">//</span> <span class="n">imu队列最大长度</span>
   <span class="n">imu_list_max_size_</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">imu_list_max_size</span><span class="p">();</span>
@@ -53,7 +94,7 @@
 </div>
 </div>
 <div class="section" id="gpscallback">
-<h2>GpsCallback<a class="headerlink" href="#gpscallback" title="Permalink to this headline">¶</a></h2>
+<h2>GpsCallback<a class="headerlink" href="#gpscallback" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">RTKLocalization::GpsCallback</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">localization</span><span class="o">::</span><span class="n">Gps</span><span class="o">&gt;</span><span class="w"> </span><span class="o">&amp;</span><span class="n">gps_msg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="kt">double</span><span class="w"> </span><span class="n">time_delay</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
@@ -113,7 +154,7 @@
 </div>
 </div>
 <div class="section" id="id1">
-<h2>开门狗<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2>开门狗<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>void RTKLocalization::RunWatchDog(double gps_timestamp) {
   if (!enable_watch_dog_) {
     return;
@@ -168,7 +209,7 @@
 </div>
 </div>
 <div class="section" id="id2">
-<h2>定位主流程<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<h2>定位主流程<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">RTKLocalization</span><span class="p">::</span><span class="n">PrepareLocalizationMsg</span><span class="p">(</span>
     <span class="n">const</span> <span class="n">localization</span><span class="p">::</span><span class="n">Gps</span> <span class="o">&amp;</span><span class="n">gps_msg</span><span class="p">,</span> <span class="n">LocalizationEstimate</span> <span class="o">*</span><span class="n">localization</span><span class="p">,</span>
     <span class="n">LocalizationStatus</span> <span class="o">*</span><span class="n">localization_status</span><span class="p">)</span> <span class="p">{</span>
@@ -192,7 +233,7 @@
 </div>
 </div>
 <div class="section" id="imu">
-<h2>找到正确的IMU消息<a class="headerlink" href="#imu" title="Permalink to this headline">¶</a></h2>
+<h2>找到正确的IMU消息<a class="headerlink" href="#imu" title="Permalink to this headline"></a></h2>
 <p>在队列中找到最匹配的IMU，其中区分了队列的第一个，最后一个，以及如果在中间则进行插值。插值的时候根据距离最近的原则进行反比例插值。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>bool RTKLocalization::FindMatchingIMU(const double gps_timestamp_sec,
                                       CorrectedImu *imu_msg) {
@@ -275,7 +316,7 @@
 </div>
 </div>
 <div class="section" id="id3">
-<h2>IMU插值<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<h2>IMU插值<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RTKLocalization::InterpolateIMU</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">CorrectedImu</span><span class="w"> </span><span class="o">&amp;</span><span class="n">imu1</span><span class="p">,</span><span class="w"></span>
 <span class="w">                                     </span><span class="k">const</span><span class="w"> </span><span class="n">CorrectedImu</span><span class="w"> </span><span class="o">&amp;</span><span class="n">imu2</span><span class="p">,</span><span class="w"></span>
 <span class="w">                                     </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">timestamp_sec</span><span class="p">,</span><span class="w"></span>
@@ -335,7 +376,7 @@
 </div>
 </div>
 <div class="section" id="id4">
-<h2>线性插值算法<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<h2>线性插值算法<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h2>
 <p>根据距离插值，反比例，即frac1越小，则越靠近p1，frac1越大，则越靠近p2</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>template &lt;class T&gt;
 T RTKLocalization::InterpolateXYZ(const T &amp;p1, const T &amp;p2,
@@ -357,7 +398,7 @@ T RTKLocalization::InterpolateXYZ(const T &amp;p1, const T &amp;p2,
 </div>
 </div>
 <div class="section" id="id5">
-<h2>填充定位消息<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<h2>填充定位消息<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h2>
 <p>找到最匹配的IMU消息后，和GPS消息做融合。IMU的角度是否不随着物体的旋转而改变？？？
 涉及到姿态解算
 https://blog.csdn.net/MOU_IT/article/details/80369043
@@ -467,7 +508,7 @@ https://zhuanlan.zhihu.com/p/20382236</p>
 </div>
 </div>
 <div class="section" id="localiztion">
-<h2>设置localiztion消息头<a class="headerlink" href="#localiztion" title="Permalink to this headline">¶</a></h2>
+<h2>设置localiztion消息头<a class="headerlink" href="#localiztion" title="Permalink to this headline"></a></h2>
 <p>填充消息头</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">RTKLocalization</span><span class="p">::</span><span class="n">FillLocalizationMsgHeader</span><span class="p">(</span>
     <span class="n">LocalizationEstimate</span> <span class="o">*</span><span class="n">localization</span><span class="p">)</span> <span class="p">{</span>
@@ -482,7 +523,7 @@ https://zhuanlan.zhihu.com/p/20382236</p>
 </div>
 </div>
 <div class="section" id="gps">
-<h1>查找最新的GPS状态<a class="headerlink" href="#gps" title="Permalink to this headline">¶</a></h1>
+<h1>查找最新的GPS状态<a class="headerlink" href="#gps" title="Permalink to this headline"></a></h1>
 <p>GPS状态列表可能是乱序的吗？不是按照时间顺序排列的？？？</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">bool</span> <span class="n">RTKLocalization</span><span class="p">::</span><span class="n">FindNearestGpsStatus</span><span class="p">(</span><span class="n">const</span> <span class="n">double</span> <span class="n">gps_timestamp_sec</span><span class="p">,</span>
                                            <span class="n">drivers</span><span class="p">::</span><span class="n">gnss</span><span class="p">::</span><span class="n">InsStat</span> <span class="o">*</span><span class="n">status</span><span class="p">)</span> <span class="p">{</span>
@@ -518,7 +559,7 @@ https://zhuanlan.zhihu.com/p/20382236</p>
 </div>
 </div>
 <div class="section" id="id6">
-<h1>增加位置的状态信息<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h1>
+<h1>增加位置的状态信息<a class="headerlink" href="#id6" title="Permalink to this headline"></a></h1>
 <p>设置位置的状态，主要是为RTK的状态信息</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>void RTKLocalization::FillLocalizationStatusMsg(
     const drivers::gnss::InsStat &amp;status,
@@ -560,7 +601,7 @@ https://zhuanlan.zhihu.com/p/20382236</p>
 </div>
 </div>
 <div class="section" id="publishposebroadcasttopic">
-<h1>PublishPoseBroadcastTopic<a class="headerlink" href="#publishposebroadcasttopic" title="Permalink to this headline">¶</a></h1>
+<h1>PublishPoseBroadcastTopic<a class="headerlink" href="#publishposebroadcasttopic" title="Permalink to this headline"></a></h1>
 <p>输出无人车的位置，为什么没有通过IMU解算真实的位置信息？？？</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">RTKLocalizationComponent</span><span class="p">::</span><span class="n">PublishPoseBroadcastTopic</span><span class="p">(</span>
     <span class="n">const</span> <span class="n">LocalizationEstimate</span><span class="o">&amp;</span> <span class="n">localization</span><span class="p">)</span> <span class="p">{</span>
@@ -570,7 +611,7 @@ https://zhuanlan.zhihu.com/p/20382236</p>
 </div>
 </div>
 <div class="section" id="publishposebroadcasttf">
-<h1>PublishPoseBroadcastTF<a class="headerlink" href="#publishposebroadcasttf" title="Permalink to this headline">¶</a></h1>
+<h1>PublishPoseBroadcastTF<a class="headerlink" href="#publishposebroadcasttf" title="Permalink to this headline"></a></h1>
 <p>输出坐标转换信息，主要发布位置、航向。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">RTKLocalizationComponent</span><span class="p">::</span><span class="n">PublishPoseBroadcastTF</span><span class="p">(</span>
     <span class="n">const</span> <span class="n">LocalizationEstimate</span><span class="o">&amp;</span> <span class="n">localization</span><span class="p">)</span> <span class="p">{</span>
@@ -599,7 +640,7 @@ https://zhuanlan.zhihu.com/p/20382236</p>
 </div>
 </div>
 <div class="section" id="publishlocalizationstatus">
-<h1>PublishLocalizationStatus<a class="headerlink" href="#publishlocalizationstatus" title="Permalink to this headline">¶</a></h1>
+<h1>PublishLocalizationStatus<a class="headerlink" href="#publishlocalizationstatus" title="Permalink to this headline"></a></h1>
 <p>发布位置状态信息</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">void</span> <span class="n">RTKLocalizationComponent</span><span class="p">::</span><span class="n">PublishLocalizationStatus</span><span class="p">(</span>
     <span class="n">const</span> <span class="n">LocalizationStatus</span><span class="o">&amp;</span> <span class="n">localization_status</span><span class="p">)</span> <span class="p">{</span>
@@ -609,7 +650,7 @@ https://zhuanlan.zhihu.com/p/20382236</p>
 </div>
 </div>
 <div class="section" id="ndt">
-<h1>NDT<a class="headerlink" href="#ndt" title="Permalink to this headline">¶</a></h1>
+<h1>NDT<a class="headerlink" href="#ndt" title="Permalink to this headline"></a></h1>
 <ol class="arabic simple">
 <li><p>NDT的原理？</p></li>
 </ol>
@@ -619,76 +660,36 @@ NDT match</p>
 http://xchu.net/2019/09/27/HDMAP%E5%BB%BA%E5%9B%BE%E6%B5%81%E7%A8%8B/<br />
 http://xchu.net/2019/10/11/autoware%E6%BF%80%E5%85%89%E9%9B%B7%E8%BE%BE%E5%BB%BA%E5%9B%BE%E5%92%8C%E5%AE%9A%E4%BD%8D/</p>
 <div class="section" id="id7">
-<h2><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<h2><a class="headerlink" href="#id7" title="Permalink to this headline"></a></h2>
 </div>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/modules/localization/todo.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

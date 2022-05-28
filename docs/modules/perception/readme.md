@@ -1,4 +1,4 @@
-# Dig into Apollo - Perception ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
+# Perception
 
 > 温故而知新，可以为师矣
 
@@ -38,7 +38,7 @@
 
 ## Perception模块简介
 
-首先简单看下perception的目录结构：  
+首先简单看下perception的目录结构：
 ```
 .
 ├── BUILD
@@ -61,26 +61,26 @@
 ├── testdata       // 上述几个模块的测试数据
 └── tool           // 离线测试工具
 ```
-下面介绍几个重要的目录结构: 
-* production目录 - **感知模块的入口在production目录，通过lanuch加载对应的dag，启动感知模块**，感知模块包括多个子模块，在onboard目录中定义。  
+下面介绍几个重要的目录结构:
+* production目录 - **感知模块的入口在production目录，通过lanuch加载对应的dag，启动感知模块**，感知模块包括多个子模块，在onboard目录中定义。
 * onboard目录 - 定义了多个子模块，分别用来处理不同的传感器信息（Lidar,Radar,Camera）。各个子模块的入口在onboard目录中，每个传感器的流程大概相似，可以分为预处理，物体识别，感兴趣区域过滤以及追踪。
-* inference目录 - 深度学习推理模块，我们知道深度学习模型训练好了之后需要部署，而推理则是深度学习部署的过程，实际上部署的过程会对模型做加速，**主要实现了caffe，TensorRT和paddlepaddle**3种模型部署。训练好的深度模型放在"modules\perception\production\data"目录中，然后通过推理模块进行加载部署和在线计算。  
-* camera目录 - 主要实现车道线识别，红绿灯检测，以及障碍物识别和追踪。  
-* radar目录 - 主要实现障碍物识别和追踪（由于毫米波雷达上报的就是障碍物信息，这里主要是对障碍物做追踪）。  
-* lidar目录 - 主要实现障碍物识别和追踪（对点云做分割，分类，识别等）。  
-* fusion目录 - 对上述传感器的感知结果做融合。  
+* inference目录 - 深度学习推理模块，我们知道深度学习模型训练好了之后需要部署，而推理则是深度学习部署的过程，实际上部署的过程会对模型做加速，**主要实现了caffe，TensorRT和paddlepaddle**3种模型部署。训练好的深度模型放在"modules\perception\production\data"目录中，然后通过推理模块进行加载部署和在线计算。
+* camera目录 - 主要实现车道线识别，红绿灯检测，以及障碍物识别和追踪。
+* radar目录 - 主要实现障碍物识别和追踪（由于毫米波雷达上报的就是障碍物信息，这里主要是对障碍物做追踪）。
+* lidar目录 - 主要实现障碍物识别和追踪（对点云做分割，分类，识别等）。
+* fusion目录 - 对上述传感器的感知结果做融合。
 
-整个模块的流程如图：  
-![process](img/perception_process.jpg)  
-可以看到感知模块由production模块开始，由fusion模块结束。  
+整个模块的流程如图：
+![process](img/perception_process.jpg)
+可以看到感知模块由production模块开始，由fusion模块结束。
 
 
 <a name="production" />
 
 ## production目录
-production中主要是存放：  
-1. 配置和lanuch和dag启动文件  
-2. 存放训练好的模型  
+production中主要是存放：
+1. 配置和lanuch和dag启动文件
+2. 存放训练好的模型
 ```
 .
 ├── conf  // 配置文件
@@ -94,7 +94,7 @@ production中主要是存放：
 <a name="onboard" />
 
 ## onboard目录
-onboard目录定义了多个子模块，每个子模块对应一个功能，包括：车道线识别，障碍物识别，红绿灯识别，传感器融合，场景分割等。  
+onboard目录定义了多个子模块，每个子模块对应一个功能，包括：车道线识别，障碍物识别，红绿灯识别，传感器融合，场景分割等。
 ```
 .
 ├── common_flags
@@ -118,36 +118,36 @@ onboard目录定义了多个子模块，每个子模块对应一个功能，包�
         "detection_component.cc",
     ],
 ```
-在BUILD文件中上述几个模块被编译为一个模块"libperception_component_lidar"。也就是说在dag中实际上只需要启动**libperception_component_lidar**这一个模块就相当于启动了上述几个模块。  
+在BUILD文件中上述几个模块被编译为一个模块"libperception_component_lidar"。也就是说在dag中实际上只需要启动**libperception_component_lidar**这一个模块就相当于启动了上述几个模块。
 
 
-看完了perception模块的入口，以及各个子模块的定义，那么各个子模块的功能如何实现的呢？  实际上感知各个子模块的功能是通过lidar,radar和camera3种传感器实现的，每种传感器分别都执行了目标识别和追踪的任务，最后通过fusion对传感器的数据做融合，执行代码分别在"perception/radar","perception/lidar","perception/camera"目录中。这里有2种查看代码的方式，一种是正序的方式，根据具体的功能，例如从物体识别子模块入手，分别查看lidar,radar和camera模块中的物体识别功能，另一种是倒序的方式，根据传感器划分，先查看传感器分别实现了哪些功能，然后回过头来看各个子模块是如何把上述功能整合起来的。这里我们采用第2种方式，先看各个传感器的执行流程如下图。  
-![sensor](img/sensor.jpg)  
-从图中可以看到，每个传感器都实现了物体识别的功能，而摄像头还实现了车道线识别和红绿灯检测的功能，每个传感器执行的任务流水线也大概相似，先进行预处理，然后做识别，最后过滤并且追踪目标。其中物体识别用到了推理引擎inference。  
+看完了perception模块的入口，以及各个子模块的定义，那么各个子模块的功能如何实现的呢？  实际上感知各个子模块的功能是通过lidar,radar和camera3种传感器实现的，每种传感器分别都执行了目标识别和追踪的任务，最后通过fusion对传感器的数据做融合，执行代码分别在"perception/radar","perception/lidar","perception/camera"目录中。这里有2种查看代码的方式，一种是正序的方式，根据具体的功能，例如从物体识别子模块入手，分别查看lidar,radar和camera模块中的物体识别功能，另一种是倒序的方式，根据传感器划分，先查看传感器分别实现了哪些功能，然后回过头来看各个子模块是如何把上述功能整合起来的。这里我们采用第2种方式，先看各个传感器的执行流程如下图。
+![sensor](img/sensor.jpg)
+从图中可以看到，每个传感器都实现了物体识别的功能，而摄像头还实现了车道线识别和红绿灯检测的功能，每个传感器执行的任务流水线也大概相似，先进行预处理，然后做识别，最后过滤并且追踪目标。其中物体识别用到了推理引擎inference。
 
-接下来来我们分别查看各个传感器的具体实现。我们先从radar开始看起，主要是radar模块相对比较简单。  
+接下来来我们分别查看各个传感器的具体实现。我们先从radar开始看起，主要是radar模块相对比较简单。
 
 
 <a name="sub_module" />
 
 ## 子模块介绍
-[radar子模块介绍](radar#radar_module)  
-[camera子模块介绍](camera#camera_module)  
-[lidar子模块介绍](lidar#lidar_module)  
-[fusion子模块](fusion#fusion_module)  
-[inference推理子模块](inference#inference_module)  
+[radar子模块介绍](radar#radar_module)
+[camera子模块介绍](camera#camera_module)
+[lidar子模块介绍](lidar#lidar_module)
+[fusion子模块](fusion#fusion_module)
+[inference推理子模块](inference#inference_module)
 
 
 <a name="reference" />
 
 ## Reference
-[A Beginner's Guide to Convolutional Neural Networks](https://skymind.ai/wiki/convolutional-network)  
-[cnn](https://cs231n.github.io/convolutional-networks/)  
-[traffic light dataset](https://hci.iwr.uni-heidelberg.de/node/6132/download/3d66608cfb112934ef40175e9a20c81f)  
-[pytorch-tutorial](https://github.com/yunjey/pytorch-tutorial)  
-[全连接层的作用是什么？](https://www.zhihu.com/question/41037974)  
-[索伯算子](https://zh.wikipedia.org/wiki/%E7%B4%A2%E8%B2%9D%E7%88%BE%E7%AE%97%E5%AD%90)  
-[卷积](https://zh.wikipedia.org/wiki/%E5%8D%B7%E7%A7%AF)  
-[TensorRT(1)-介绍-使用-安装](https://arleyzhang.github.io/articles/7f4b25ce/)   
-[高性能深度学习支持引擎实战——TensorRT](https://zhuanlan.zhihu.com/p/35657027)  
+[A Beginner's Guide to Convolutional Neural Networks](https://skymind.ai/wiki/convolutional-network)
+[cnn](https://cs231n.github.io/convolutional-networks/)
+[traffic light dataset](https://hci.iwr.uni-heidelberg.de/node/6132/download/3d66608cfb112934ef40175e9a20c81f)
+[pytorch-tutorial](https://github.com/yunjey/pytorch-tutorial)
+[全连接层的作用是什么？](https://www.zhihu.com/question/41037974)
+[索伯算子](https://zh.wikipedia.org/wiki/%E7%B4%A2%E8%B2%9D%E7%88%BE%E7%AE%97%E5%AD%90)
+[卷积](https://zh.wikipedia.org/wiki/%E5%8D%B7%E7%A7%AF)
+[TensorRT(1)-介绍-使用-安装](https://arleyzhang.github.io/articles/7f4b25ce/)
+[高性能深度学习支持引擎实战——TensorRT](https://zhuanlan.zhihu.com/p/35657027)
 

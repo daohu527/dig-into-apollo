@@ -1,14 +1,9 @@
-# Dig into Apollo - Docker ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)  
+# 启动容器
 
 > 橘生淮南则为橘，生于淮北则为枳。
 
-## Table of Contents
-- [docker编译](#docker_build)
-- [docker脚本](#docker_script)
-- [设置主机](#setup_host)
 
-
-docker的主要的好处是开箱即用，在编译docker的时候安装好需要的环境，在使用的时候就无需担心环境问题带来的影响了。下面我们主要分析下docker文件夹中的脚本，主要涉及docker的编译、启动、以及host相关的内容。  
+docker的主要的好处是开箱即用，在编译docker的时候安装好需要的环境，在使用的时候就无需担心环境问题带来的影响了。下面我们主要分析下docker文件夹中的脚本，主要涉及docker的编译、启动、以及host相关的内容。
 
 <a name="docker_build" />
 
@@ -17,7 +12,7 @@ docker的主要的好处是开箱即用，在编译docker的时候安装好需�
 ```
 ./build_dev.sh ./dev.x86_64.dockerfile
 ```
-在"build_dev.sh"脚本中会执行编译docker的工作，下面我们分析下docker的编译过程。  
+在"build_dev.sh"脚本中会执行编译docker的工作，下面我们分析下docker的编译过程。
 
 #### build_dev.sh
 ```
@@ -46,10 +41,10 @@ echo "Built new image ${TAG}"
 -f : 默认不需要设置这个参数，docker会从当前目录中找dockerfile编译，当有多个dockerfile的时候就需要通过"-f"来指定编译的dockerfile
 CONTEXT ： docker编译的资源目录
 
-[参考](https://docs.docker.com/engine/reference/commandline/build/)  
+[参考](https://docs.docker.com/engine/reference/commandline/build/)
 
-**疑问**  
-1. ARM架构和X86_64架构的docker编译有什么区别？  
+**疑问**
+1. ARM架构和X86_64架构的docker编译有什么区别？
 
 
 接着我们来看dockerfile
@@ -176,9 +171,9 @@ USER apollo
 
 ```
 
-还有一些没有用到的脚本  
+还有一些没有用到的脚本
 ```
-1.  
+1.
 install_adolc.sh
 
 2. 安装fast-rtps，一个网络发现协议
@@ -191,7 +186,7 @@ install_libtorch.sh
 <a name="docker_script" />
 
 ## docker脚本
-容器相关的脚本在"scripts"中，下面我逐步分析下这些脚本做了哪些工作。  
+容器相关的脚本在"scripts"中，下面我逐步分析下这些脚本做了哪些工作。
 
 #### dev_start.sh
 启动容器的脚本
@@ -233,7 +228,7 @@ fi
 # Add udev rules.
 sudo cp -r ${APOLLO_ROOT_DIR}/docker/setup_host/etc/* /etc/
 
-# 
+#
 # Add uvcvideo clock config.
 grep -q uvcvideo /etc/modules
 if [ $? -ne 0 ]; then

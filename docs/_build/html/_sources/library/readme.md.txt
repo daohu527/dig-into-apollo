@@ -1,4 +1,4 @@
-# Dig into Apollo - Library ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)  
+# 引用的库
 
 > 读书患不多，思义患不明。
 

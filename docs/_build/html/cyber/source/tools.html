@@ -1,37 +1,78 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cyber组件启动 &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cyber组件启动 &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">Dig into Apollo - Library </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">Dig into Apollo - Papers </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">Dig into Apollo - Performance </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">Dig into Apollo - Questions </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">Dig into Apollo - Simulation </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">Dig into Apollo - Build </a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>cyber组件启动</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cyber/source/tools.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <div class="section" id="cyber">
-<h1>cyber组件启动<a class="headerlink" href="#cyber" title="Permalink to this headline">¶</a></h1>
+<h1>cyber组件启动<a class="headerlink" href="#cyber" title="Permalink to this headline"></a></h1>
 <p>cyber_launch主要用来启动cyber模块，其中一个launch文件可以有一个或者多个module，每个module 包含一个dag文件，而一个dag文件则对应一个或者多个components。<br />
 launch文件中有几个module则会启动几个<em>进程</em>，每个进程有单独的内存空间，比如静态变量等都不会共享。<br />
 一个dag文件中可以有一个或者多个components，一个components对应一个协程。协程中的静态变量是共享的，并且全局唯一。</p>
@@ -44,7 +85,7 @@ launch文件中有几个module则会启动几个<em>进程</em>，每个进程�
 <p>下面介绍下cyber_launch的文件结构。</p>
 </div>
 <div class="section" id="cyber-launch">
-<h1>cyber_launch<a class="headerlink" href="#cyber-launch" title="Permalink to this headline">¶</a></h1>
+<h1>cyber_launch<a class="headerlink" href="#cyber-launch" title="Permalink to this headline"></a></h1>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">cyber</span><span class="o">&gt;</span>
     <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
         <span class="o">&lt;</span><span class="n">name</span><span class="o">&gt;</span><span class="n">planning</span><span class="o">&lt;/</span><span class="n">name</span><span class="o">&gt;</span>   \\ <span class="n">module名称</span>
@@ -62,7 +103,7 @@ launch文件中有几个module则会启动几个<em>进程</em>，每个进程�
 </ul>
 </div>
 <div class="section" id="dag">
-<h1>dag<a class="headerlink" href="#dag" title="Permalink to this headline">¶</a></h1>
+<h1>dag<a class="headerlink" href="#dag" title="Permalink to this headline"></a></h1>
 <p>下面以<code class="docutils literal notranslate"><span class="pre">velodyne.dag</span></code>文件为例来进行说明。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>module_config {
     module_library : &quot;/apollo/bazel-bin/modules/drivers/lidar/velodyne/driver/libvelodyne_driver_component.so&quot;
@@ -117,9 +158,9 @@ module_config {
 <p>dag文件有一个或者多个module_config，而每个module_config中对应一个或者多个components。</p>
 </div>
 <div class="section" id="cyber-launch-py">
-<h1>cyber_launch.py分析<a class="headerlink" href="#cyber-launch-py" title="Permalink to this headline">¶</a></h1>
+<h1>cyber_launch.py分析<a class="headerlink" href="#cyber-launch-py" title="Permalink to this headline"></a></h1>
 <div class="section" id="start">
-<h2>start<a class="headerlink" href="#start" title="Permalink to this headline">¶</a></h2>
+<h2>start<a class="headerlink" href="#start" title="Permalink to this headline"></a></h2>
 <p>在start函数中会遍历module，然后通过</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;module&#39;</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">process_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">process_list</span><span class="p">:</span>
@@ -154,7 +195,7 @@ module_config {
 </div>
 </div>
 <div class="section" id="stop">
-<h2>stop<a class="headerlink" href="#stop" title="Permalink to this headline">¶</a></h2>
+<h2>stop<a class="headerlink" href="#stop" title="Permalink to this headline"></a></h2>
 <p>stop实际上是通过找到对应的launch文件，并且杀掉对应的进程来实现。(kill对应的是PID，pkill对应的是command)</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">stop_launch</span><span class="p">(</span><span class="n">launch_file</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -174,7 +215,7 @@ module_config {
 </div>
 </div>
 <div class="section" id="mainboard">
-<h1>mainboard<a class="headerlink" href="#mainboard" title="Permalink to this headline">¶</a></h1>
+<h1>mainboard<a class="headerlink" href="#mainboard" title="Permalink to this headline"></a></h1>
 <p>mainboard通过LoadModule来加载模块，而<code class="docutils literal notranslate"><span class="pre">module_config</span></code>来指定加载的so文件，然后启动一个或者多个components，每个components的配置文件可以不一样。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ModuleController::LoadModule</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">DagConfig</span><span class="o">&amp;</span><span class="w"> </span><span class="n">dag_config</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">work_root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">common</span><span class="o">::</span><span class="n">WorkRoot</span><span class="p">();</span><span class="w"></span>
@@ -223,11 +264,11 @@ module_config {
 </div>
 </div>
 <div class="section" id="dreamview">
-<h1>dreamview<a class="headerlink" href="#dreamview" title="Permalink to this headline">¶</a></h1>
+<h1>dreamview<a class="headerlink" href="#dreamview" title="Permalink to this headline"></a></h1>
 <p>dreamview通过界面上的滑动按钮打开和关闭模块，大概的流程是前端通过websocket发送消息到后端，后端通过调用命令行启动模块，后端主要的实现在”hmi_worker.cc”中。</p>
 <p>dreamview中的modules通过指定”start_command”和”stop_command”来启动和关闭。</p>
 <div class="section" id="loadmode">
-<h2>LoadMode<a class="headerlink" href="#loadmode" title="Permalink to this headline">¶</a></h2>
+<h2>LoadMode<a class="headerlink" href="#loadmode" title="Permalink to this headline"></a></h2>
 <p>对于so文件，会通过LoadMode来进行生成命令，下面介绍下生成”start_command”和”stop_command”的过程。生成的命令和cyber_launch中调用的命令一致，只是前面增加了<code class="docutils literal notranslate"><span class="pre">nohup</span></code>。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">HMIMode</span><span class="w"> </span><span class="nf">HMIWorker::LoadMode</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">mode_config_path</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">HMIMode</span><span class="w"> </span><span class="n">mode</span><span class="p">;</span><span class="w"></span>
@@ -273,7 +314,7 @@ module_config {
 </div>
 </div>
 <div class="section" id="id1">
-<h1>用途<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<h1>用途<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h1>
 <p>如何启动2个一模一样的模块</p>
 <ol class="arabic simple">
 <li><p>如果你需要启动2个相同的模块，可以在launch文件中增加2个module，并且修改dag文件中模块的名称，这样就可以启动2个一模一样的模块了。上述这种情况在模块中有静态变量，并且你希望静态变量不相互影响的情况下可以采用。</p></li>
@@ -284,71 +325,31 @@ perception模块中的inner消息只有在同一个进程中才会收到，也�
 </div>
 
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/cyber/source/tools.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

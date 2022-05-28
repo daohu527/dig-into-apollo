@@ -1,37 +1,78 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DetectionComponent &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DetectionComponent &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-   
-  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../what_is_apollo/readme.html">Dig into Apollo - Introduction </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">Dig into Apollo - Library </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">Dig into Apollo - Papers </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">Dig into Apollo - Performance </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">Dig into Apollo - Questions </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">Dig into Apollo - Simulation </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how_to_build/readme.html">Dig into Apollo - Build </a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>DetectionComponent</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/perception/detection_component.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <div class="section" id="detectioncomponent">
-<h1>DetectionComponent<a class="headerlink" href="#detectioncomponent" title="Permalink to this headline">¶</a></h1>
+<h1>DetectionComponent<a class="headerlink" href="#detectioncomponent" title="Permalink to this headline"></a></h1>
 <p>DetectionComponent主要的目的是用来做物体识别。接收点云信息，最后输出感知到的结果。
 输入TOPIC： drivers::PointCloud
 输出TOPIC： LidarFrameMessage</p>
@@ -39,7 +80,7 @@
 疑问：<br />
 目前并没有在dag中找到对应的配置文件，看起来这个模块是给第三方雷达感知算法提供的接口？？？</p>
 <div class="section" id="init">
-<h2>初始化(Init)<a class="headerlink" href="#init" title="Permalink to this headline">¶</a></h2>
+<h2>初始化(Init)<a class="headerlink" href="#init" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">DetectionComponent::Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">LidarDetectionComponentConfig</span><span class="w"> </span><span class="n">comp_config</span><span class="p">;</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 1. 读取配置文件</span>
@@ -68,7 +109,7 @@
 </div>
 </div>
 <div class="section" id="initalgorithmplugin">
-<h2>InitAlgorithmPlugin<a class="headerlink" href="#initalgorithmplugin" title="Permalink to this headline">¶</a></h2>
+<h2>InitAlgorithmPlugin<a class="headerlink" href="#initalgorithmplugin" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">DetectionComponent::InitAlgorithmPlugin</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">ACHECK</span><span class="p">(</span><span class="n">common</span><span class="o">::</span><span class="n">SensorManager</span><span class="o">::</span><span class="n">Instance</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetSensorInfo</span><span class="p">(</span><span class="n">sensor_name_</span><span class="p">,</span><span class="w"></span>
 <span class="w">                                                          </span><span class="o">&amp;</span><span class="n">sensor_info_</span><span class="p">));</span><span class="w"></span>
@@ -93,7 +134,7 @@
 </div>
 </div>
 <div class="section" id="proc">
-<h2>执行(Proc)<a class="headerlink" href="#proc" title="Permalink to this headline">¶</a></h2>
+<h2>执行(Proc)<a class="headerlink" href="#proc" title="Permalink to this headline"></a></h2>
 <p>执行主要在Proc，而Proc主要是调用内部的实现”InternalProc”。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">DetectionComponent::InternalProc</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">drivers</span><span class="o">::</span><span class="n">PointCloud</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">in_message</span><span class="p">,</span><span class="w"></span>
@@ -156,11 +197,11 @@
 </div>
 </div>
 <div class="section" id="lidarobstacledetection">
-<h1>LidarObstacleDetection<a class="headerlink" href="#lidarobstacledetection" title="Permalink to this headline">¶</a></h1>
+<h1>LidarObstacleDetection<a class="headerlink" href="#lidarobstacledetection" title="Permalink to this headline"></a></h1>
 <p>在DetectionComponent中会初始化LidarObstacleDetection，并且调用类的”Process()”方法，那么LidarObstacleDetection中究竟实现了哪些功能？</p>
 <p>下面先分析Init方法</p>
 <div class="section" id="id1">
-<h2>初始化Init<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2>初始化Init<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">LidarObstacleDetection::Init</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">LidarObstacleDetectionInitOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 1. 根据传感器名称获取模型配置</span>
@@ -222,7 +263,7 @@
 <p>接着看LidarObstacleDetection如何进行物体识别</p>
 </div>
 <div class="section" id="process">
-<h2>执行Process<a class="headerlink" href="#process" title="Permalink to this headline">¶</a></h2>
+<h2>执行Process<a class="headerlink" href="#process" title="Permalink to this headline"></a></h2>
 <p>Process有多态实现，主要的区别为是否传入点云信息message。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">LidarProcessResult</span><span class="w"> </span><span class="nf">LidarObstacleDetection::Process</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">LidarObstacleDetectionOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"></span>
@@ -250,7 +291,7 @@
 </div>
 </div>
 <div class="section" id="id2">
-<h2>点云计算<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<h2>点云计算<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">LidarProcessResult</span><span class="w"> </span><span class="nf">LidarObstacleDetection::ProcessCommon</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">LidarObstacleDetectionOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">LidarFrame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sensor_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">options</span><span class="p">.</span><span class="n">sensor_name</span><span class="p">;</span><span class="w"></span>
@@ -279,10 +320,10 @@
 </div>
 </div>
 <div class="section" id="pointpillarsdetection">
-<h1>PointPillarsDetection<a class="headerlink" href="#pointpillarsdetection" title="Permalink to this headline">¶</a></h1>
+<h1>PointPillarsDetection<a class="headerlink" href="#pointpillarsdetection" title="Permalink to this headline"></a></h1>
 <p>PointPillarsDetection主要的实现在Init和Proc中。</p>
 <div class="section" id="id3">
-<h2>初始化<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<h2>初始化<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h2>
 <p>在PointPillarsDetection中初始化”PointPillars”类</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">PointPillarsDetection::Init</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">DetectionInitOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">point_pillars_ptr_</span><span class="p">.</span><span class="n">reset</span><span class="p">(</span><span class="w"></span>
@@ -295,7 +336,7 @@
 </div>
 </div>
 <div class="section" id="detect">
-<h2>实现(detect)<a class="headerlink" href="#detect" title="Permalink to this headline">¶</a></h2>
+<h2>实现(detect)<a class="headerlink" href="#detect" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">PointPillarsDetection::Detect</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">DetectionOptions</span><span class="o">&amp;</span><span class="w"> </span><span class="n">options</span><span class="p">,</span><span class="w"></span>
 <span class="w">                                   </span><span class="n">LidarFrame</span><span class="o">*</span><span class="w"> </span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 
@@ -337,7 +378,7 @@
 </div>
 </div>
 <div class="section" id="id4">
-<h2>输出障碍物<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<h2>输出障碍物<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h2>
 <p>获取目标做分类，点云模型目前只输出了车的分类，因此无法做其他分类</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">PointPillarsDetection::GetObjects</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">&gt;&gt;*</span><span class="w"> </span><span class="n">objects</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Affine3d</span><span class="o">&amp;</span><span class="w"> </span><span class="n">pose</span><span class="p">,</span><span class="w"></span>
@@ -432,7 +473,7 @@
 </div>
 </div>
 <div class="section" id="pointpillars">
-<h1>PointPillars<a class="headerlink" href="#pointpillars" title="Permalink to this headline">¶</a></h1>
+<h1>PointPillars<a class="headerlink" href="#pointpillars" title="Permalink to this headline"></a></h1>
 <p>PointPillars，一种新颖的编码器，它利用PointNets来学习在垂直列柱体组织中的点云的特征。 Apollo中的PointPillars是基于autoware。<br />
 疑问：</p>
 <ol class="arabic simple">
@@ -449,9 +490,9 @@
 <p>综上所述DetectionComponent主要实现了雷达的识别，识别的具体功能实现在”perception/lidar”中，同时”perception/lidar”还实现了雷达的分割和追踪，后面我们会接着分析这个模块。</p>
 </div>
 <div class="section" id="fusioncameradetectioncomponent">
-<h1>FusionCameraDetectionComponent<a class="headerlink" href="#fusioncameradetectioncomponent" title="Permalink to this headline">¶</a></h1>
+<h1>FusionCameraDetectionComponent<a class="headerlink" href="#fusioncameradetectioncomponent" title="Permalink to this headline"></a></h1>
 <div class="section" id="id5">
-<h2>初始化Init<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<h2>初始化Init<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h2>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">FusionCameraDetectionComponent::Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="c1">// 1. 初始化配置</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">InitConfig</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">cyber</span><span class="o">::</span><span class="n">SUCC</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -553,9 +594,9 @@
 </div>
 </div>
 <div class="section" id="obstaclecameraperception">
-<h1>ObstacleCameraPerception<a class="headerlink" href="#obstaclecameraperception" title="Permalink to this headline">¶</a></h1>
+<h1>ObstacleCameraPerception<a class="headerlink" href="#obstaclecameraperception" title="Permalink to this headline"></a></h1>
 <div class="section" id="id6">
-<h2>初始化Init<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<h2>初始化Init<a class="headerlink" href="#id6" title="Permalink to this headline"></a></h2>
 <p>相机检测的初始化比较复杂，分为了几个方面。<br />
 其中读取的配置在文件”perception\production\conf\perception\camera\obstacle.pt”中，这里的”.pt”文件是否是pytorch传统概念上的pt文件？？？如果打开实际上是一个配置文件，并且指定了具体的pt文件在哪个目录。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ObstacleCameraPerception::Init</span><span class="p">(</span><span class="w"></span>
@@ -695,7 +736,7 @@
 </div>
 </div>
 <div class="section" id="perception">
-<h2>相机感知(Perception)<a class="headerlink" href="#perception" title="Permalink to this headline">¶</a></h2>
+<h2>相机感知(Perception)<a class="headerlink" href="#perception" title="Permalink to this headline"></a></h2>
 <p>相机的感知包括车道线和障碍物的感知，障碍物追踪几个功能。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">ObstacleCameraPerception::Perception</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">CameraPerceptionOptions</span><span class="w"> </span><span class="o">&amp;</span><span class="n">options</span><span class="p">,</span><span class="w"> </span><span class="n">CameraFrame</span><span class="w"> </span><span class="o">*</span><span class="n">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -848,12 +889,12 @@
 </div>
 </div>
 <div class="section" id="cipv">
-<h2>前方最危险目标检测(Cipv)<a class="headerlink" href="#cipv" title="Permalink to this headline">¶</a></h2>
+<h2>前方最危险目标检测(Cipv)<a class="headerlink" href="#cipv" title="Permalink to this headline"></a></h2>
 <p>Cipv在”perception/camera”中，</p>
 </div>
 </div>
 <div class="section" id="fusioncomponent">
-<h1>FusionComponent<a class="headerlink" href="#fusioncomponent" title="Permalink to this headline">¶</a></h1>
+<h1>FusionComponent<a class="headerlink" href="#fusioncomponent" title="Permalink to this headline"></a></h1>
 <p>融合感知模块采用的是”ObstacleMultiSensorFusion”中的实现。当消息到来的时候会执行Proc，而Proc是调用内部实现”InternalProc”。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">FusionComponent::InternalProc</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">SensorFrameMessage</span><span class="w"> </span><span class="k">const</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">in_message</span><span class="p">,</span><span class="w"></span>
@@ -956,96 +997,56 @@
 </pre></div>
 </div>
 <div class="section" id="obstaclemultisensorfusion">
-<h2>ObstacleMultiSensorFusion<a class="headerlink" href="#obstaclemultisensorfusion" title="Permalink to this headline">¶</a></h2>
+<h2>ObstacleMultiSensorFusion<a class="headerlink" href="#obstaclemultisensorfusion" title="Permalink to this headline"></a></h2>
 <p>ObstacleMultiSensorFusion实现了障碍物的融合，在目录”modules\perception\fusion”中。</p>
 </div>
 </div>
 <div class="section" id="lanedetectioncomponent">
-<h1>LaneDetectionComponent<a class="headerlink" href="#lanedetectioncomponent" title="Permalink to this headline">¶</a></h1>
+<h1>LaneDetectionComponent<a class="headerlink" href="#lanedetectioncomponent" title="Permalink to this headline"></a></h1>
 </div>
 <div class="section" id="lidaroutputcomponent">
-<h1>LidarOutputComponent<a class="headerlink" href="#lidaroutputcomponent" title="Permalink to this headline">¶</a></h1>
+<h1>LidarOutputComponent<a class="headerlink" href="#lidaroutputcomponent" title="Permalink to this headline"></a></h1>
 </div>
 <div class="section" id="recognitioncomponent">
-<h1>RecognitionComponent<a class="headerlink" href="#recognitioncomponent" title="Permalink to this headline">¶</a></h1>
+<h1>RecognitionComponent<a class="headerlink" href="#recognitioncomponent" title="Permalink to this headline"></a></h1>
 </div>
 <div class="section" id="radardetectioncomponent">
-<h1>RadarDetectionComponent<a class="headerlink" href="#radardetectioncomponent" title="Permalink to this headline">¶</a></h1>
+<h1>RadarDetectionComponent<a class="headerlink" href="#radardetectioncomponent" title="Permalink to this headline"></a></h1>
 </div>
 <div class="section" id="segmentationcomponent">
-<h1>SegmentationComponent<a class="headerlink" href="#segmentationcomponent" title="Permalink to this headline">¶</a></h1>
+<h1>SegmentationComponent<a class="headerlink" href="#segmentationcomponent" title="Permalink to this headline"></a></h1>
 </div>
 <div class="section" id="trafficlightsperceptioncomponent">
-<h1>TrafficLightsPerceptionComponent<a class="headerlink" href="#trafficlightsperceptioncomponent" title="Permalink to this headline">¶</a></h1>
+<h1>TrafficLightsPerceptionComponent<a class="headerlink" href="#trafficlightsperceptioncomponent" title="Permalink to this headline"></a></h1>
 <p>至此，整个感知模块的分析就完成了，可以看到感知模块主要是负责获取障碍物的类型、以及车道等信息反馈给车。</p>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../../_sources/modules/perception/detection_component.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

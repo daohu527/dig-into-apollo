@@ -1,15 +1,6 @@
-# Dig into Apollo - Papers ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)  
+# 论文
 
 > 我见青山多妩媚，料青山见我应如是。
-
-## Table of Contents
-
-- [localization papers](#localization)
-- [perception papers](#perception)
-- [prediction papers](#prediction)
-- [planning papers](#planning)
-- [control papers](#control)
-- [simulation papers](#simulation)
 
 
 <a name="localization" />
@@ -28,7 +19,7 @@
 
 ## Prediction papers
 
-* [Simple Online and Realtime Tracking with a Deep Association Metric](https://arxiv.org/abs/1703.07402) - [code](https://github.com/nwojke/deep_sort)  
+* [Simple Online and Realtime Tracking with a Deep Association Metric](https://arxiv.org/abs/1703.07402) - [code](https://github.com/nwojke/deep_sort)
 
 
 <a name="planning" />

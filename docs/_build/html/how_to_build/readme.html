@@ -1,54 +1,116 @@
-
 <!DOCTYPE html>
-
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dig into Apollo - Build &#8212; dig-into-apollo  documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2. 如何编译 &mdash; dig-into-apollo  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-   
-  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="next" title="3. 启动容器" href="../docker/readme.html" />
+    <link rel="prev" title="1. 什么是Apollo" href="../what_is_apollo/readme.html" /> 
+</head>
 
-  </head><body>
-  
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> dig-into-apollo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../what_is_apollo/readme.html">1. 什么是Apollo</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">2. 如何编译</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">2.1. 编译</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#build">2.1.1. build</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">2.2. 常见问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../docker/readme.html">3. 启动容器</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cyber/readme.html">4. Cyber</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/audio/readme.html">5. Dig into Apollo - Audio </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/bridge/readme.html">6. Dig into Apollo - Bridge </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/canbus/readme.html">7. Dig into Apollo - Canbus </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/control/readme.html">8. Dig into Apollo - Control </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data/readme.html">9. Dig into Apollo - Data </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/dreamview/readme.html">10. Dig into Apollo - Dreamview </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/drivers/readme.html">11. Dig into Apollo - Drivers </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/guardian/readme.html">12. Dig into Apollo - Guardian </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/localization/readme.html">13. Dig into Apollo - Localization </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/map/readme.html">14. Dig into Apollo - Map </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/monitor/readme.html">15. Dig into Apollo - Monitor </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/perception/readme.html">16. Dig into Apollo - Perception </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/planning/readme.html">17. Dig into Apollo - Planning </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/prediction/readme.html">18. Dig into Apollo - Prediction </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/routing/readme.html">19. Dig into Apollo - Routing </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/routing/readme.html#id4">20. Routing模块分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/tools/readme.html">21. Dig into Apollo - Tools </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transform/readme.html">22. Dig into Apollo - Transform </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/v2x/readme.html">23. Dig into Apollo - V2X </a></li>
+<li class="toctree-l1"><a class="reference internal" href="../performance/readme.html">24. 性能分析</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simulation/readme.html">25. 仿真</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../library/readme.html">26. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../papers/readme.html">27. 论文</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../questions/readme.html">28. 常见问题</a></li>
+</ul>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
+        </div>
+      </div>
+    </nav>
 
-          <div class="body" role="main">
-            
-  <div class="section" id="dig-into-apollo-build-github">
-<h1>Dig into Apollo - Build <img alt="GitHub" src="https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout" /><a class="headerlink" href="#dig-into-apollo-build-github" title="Permalink to this headline">¶</a></h1>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">dig-into-apollo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li><span class="section-number">2. </span>如何编译</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/how_to_build/readme.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="id1">
+<h1><span class="section-number">2. </span>如何编译<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h1>
 <blockquote>
 <div><p>高行微言，所以修身。</p>
 </div></blockquote>
-<div class="section" id="table-of-contents">
-<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p><span class="xref myst">编译</span></p></li>
-<li><p><span class="xref myst">常见问题</span></p></li>
-</ul>
 <a name="build" />
-</div>
-<div class="section" id="id1">
-<h2>编译<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h2><span class="section-number">2.1. </span>编译<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <p>编译脚本在”apollo.sh”中实现，通过shell脚本设置一些参数和环境变量，最后通过bazel编译。下面我们分析下apollo.sh的具体实现。</p>
 <p>“apollo.sh”中实现了一些函数，我们先介绍下build函数</p>
 <div class="section" id="build">
-<h3>build<a class="headerlink" href="#build" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">2.1.1. </span>build<a class="headerlink" href="#build" title="Permalink to this headline"></a></h3>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>function build() {
   if [ &quot;${USE_GPU}&quot; = &quot;1&quot; ] ; then
     echo -e &quot;${YELLOW}Running build under GPU mode. GPU is required to run the build.${NO_COLOR}&quot;
@@ -106,8 +168,8 @@
 <a name="question" />
 </div>
 </div>
-<div class="section" id="id2">
-<h2>常见问题<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h2><span class="section-number">2.2. </span>常见问题<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h2>
 <ol class="arabic simple">
 <li><p>如果机器内存小于8G，会出现编译错误的情况，单独编译又没有问题，问题的原因是内存缓冲不足，导致报错。调大内存后解决，错误信息如下。</p></li>
 </ol>
@@ -115,78 +177,41 @@
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
-<li><p>因为一些文件需要下载之后才能编译，如果启动离线模式，或者想下载文件之后再进行编译，可以参考。<br />
+<li><p>因为一些文件需要下载之后才能编译，如果启动离线模式，或者想下载文件之后再进行编译，可以参考。
 <a class="reference external" href="https://docs.bazel.build/versions/0.18.1/external.html">bazel</a></p></li>
 </ol>
 </div>
 </div>
 
 
+           </div>
           </div>
-          
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../what_is_apollo/readme.html" class="btn btn-neutral float-left" title="1. 什么是Apollo" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../docker/readme.html" class="btn btn-neutral float-right" title="3. 启动容器" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, daohu527.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../index.html">dig-into-apollo</a></h1>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
 
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../cyber/readme.html">Dig into Apollo - Cyber </a></li>
-<li class="toctree-l1"><a class="reference internal" href="../docker/readme.html">Dig into Apollo - Docker </a></li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../index.html">Documentation overview</a><ul>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022, daohu527.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
-      
-      |
-      <a href="../_sources/how_to_build/readme.md.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+</body>
 </html>

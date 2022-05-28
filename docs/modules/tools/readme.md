@@ -1,4 +1,4 @@
-# Dig into Apollo - Tools ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
+# Tools
 
 > 君子生非异也，善假于物也。
 

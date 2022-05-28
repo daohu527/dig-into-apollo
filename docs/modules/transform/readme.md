@@ -1,4 +1,4 @@
-# Dig into Apollo - Transform ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
+# Transform
 
 > 三人行，必有我师。
 
@@ -17,9 +17,9 @@
 <a name="introduction" />
 
 ## Transform模块简介
-关于transform模块开始一直不知道是干啥的，一直看到一个"/tf"的TOPIC，还以为是tensorflow的缩写，想着是不是和神经网络有关系，后来才知道tf是transform的缩写，主要的用途是进行坐标转换，原型即是大名鼎鼎的"ros/tf2"库。那么为什么要进行坐标转换呢？  
-![tf2](img/frames2.png)  
-在机器人系统中，经常需要用到坐标转换，比如一个机器人的手臂要去拿一个运动的物体，控制的时候我们需要手臂的当前坐标，同时还需要知道手臂和身体的坐标，这个时候就需要用到坐标转换，把手臂的坐标转换为身体的坐标系，这样控制起来就方便一点。当然这里是动态的情况，也存在静态的情况，比如机器人头顶的摄像头，转换到身体的坐标系，那么位置关系是相对固定的，所以可以一开始就写到固定的位置。这里就引入了以下几个问题：  
+关于transform模块开始一直不知道是干啥的，一直看到一个"/tf"的TOPIC，还以为是tensorflow的缩写，想着是不是和神经网络有关系，后来才知道tf是transform的缩写，主要的用途是进行坐标转换，原型即是大名鼎鼎的"ros/tf2"库。那么为什么要进行坐标转换呢？
+![tf2](img/frames2.png)
+在机器人系统中，经常需要用到坐标转换，比如一个机器人的手臂要去拿一个运动的物体，控制的时候我们需要手臂的当前坐标，同时还需要知道手臂和身体的坐标，这个时候就需要用到坐标转换，把手臂的坐标转换为身体的坐标系，这样控制起来就方便一点。当然这里是动态的情况，也存在静态的情况，比如机器人头顶的摄像头，转换到身体的坐标系，那么位置关系是相对固定的，所以可以一开始就写到固定的位置。这里就引入了以下几个问题：
 1. 有固定转换关系的文件放在哪里？如果都是集中放在一个地方，那么这个地方损坏会导致所有的转换关系失效，一个比较好的方法是各个节点自己广播自己的转换关系。而其实静态的转换关系只需要发送一次就可以了，因为不会变化。
 2. 有动态转换关系的节点，需要实时动态发布自己的转换关系，这样会涉及到时间戳，以及过时。
 3. 转换关系的拓扑结构如何确定？是树型还是网络型的，这涉及到转换关系传递的问题。
@@ -109,7 +109,7 @@ transform:
 header:
   frame_id: localization
 ```
-我们在看下如何解析yaml文件：  
+我们在看下如何解析yaml文件：
 ```c++
 bool StaticTransformComponent::ParseFromYaml(
     const std::string& file_path, TransformStamped* transform_stamped) {
@@ -171,7 +171,7 @@ void StaticTransformComponent::SendTransform(
 
 
 按照流程总结一下就如下图所示，首先遍历conf，获取传感器的外参数文件路径，然后解析对应的yaml文件，并且发布到"/tf_static"。
-![transform流程](img/transform.jpg)  
+![transform流程](img/transform.jpg)
 
 
 <a name="no_static_transform" />
@@ -196,7 +196,7 @@ class TransformBroadcaster {
 };
 ```
 从上面的分析可以看出，构造TransformBroadcaster的时候需要传入node。为什么需要传入node呢，因为cyber的一个module不能同时创建2个node，所以这里谁调用，就用谁的node创建reader和writer。如果是自己创建node，那么其他模块自己的node和引用该模块创建的node就打破了cyber上述的限制，这里的node是否可以理解为一个进程？
-下面我们分析具体的实现，首先是TransformBroadcaster构造函数：  
+下面我们分析具体的实现，首先是TransformBroadcaster构造函数：
 ```c++
 TransformBroadcaster::TransformBroadcaster(
     const std::shared_ptr<cyber::Node>& node)
@@ -207,8 +207,8 @@ TransformBroadcaster::TransformBroadcaster(
   writer_ = node_->CreateWriter<TransformStampeds>(attr);
 }
 ```
-创建writer并且往"/tf"发消息。这里可以看到，这里存在多个节点往一个topic发消息的情况。  
-发送消息比较简单，直接写对应的消息：  
+创建writer并且往"/tf"发消息。这里可以看到，这里存在多个节点往一个topic发消息的情况。
+发送消息比较简单，直接写对应的消息：
 ```c++
 void TransformBroadcaster::SendTransform(
     const std::vector<TransformStamped>& transforms) {
@@ -221,13 +221,13 @@ void TransformBroadcaster::SendTransform(
 <a name="buffer" />
 
 ## Buffer（接收缓存）
-Buffer实际上提供了一个工具类给其它模块，它的主要作用是接收"/tf"和"/tf_static"的消息，并且保持在buffer中，提供给其它节点进行查找和转换到对应的坐标系，我们先看BufferInterface的实现：  
+Buffer实际上提供了一个工具类给其它模块，它的主要作用是接收"/tf"和"/tf_static"的消息，并且保持在buffer中，提供给其它节点进行查找和转换到对应的坐标系，我们先看BufferInterface的实现：
 
 
 <a name="buffer_interface" />
 
 #### 缓存接口
-BufferInterface类定义了缓存需要实现的接口：  
+BufferInterface类定义了缓存需要实现的接口：
 ```c++
 class BufferInterface {
  public:
@@ -322,12 +322,12 @@ class BufferInterface {
   }
 };
 ```
-BufferInterface实现的功能主要是查找转换关系，以及查看转换关系是否存在，以及做最后的转换。  
+BufferInterface实现的功能主要是查找转换关系，以及查看转换关系是否存在，以及做最后的转换。
 
 <a name="buffer_class" />
 
 #### 缓存实现
-下面我们接着看buffer类的实现，可以看到buffer类继承了"BufferInterface"和"tf2::BufferCore"，其中"tf2::BufferCore"就是大名鼎鼎的ROS中的tf2库。  
+下面我们接着看buffer类的实现，可以看到buffer类继承了"BufferInterface"和"tf2::BufferCore"，其中"tf2::BufferCore"就是大名鼎鼎的ROS中的tf2库。
 ```c++
 class Buffer : public BufferInterface, public tf2::BufferCore {
  public:
@@ -398,9 +398,9 @@ class Buffer : public BufferInterface, public tf2::BufferCore {
   DECLARE_SINGLETON(Buffer)
 };  // class
 ```
-这里注意buffer为单例模式，即接收转换消息，并且放到buffer中保存。其他模块需要用到转换的时候，则从buffer中查找是否存在转换关系，并且进行对应的转换。  
+这里注意buffer为单例模式，即接收转换消息，并且放到buffer中保存。其他模块需要用到转换的时候，则从buffer中查找是否存在转换关系，并且进行对应的转换。
 
-下面我们看buffer类的具体实现，buffer类的初始化在Init函数中：  
+下面我们看buffer类的具体实现，buffer类的初始化在Init函数中：
 ```c++
 int Buffer::Init() {
   std::string node_name =
@@ -496,17 +496,17 @@ void Buffer::SubscriptionCallbackImpl(
   }
 }
 ```
-接着是lookupTransform和canTransform分别调用tf2的库函数，实现查找转换和判断是否能够转换的实现，由于函数功能比较简单这里就不介绍了。  
-可以看到主要的缓存实现都是在tf2的库函数中，后面有时间再分析下tf2具体的实现。  
+接着是lookupTransform和canTransform分别调用tf2的库函数，实现查找转换和判断是否能够转换的实现，由于函数功能比较简单这里就不介绍了。
+可以看到主要的缓存实现都是在tf2的库函数中，后面有时间再分析下tf2具体的实现。
 
 <a name="summary" />
 
 ## 总结
-接下来我们用一张图来总结Apollo中的坐标变换关系，即静态坐标转换由"StaticTransform"模块提供，而动态转换由需要发布的模块自行发布如"NDTLocalization","RTKLocalization"和""Gnss，可以看到动态变换主要是世界坐标到本地坐标的转换，而静态转换主要是各个传感器之间的转换。最后转换关系统一由Buffer模块接收，并且提供查询。  
-![all](img/all.jpg)  
+接下来我们用一张图来总结Apollo中的坐标变换关系，即静态坐标转换由"StaticTransform"模块提供，而动态转换由需要发布的模块自行发布如"NDTLocalization","RTKLocalization"和""Gnss，可以看到动态变换主要是世界坐标到本地坐标的转换，而静态转换主要是各个传感器之间的转换。最后转换关系统一由Buffer模块接收，并且提供查询。
+![all](img/all.jpg)
 
 <a name="reference" />
 
 ## Reference
-[tf2](http://wiki.ros.org/tf2)  
+[tf2](http://wiki.ros.org/tf2)
 
