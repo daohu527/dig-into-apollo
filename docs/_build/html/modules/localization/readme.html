@@ -54,19 +54,18 @@
 <li class="toctree-l1"><a class="reference internal" href="../drivers/readme.html">8. Drivers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../guardian/readme.html">9. Guardian</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">10. Localization</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">10.1. Table of Contents</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id1">10.2. Localization模块简介</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">10.3. 代码目录</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#rtk">10.4. RTK定位流程</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id3">10.4.1. 获取定位信息</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#findmatchingimu">10.4.2. FindMatchingIMU</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#composelocalizationmsg">10.4.3. ComposeLocalizationMsg</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#findnearestgpsstatus">10.4.4. FindNearestGpsStatus</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#filllocalizationstatusmsg">10.4.5. FillLocalizationStatusMsg</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id4">10.4.6. 发布消息</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">10.1. Localization模块简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">10.2. 代码目录</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rtk">10.3. RTK定位流程</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">10.3.1. 获取定位信息</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#findmatchingimu">10.3.2. FindMatchingIMU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#composelocalizationmsg">10.3.3. ComposeLocalizationMsg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#findnearestgpsstatus">10.3.4. FindNearestGpsStatus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#filllocalizationstatusmsg">10.3.5. FillLocalizationStatusMsg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">10.3.6. 发布消息</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#reference">10.5. Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reference">10.4. Reference</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../map/readme.html">11. Map</a></li>
@@ -81,12 +80,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../v2x/readme.html">20. V2X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">23. 引用的库</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">24. 论文</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<p class="caption" role="heading"><span class="caption-text">参考</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">28. 常见问题</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">1. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">2. 论文</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">3. 常见问题</a></li>
 </ul>
 
         </div>
@@ -119,18 +118,8 @@
 <blockquote>
 <div><p>虽千万人，吾往矣。</p>
 </div></blockquote>
-<div class="section" id="table-of-contents">
-<h2><span class="section-number">10.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
-<ul class="simple">
-<li><p><span class="xref myst">Localization模块简介</span></p></li>
-<li><p><span class="xref myst">代码目录</span></p></li>
-<li><p><span class="xref myst">RTK定位流程</span></p></li>
-<li><p><span class="xref myst">Reference</span></p></li>
-</ul>
-<a name="introduction" />
-</div>
 <div class="section" id="id1">
-<h2><span class="section-number">10.2. </span>Localization模块简介<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">10.1. </span>Localization模块简介<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>localization模块主要实现了以下2个功能：</p>
 <ol class="arabic simple">
 <li><p>输出车辆的位置信息（planning模块使用）</p></li>
@@ -145,10 +134,9 @@
 <blockquote>
 <div><p>MSF方法参考论文”Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes”</p>
 </div></blockquote>
-<a name="content" />
 </div>
 <div class="section" id="id2">
-<h2><span class="section-number">10.3. </span>代码目录<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">10.2. </span>代码目录<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <p>下面是localization的目录结构，在查看具体的代码之前最好看下定位模块的readme文件:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── common          // 声明配置(flags)，从conf目录中读取相应的值
 ├── conf            // 配置文件存放目录
@@ -186,10 +174,9 @@
 </pre></div>
 </div>
 <p>通过上述目录可以知道，定位模块主要实现了rtk，ndt，msf这3个定位方法，分别对应不同的目录。proto文件夹定义了消息的格式，common和conf主要是存放一些配置和消息TOPIC。下面我们逐个分析RTK定位、NDT定位和MSF定位。</p>
-<a name="rtk" />
 </div>
 <div class="section" id="rtk">
-<h2><span class="section-number">10.4. </span>RTK定位流程<a class="headerlink" href="#rtk" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">10.3. </span>RTK定位流程<a class="headerlink" href="#rtk" title="Permalink to this headline"></a></h2>
 <p>RTK定位是通过GPS和IMU的信息做融合然后输出车辆所在的位置。RTK通过基准站的获取当前GPS信号的误差，用来校正无人车当前的位置，可以得到厘米级别的精度。IMU的输出频率高，可以在GPS没有刷新的情况下（通常是1s刷新一次）用IMU获取车辆的位置。下面是RTK模块的目录结构。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── BUILD                               // bazel编译文件
 ├── rtk_localization.cc                 // rtk定位功能实现模块
@@ -289,7 +276,7 @@ Init函数实现比较简单，一是初始化配置信息，二是初始化IO�
 主要的执行过程在”GpsCallback”中，然后通过”GetLocalization”和”GetLocalizationStatus”获取结果，最后发布对应的位置信息、位置转换信息和位置状态信息。
 由于”GpsCallback”主要执行过程在”PrepareLocalizationMsg”中，因此我们主要分析”PrepareLocalizationMsg”的实现。</p>
 <div class="section" id="id3">
-<h3><span class="section-number">10.4.1. </span>获取定位信息<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">10.3.1. </span>获取定位信息<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
 <p>PrepareLocalizationMsg函数的具体实现如下。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">RTKLocalization::PrepareLocalizationMsg</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">localization</span><span class="o">::</span><span class="n">Gps</span><span class="w"> </span><span class="o">&amp;</span><span class="n">gps_msg</span><span class="p">,</span><span class="w"> </span><span class="n">LocalizationEstimate</span><span class="w"> </span><span class="o">*</span><span class="n">localization</span><span class="p">,</span><span class="w"></span>
@@ -313,7 +300,7 @@ Init函数实现比较简单，一是初始化配置信息，二是初始化IO�
 <p>下面我们逐个分析上述4个过程。</p>
 </div>
 <div class="section" id="findmatchingimu">
-<h3><span class="section-number">10.4.2. </span>FindMatchingIMU<a class="headerlink" href="#findmatchingimu" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">10.3.2. </span>FindMatchingIMU<a class="headerlink" href="#findmatchingimu" title="Permalink to this headline"></a></h3>
 <p>在队列中找到最匹配的IMU消息，其中区分了队列的第一个，最后一个，以及如果在中间位置则进行插值。插值的时候根据距离最近的原则进行反比例插值。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RTKLocalization::FindMatchingIMU</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">gps_timestamp_sec</span><span class="p">,</span><span class="w"></span>
 <span class="w">                                      </span><span class="n">CorrectedImu</span><span class="w"> </span><span class="o">*</span><span class="n">imu_msg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -454,7 +441,7 @@ Init函数实现比较简单，一是初始化配置信息，二是初始化IO�
 </div>
 </div>
 <div class="section" id="composelocalizationmsg">
-<h3><span class="section-number">10.4.3. </span>ComposeLocalizationMsg<a class="headerlink" href="#composelocalizationmsg" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">10.3.3. </span>ComposeLocalizationMsg<a class="headerlink" href="#composelocalizationmsg" title="Permalink to this headline"></a></h3>
 <p>填充位置信息，这里实际上涉及到姿态解算，具体是根据GPS和IMU消息对位置信息进行赋值。需要注意需要根据航向对IMU的信息进行转换。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">RTKLocalization::ComposeLocalizationMsg</span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">localization</span><span class="o">::</span><span class="n">Gps</span><span class="w"> </span><span class="o">&amp;</span><span class="n">gps_msg</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">localization</span><span class="o">::</span><span class="n">CorrectedImu</span><span class="w"> </span><span class="o">&amp;</span><span class="n">imu_msg</span><span class="p">,</span><span class="w"></span>
@@ -540,7 +527,7 @@ Init函数实现比较简单，一是初始化配置信息，二是初始化IO�
 </div>
 </div>
 <div class="section" id="findnearestgpsstatus">
-<h3><span class="section-number">10.4.4. </span>FindNearestGpsStatus<a class="headerlink" href="#findnearestgpsstatus" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">10.3.4. </span>FindNearestGpsStatus<a class="headerlink" href="#findnearestgpsstatus" title="Permalink to this headline"></a></h3>
 <p>获取最近的Gps状态信息，这里实现的算法是遍历查找离”gps_time_stamp”最近的状态，GPS状态信息不是按照时间顺序排列的？？？</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">RTKLocalization::FindNearestGpsStatus</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">gps_timestamp_sec</span><span class="p">,</span><span class="w"></span>
 <span class="w">                                           </span><span class="n">drivers</span><span class="o">::</span><span class="n">gnss</span><span class="o">::</span><span class="n">InsStat</span><span class="w"> </span><span class="o">*</span><span class="n">status</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -562,11 +549,11 @@ Init函数实现比较简单，一是初始化配置信息，二是初始化IO�
 </div>
 </div>
 <div class="section" id="filllocalizationstatusmsg">
-<h3><span class="section-number">10.4.5. </span>FillLocalizationStatusMsg<a class="headerlink" href="#filllocalizationstatusmsg" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">10.3.5. </span>FillLocalizationStatusMsg<a class="headerlink" href="#filllocalizationstatusmsg" title="Permalink to this headline"></a></h3>
 <p>获取位置状态，一共有3种状态：稳定状态(INS_RTKFIXED)、浮动状态(INS_RTKFLOAT)、错误状态(ERROR)。由于代码比较简单，这里就不分析了。</p>
 </div>
 <div class="section" id="id4">
-<h3><span class="section-number">10.4.6. </span>发布消息<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">10.3.6. </span>发布消息<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
 <p>最后通过以下几个函数发布消息。</p>
 <ol class="arabic simple">
 <li><p>PublishPoseBroadcastTopic  // 发布位置信息</p></li>
@@ -574,12 +561,13 @@ Init函数实现比较简单，一是初始化配置信息，二是初始化IO�
 <li><p>PublishLocalizationStatus  // 发布位置状态信息</p></li>
 </ol>
 <p>以上就是整个RTK的定位流程，主要的思路是通过接收GPS和IMU信息结合输出无人车的位置信息，这里还有一个疑问是为什么最后输出的定位信息的位置是直接采用的GPS的位置信息，没有通过IMU信息对位置信息做解算，还是说在其它模块中实现的？？？</p>
-<a name="reference" />
 </div>
 </div>
 <div class="section" id="reference">
-<h2><span class="section-number">10.5. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
-<p><a class="reference external" href="https://ieeexplore.ieee.org/document/8461224">Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes</a></p>
+<h2><span class="section-number">10.4. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://ieeexplore.ieee.org/document/8461224">Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes</a></p></li>
+</ul>
 </div>
 </div>
 

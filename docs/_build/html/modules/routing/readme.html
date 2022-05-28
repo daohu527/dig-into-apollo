@@ -60,12 +60,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../planning/readme.html">14. Planning</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../prediction/readme.html">15. Prediction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">16. Routing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">16.1. Table of Contents</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id1">16.2. Routing模块简介</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">16.3. 基础知识</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#demo">16.3.1. Demo</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id3">16.3.2. 地图</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id4">16.3.3. 最短距离</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">16.1. Routing模块简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">16.2. 基础知识</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#demo">16.2.1. Demo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">16.2.2. 地图</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">16.2.3. 最短距离</a></li>
 </ul>
 </li>
 </ul>
@@ -135,47 +134,8 @@
 <blockquote>
 <div><p>青，取之于蓝而青于蓝；冰，水为之而寒于水。</p>
 </div></blockquote>
-<div class="section" id="table-of-contents">
-<h2><span class="section-number">16.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
-<ul class="simple">
-<li><p><span class="xref myst">Routing模块简介</span></p></li>
-<li><p><span class="xref myst">基础知识</span></p>
-<ul>
-<li><p><span class="xref myst">Demo</span></p></li>
-<li><p><span class="xref myst">地图</span></p></li>
-<li><p><span class="xref myst">最短距离</span></p></li>
-</ul>
-</li>
-<li><p><span class="xref myst">Routing模块分析</span></p>
-<ul>
-<li><p><span class="xref myst">创建Routing地图</span></p>
-<ul>
-<li><p><span class="xref myst">建图流程</span></p></li>
-<li><p><span class="xref myst">创建节点</span></p></li>
-<li><p><span class="xref myst">创建边</span></p></li>
-</ul>
-</li>
-<li><p><span class="xref myst">Routing主流程</span></p>
-<ul>
-<li><p><span class="xref myst">Routing类</span></p></li>
-<li><p><span class="xref myst">导航</span></p></li>
-<li><p><span class="xref myst">子节点</span></p></li>
-<li><p><span class="xref myst">节点切分</span></p></li>
-<li><p><span class="xref myst">生成子图</span></p></li>
-<li><p><span class="xref myst">Astar算法</span></p></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p><span class="xref myst">调试工具</span></p></li>
-<li><p><span class="xref myst">问题</span></p></li>
-<li><p><span class="xref myst">OSM数据查找</span></p></li>
-<li><p><span class="xref myst">Reference</span></p></li>
-</ul>
-<a name="introduction" />
-</div>
 <div class="section" id="id1">
-<h2><span class="section-number">16.2. </span>Routing模块简介<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">16.1. </span>Routing模块简介<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>Routing类似于现在开车时用到的导航模块，通常考虑的是起点到终点的最优路径（通常是最短路径），Routing考虑的是起点到终点的最短路径，而Planning则是行驶过程中，当前一小段时间如何行驶，需要考虑当前路况，是否有障碍物。Routing模块则不需要考虑这些信息，只需要做一个长期的规划路径即可，过程如下：</p>
 <p><img alt="introduction" src="../../_images/introduction.png" /></p>
 <p>这也和我们开车类似，上车之后，首先搜索目的地，打开导航（Routing所做的事情），而开始驾车之后，则会根据当前路况，行人车辆信息来适当调整直到到达目的地（Planning所做的事情）。</p>
@@ -183,13 +143,11 @@
 <li><p><strong>Routing</strong> - 主要关注起点到终点的长期路径，根据起点到终点之间的道路，选择一条最优路径。</p></li>
 <li><p><strong>Planning</strong> - 主要关注几秒钟之内汽车的行驶路径，根据当前行驶过程中的交通规则，车辆行人等信息，规划一条短期路径。</p></li>
 </ul>
-<a name="base" />
 </div>
 <div class="section" id="id2">
-<h2><span class="section-number">16.3. </span>基础知识<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
-<a name="demo" />
+<h2><span class="section-number">16.2. </span>基础知识<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <div class="section" id="demo">
-<h3><span class="section-number">16.3.1. </span>Demo<a class="headerlink" href="#demo" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">16.2.1. </span>Demo<a class="headerlink" href="#demo" title="Permalink to this headline"></a></h3>
 <p><a class="reference external" href="https://daohu527.github.io/">演示地址</a>
 我们通过”OSM Pathfinding”作为例子，来详细讲解整个过程，感谢&#64;mplewis。
 首先我们通过如下的视频演示看下Routing寻找路径的过程，查找的是深圳南山区的地图：
@@ -209,11 +167,10 @@
 <blockquote>
 <div><p>如果图的规模太大，以1000个举例，只算两个点之间互相有连接的情况，1000*1000就是100万个点，如果点的规模更大，那么就需要采用redis数据库来提高查找效率了。</p>
 </div></blockquote>
-<p>下面我们先介绍上面的例子是如何工作的。
-<a name="map" /></p>
+<p>下面我们先介绍上面的例子是如何工作的。</p>
 </div>
 <div class="section" id="id3">
-<h3><span class="section-number">16.3.2. </span>地图<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">16.2.2. </span>地图<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
 <p>首先我们以openstreetmap为例来介绍下地图是如何组成的。<a class="reference external" href="https://www.openstreetmap.org/">开放街道地图</a>（英语：OpenStreetMap，缩写为OSM）是一个建构自由内容之网上地图协作计划，目标是创造一个内容自由且能让所有人编辑的世界地图，并且让一般的移动设备有方便的导航方案。因为这个地图是一个开源地图，所以可以灵活和自由的获取地图资源。
 接着看下openstreetmap的基本元素：
 <strong>Node</strong><img alt="node" src="../../_images/30px-Osm_element_node.svg.png" />
@@ -257,10 +214,9 @@
 <li><p>Osmarender: 一个基于可扩展样式表语言转换 (XSLT) 的渲染器,能够创建可缩放矢量图形(SVG), SVG可以用浏览器观看或转换成位图.</p></li>
 <li><p>Mapnik: 一个用C++写的非常快的渲染器,可以生成位图(png, jpeg)和矢量图形(pdf, svg, postscript)。</p></li>
 </ol>
-<a name="shortest_path" />
 </div>
 <div class="section" id="id4">
-<h3><span class="section-number">16.3.3. </span>最短距离<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">16.2.3. </span>最短距离<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
 <p>我们先看一下经典的例子：最短路径。
 在图论中，最短路径问题是在图中的两个顶点之间找到路径，使得其边的权重之和最小化的问题。而在地图上找到两个点之间最短路径的问题可以被建模为图中最短路径问题的特殊情况，其中顶点对应于交叉点并且边缘对应于路段，每个路段对应于路段的长度。
 <img alt="shortest_path" src="../../_images/375px-Shortest_path_with_direct_weights.svg.png" /></p>
@@ -288,7 +244,6 @@
 根据用户的反馈实时的更新路况，比如路上有10个人在用地图导航，发现在某一段大家都开的很慢，或者有用户反馈堵车，就更新当前路况。
 所以地图是一个强者越强的市场，用户越多，数据就更新的就越快，地图就越准确，用的人就越多；用的人越少，数据更新的就越慢，假设一条路上只有一个用户，一个人开的慢，并不能反馈当前道路拥堵，用该地图的其它用户过去之后，发现堵车，就导致用户体验很差，下次就不会再用这个地图了。所以地图必须需要一定的用户量才能活下去，而且强者越强。</p>
 </div></blockquote>
-<a name="routing" />
 </div>
 </div>
 </div>
@@ -301,7 +256,6 @@
 <li><p>如何途径某些点 - 采用分段的形式，逐段导航（改进版的算法是不给定点的顺序，自动规划最优的线路）。</p></li>
 <li><p>如何设置固定线路，而且不会变？最后routing输出的结果是什么？固定成文件的形式。</p></li>
 </ol>
-<a name="create_routing_map" />
 <div class="section" id="id6">
 <h2><span class="section-number">17.1. </span>创建Routing地图<a class="headerlink" href="#id6" title="Permalink to this headline"></a></h2>
 <p>通过上面的介绍可以知道，routing需要的是一个拓扑结构的图，要想做routing，第一步就是要把原始的地图转换成包含拓扑结构的图，apollo中也实现了类似的操作，把base_map转换为routing_map，这里的base_map就是高精度地图，而routing_map则是导航地图，routing_map的结构为一个有向图。对应的例子在”modules/map/data/demo”中，这个例子比较简陋，因为routing_map.txt中只包含一个节点(Node)，没有边(Edge)信息。
@@ -338,7 +292,6 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="n">speed_limit</span><span class="w">                     </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span><span class="w">       </span><span class="c1">// 限速30km/h</span>
 </pre></div>
 </div>
-<a name="create_map_main" />
 <div class="section" id="id7">
 <h3><span class="section-number">17.1.1. </span>建图流程<a class="headerlink" href="#id7" title="Permalink to this headline"></a></h3>
 <p>可以看到对比map结构中的lane，graph中的节点和边省去了很多信息，主要关注的是lane之间的关系。在理解了上述数据结构之后，理解建图的过程就轻松多了，下面我们结合代码来分析具体的建图流程。建图的代码目录为”routing/topo_creator”，其文件结构如下：</p>
@@ -472,7 +425,6 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 </pre></div>
 </div>
 <p>小结一下创建的图的流程，首先是从base_map中读取道路信息，之后遍历道路，先创建节点，然后创建节点的边，之后把图(点和边的信息)保存到routing_map中，所以routing_map中就是graph_protobuf格式的固化，后面routing模块会读取创建好的routing_map通过astar算法来进行路径规划。</p>
-<a name="create_node" />
 </div>
 <div class="section" id="id8">
 <h3><span class="section-number">17.1.2. </span>创建节点<a class="headerlink" href="#id8" title="Permalink to this headline"></a></h3>
@@ -538,7 +490,6 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<a name="create_edge" />
 </div>
 <div class="section" id="id9">
 <h3><span class="section-number">17.1.3. </span>创建边<a class="headerlink" href="#id9" title="Permalink to this headline"></a></h3>
@@ -574,7 +525,6 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <p>我们可以看下edge cost的曲线，因为”changing_area_length / routing_config.base_changing_length() &lt; 1”，这个函数最小值为1，最大值为无穷。
 <img alt="edge_cost" src="../../_images/edge_cost.png" /></p>
 <p>到这里制作routing_map的流程就结束了，建图的主要目的是把base结构的map转换为graph结构的map，从而利用图结构来查找最佳路径，下面会分析如何通过routing_map得到规划好的路线。</p>
-<a name="routing_main" />
 </div>
 </div>
 <div class="section" id="id10">
@@ -690,7 +640,6 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <li><p>接收”RoutingRequest”消息，输出”RoutingResponse”响应。</p></li>
 </ol>
 <p>接下来我们来看routing的具体实现。</p>
-<a name="routing_class" />
 <div class="section" id="id11">
 <h3><span class="section-number">17.2.1. </span>Routing类<a class="headerlink" href="#id11" title="Permalink to this headline"></a></h3>
 <p>“Routing”类的实现在”routing.h”和”routing.cc”中，首先看下”Routing”类引用的头文件：</p>
@@ -732,7 +681,6 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 </pre></div>
 </div>
 <p>上述的过程总结一下就是，首先读取routing_map并初始化Navigator类，接着遍历routing_request，因为routing_request请求为一个个的点，所以先查看routing_request的点是否在路上，不在路上则找到最近的路，并且补充信息（不在路上的点则过不去），最后调用”navigator_ptr_-&gt;SearchRoute”返回routing响应。</p>
-<a name="navigator_class" />
 </div>
 <div class="section" id="id12">
 <h3><span class="section-number">17.2.2. </span>导航<a class="headerlink" href="#id12" title="Permalink to this headline"></a></h3>
@@ -803,12 +751,10 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<a name="subnode" />
 </div>
 <div class="section" id="id13">
 <h3><span class="section-number">17.2.3. </span>子节点<a class="headerlink" href="#id13" title="Permalink to this headline"></a></h3>
 <p>下面我们把子图的概念讲解一下，”AddBlackMapFromTerminal”中会把节点(这里的节点就是lane)切分，切分之后的数据保存在”TopoRangeManager”中，而”SubTopoGraph”会根据”TopoRangeManager”中的数据初始化子图。我们先理解下子节点的概念，节点就是一条lane，而子节点是对lane做了切割，把一条lane根据黑名单区域，生成几个子节点。用图来说明很形象：</p>
-<a name="generate_subnode" />
 </div>
 <div class="section" id="id14">
 <h3><span class="section-number">17.2.4. </span>节点切分<a class="headerlink" href="#id14" title="Permalink to this headline"></a></h3>
@@ -872,7 +818,6 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<a name="generate_subgraph" />
 </div>
 <div class="section" id="id15">
 <h3><span class="section-number">17.2.5. </span>生成子图<a class="headerlink" href="#id15" title="Permalink to this headline"></a></h3>
@@ -928,7 +873,6 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 </pre></div>
 </div>
 <p>关于子图的分析就结束了，子图主要是针对一条lane切分为几个子节点的情况，根据切分好的子节点从新生成一张图，比原先根据routing_map建立的图有更细的粒度。</p>
-<a name="astar" />
 </div>
 <div class="section" id="astar">
 <h3><span class="section-number">17.2.6. </span>Astar算法<a class="headerlink" href="#astar" title="Permalink to this headline"></a></h3>
@@ -953,7 +897,6 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 如果h(n)为0，即只需求出起点到任意顶点n的最短路径g(n)，而不计算任何评估函数h(n)，则转化为单源最短路径问题，即Dijkstra算法，此时需要计算最多的顶点；</p>
 <p>TODO: 具体算法实现可以参考维基百科的伪代码，由于网上已经有大量的astar算法的介绍，这里暂时先跳过，后面再增加这一部分的介绍。</p>
 <p>跳过Astar算法找到最优路径之后，发送routing_response，然后planning模块根据生成好的路径，控制车辆行驶。这里routing模块的使命就完成了，除非planning模块需要重新规划，则会重新发送routing_request再进行规划。</p>
-<a name="tools" />
 </div>
 </div>
 <div class="section" id="id16">
@@ -964,13 +907,11 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <span class="n">routing_tester</span><span class="p">.</span><span class="n">cc</span><span class="w"> </span><span class="c1">// 定时发送routing request请求</span>
 </pre></div>
 </div>
-<a name="question" />
 </div>
 <div class="section" id="id17">
 <h2><span class="section-number">17.4. </span>问题<a class="headerlink" href="#id17" title="Permalink to this headline"></a></h2>
 <p>如果是曲线转弯，并且需要变道的情况，是否可以规划？比如在十字路口，左转中途有车挡住，这时候需要变道，就是edge左转，再加上node是曲线的情况，是否能够实现，这应该是planning应该考虑的情况？
 答： 可以实现，lane有直道和弯道的区别，edge有左转和右转的区别，在转弯过程中如果需要左转，继续左转就可以了，这里只描述了道路的信息，不关注是直道还是弯道。</p>
-<a name="osm_find" />
 </div>
 <div class="section" id="osm">
 <h2><span class="section-number">17.5. </span>OSM数据查找<a class="headerlink" href="#osm" title="Permalink to this headline"></a></h2>
@@ -984,18 +925,19 @@ apollo建图的实现在”routing/topo_creator”中，首先apollo的拓扑图
 <ul class="simple">
 <li><p>You can download the osm from: https://www.openstreetmap.org/export#map=15/22.5163/113.9380</p></li>
 </ul>
-<a name="reference" />
 </div>
 <div class="section" id="reference">
 <h2><span class="section-number">17.6. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
-<p><a class="reference external" href="https://blog.csdn.net/scy411082514/article/details/7484497">OSM地图介绍</a>
-<a class="reference external" href="https://wiki.openstreetmap.org/wiki/Routing">OSM Routing</a>
-<a class="reference external" href="https://github.com/daohu527/osm-pathfinding">OSM Pathfinding</a>
-<a class="reference external" href="https://www.openstreetmap.org/">OpenstreetMap</a>
-<a class="reference external" href="https://wiki.openstreetmap.org/wiki/Elements">OpenstreetMap Elements</a>
-<a class="reference external" href="https://wiki.openstreetmap.org/wiki/Zh-hans:Beginners_Guide_1.5">OpenstreetMap地图渲染</a>
-<a class="reference external" href="https://en.wikipedia.org/wiki/Shortest_path_problem">最短路径问题</a>
-<a class="reference external" href="https://zh.wikipedia.org/wiki/A*%E6%90%9C%E5%B0%8B%E6%BC%94%E7%AE%97%E6%B3%95">A*搜索算法</a></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://blog.csdn.net/scy411082514/article/details/7484497">OSM地图介绍</a></p></li>
+<li><p><a class="reference external" href="https://wiki.openstreetmap.org/wiki/Routing">OSM Routing</a></p></li>
+<li><p><a class="reference external" href="https://github.com/daohu527/osm-pathfinding">OSM Pathfinding</a></p></li>
+<li><p><a class="reference external" href="https://www.openstreetmap.org/">OpenstreetMap</a></p></li>
+<li><p><a class="reference external" href="https://wiki.openstreetmap.org/wiki/Elements">OpenstreetMap Elements</a></p></li>
+<li><p><a class="reference external" href="https://wiki.openstreetmap.org/wiki/Zh-hans:Beginners_Guide_1.5">OpenstreetMap地图渲染</a></p></li>
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Shortest_path_problem">最短路径问题</a></p></li>
+<li><p><a class="reference external" href="https://zh.wikipedia.org/wiki/A*%E6%90%9C%E5%B0%8B%E6%BC%94%E7%AE%97%E6%B3%95">A*搜索算法</a></p></li>
+</ul>
 </div>
 </div>
 

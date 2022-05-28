@@ -48,21 +48,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../audio/readme.html">2. Audio</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../bridge/readme.html">3. Bridge</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">4. Canbus</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">4.1. Table of Contents</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id1">4.2. Canbus模块介绍</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">4.3. Canbus模块主流程</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vehiclefactory">4.3.1. 车辆工厂模式(VehicleFactory)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#lincolncontroller">4.3.2. 车辆控制器(LincolnController)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">4.1. Canbus模块介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">4.2. Canbus模块主流程</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#vehiclefactory">4.2.1. 车辆工厂模式(VehicleFactory)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lincolncontroller">4.2.2. 车辆控制器(LincolnController)</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id3">4.4. Canbus(驱动程序)</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#messagemanager">4.4.1. 消息管理器(MessageManager)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#canreceiver">4.4.2. 消息接收(CanReceiver)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#cansender">4.4.3. 消息发送(CanSender)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#canbus-canclient">4.4.4. canbus客户端(CanClient)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">4.3. Canbus(驱动程序)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#messagemanager">4.3.1. 消息管理器(MessageManager)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#canreceiver">4.3.2. 消息接收(CanReceiver)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cansender">4.3.3. 消息发送(CanSender)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#canbus-canclient">4.3.4. canbus客户端(CanClient)</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#reference">4.5. Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reference">4.4. Reference</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../control/readme.html">5. Control</a></li>
@@ -83,12 +82,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../v2x/readme.html">20. V2X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">23. 引用的库</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">24. 论文</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<p class="caption" role="heading"><span class="caption-text">参考</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">28. 常见问题</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">1. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">2. 论文</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">3. 常见问题</a></li>
 </ul>
 
         </div>
@@ -121,30 +120,8 @@
 <blockquote>
 <div><p>黑发不知勤学早，白首方悔读书迟。</p>
 </div></blockquote>
-<div class="section" id="table-of-contents">
-<h2><span class="section-number">4.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
-<ul class="simple">
-<li><p><span class="xref myst">Canbus模块介绍</span></p></li>
-<li><p><span class="xref myst">Canbus模块主流程</span></p>
-<ul>
-<li><p><span class="xref myst">车辆工厂模式(VehicleFactory)</span></p></li>
-<li><p><span class="xref myst">车辆控制器(LincolnController)</span></p></li>
-</ul>
-</li>
-<li><p><span class="xref myst">Canbus(驱动程序)</span></p>
-<ul>
-<li><p><span class="xref myst">消息管理器(MessageManager)</span></p></li>
-<li><p><span class="xref myst">消息接收(CanReceiver)</span></p></li>
-<li><p><span class="xref myst">消息发送(CanSender)</span></p></li>
-<li><p><span class="xref myst">canbus客户端(CanClient)</span></p></li>
-</ul>
-</li>
-<li><p><span class="xref myst">Reference</span></p></li>
-</ul>
-<a name="introduction" />
-</div>
 <div class="section" id="id1">
-<h2><span class="section-number">4.2. </span>Canbus模块介绍<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">4.1. </span>Canbus模块介绍<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>我们先看下什么是Canbus： 控制器局域网 (Controller Area Network，简称CAN或者CAN bus) 是一种车用总线标准。被设计用于在不需要主机（Host）的情况下，允许网络上的节点相互通信。采用广播机制，并利用标识符来定义内容和消息的优先顺序，使得canbus的扩展性良好，同时不基于特殊类型（Host）的节点，增加了升级网络的便利性。
 这里的<strong>Canbus模块其实可以称为Chassis模块</strong>，主要的作用是反馈车当前的状态（航向，角度，速度等信息），并且发送控制命令到车线控底盘，<strong>可以说Canbus模块是车和自动驾驶软件之间的桥梁</strong>。由于这个模块和”drivers/canbus”的联系紧密，因此也一起在这里介绍。
 Canbus模块是车和自动驾驶软件之间的桥梁，通过canbus驱动(drivers/canbus)来实现将车身信息发送给apollo上层软件，同时接收控制命令，发送给汽车线控底盘实现对汽车的控制。</p>
@@ -172,10 +149,9 @@ Canbus模块是车和自动驾驶软件之间的桥梁，通过canbus驱动(driv
 </pre></div>
 </div>
 <p>接着我们来分析下Canbus模块的执行流程。</p>
-<a name="main" />
 </div>
 <div class="section" id="id2">
-<h2><span class="section-number">4.3. </span>Canbus模块主流程<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">4.2. </span>Canbus模块主流程<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <p>Canbus模块的主流程在文件”canbus_component.cc”中，canbus模块为定时触发，每10ms执行一次，发布chassis信息，而ControlCommand则是每次读取到之后触发回调”OnControlCommand”，发送”control_command”到线控底盘。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span><span class="w"> </span><span class="nf">CanbusComponent::Proc</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">  </span><span class="n">PublishChassis</span><span class="p">();</span><span class="w"></span>
@@ -188,9 +164,8 @@ Canbus模块是车和自动驾驶软件之间的桥梁，通过canbus驱动(driv
 </div>
 <p>由于不同型号的车辆的canbus命令不一样，在”/vehicle”中适配了不同型号车辆的canbus消息格式，所有的车都继承自Vehicle_controller基类，通过对Vehicle_controller的抽象来发送和读取canbus信息。
 <img alt="main" src="../../_images/main1.jpg" /></p>
-<a name="vehicle_factory" />
 <div class="section" id="vehiclefactory">
-<h3><span class="section-number">4.3.1. </span>车辆工厂模式(VehicleFactory)<a class="headerlink" href="#vehiclefactory" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">4.2.1. </span>车辆工厂模式(VehicleFactory)<a class="headerlink" href="#vehiclefactory" title="Permalink to this headline"></a></h3>
 <p>在vehicle中可以适配不同的车型，而每种车型都对应一个vehicle_controller，创建每种车辆的控制器(VehicleController)和消息管理(MessageManager)流程如下：
 <img alt="factory" src="../../_images/factory.jpg" />
 VehicleFactory类通过创建不同的类型AbstractVehicleFactory，每个车型自己的Factory在创建出对应的VehicleController和MessageManager，用林肯来举例子就是： VehicleFactory创建LincolnVehicleFactory，之后通过CreateMessageManager和CreateVehicleController创建对应的控制器（LincolnController）和消息管理器（LincolnMessageManager）。
@@ -198,28 +173,25 @@ VehicleFactory类通过创建不同的类型AbstractVehicleFactory，每个车�
 <a name="lincoln_controller" />
 </div>
 <div class="section" id="lincolncontroller">
-<h3><span class="section-number">4.3.2. </span>车辆控制器(LincolnController)<a class="headerlink" href="#lincolncontroller" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">4.2.2. </span>车辆控制器(LincolnController)<a class="headerlink" href="#lincolncontroller" title="Permalink to this headline"></a></h3>
 <p>下面以林肯来介绍LincolnController，以及如何接收chassis信息，其它的车型可以以此类推，下面主要分为2部分介绍，第一部分为controller的init-&gt;start-&gt;stop流程，第二部分为chassis信息获取：
 <img alt="process" src="../../_images/process.jpg" />
 可以看到control模块初始化(init)的过程获取了发送的消息的格式，通过can_sender应该发送那些消息，而启动(start)之后启动一个看门狗，检查canbus消息格式是否正确，最后关闭(stop)模块则是结束看门狗进程。</p>
 <p><img alt="chassis" src="../../_images/chassis.jpg" />
 而chassis的获取则是通过message_manager_获取chassis_detail，之后对chassis进行赋值。</p>
-<a name="canbus_driver" />
 </div>
 </div>
 <div class="section" id="id3">
-<h2><span class="section-number">4.4. </span>Canbus(驱动程序)<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">4.3. </span>Canbus(驱动程序)<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h2>
 <p>上层的canbus就介绍完成了，而canbus的发送(CanSender)和接收(CanReceiver)，还有消息管理(MessageManager)都是在”drivers/canbus”中实现的。</p>
-<a name="message_manager" />
 <div class="section" id="messagemanager">
-<h3><span class="section-number">4.4.1. </span>消息管理器(MessageManager)<a class="headerlink" href="#messagemanager" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">4.3.1. </span>消息管理器(MessageManager)<a class="headerlink" href="#messagemanager" title="Permalink to this headline"></a></h3>
 <p>MessageManager是如何获取消息的呢？</p>
 <p><strong>MessageManager主要作用是解析和保存canbus数据，而具体的接收和发送则是在”CanReceiver”和”CanSender”中</strong>，拿接收消息举例子，也就是说CanReceiver收到消息后，会调用MessageManager中的parse去解析消息，消息的解析协议在”modules/canbus/vehicle/lincoln/protocol”中，每个消息把自己对应的信息塞到”chassis_detail”中完成了消息的接收。
 <img alt="canbus" src="../../_images/canbus.jpg" /></p>
-<a name="can_receiver" />
 </div>
 <div class="section" id="canreceiver">
-<h3><span class="section-number">4.4.2. </span>消息接收(CanReceiver)<a class="headerlink" href="#canreceiver" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">4.3.2. </span>消息接收(CanReceiver)<a class="headerlink" href="#canreceiver" title="Permalink to this headline"></a></h3>
 <p>canbus消息的接收在上面有介绍，在CanReceiver中的”Start”调用”RecvThreadFunc”实现消息的接收，这里会启动一个异步进程去完成接收。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">SensorType</span><span class="o">&gt;</span><span class="w"></span>
 <span class="o">::</span><span class="n">apollo</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="w"> </span><span class="n">CanReceiver</span><span class="o">&lt;</span><span class="n">SensorType</span><span class="o">&gt;::</span><span class="n">Start</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -269,10 +241,9 @@ VehicleFactory类通过创建不同的类型AbstractVehicleFactory，每个车�
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<a name="can_sender" />
 </div>
 <div class="section" id="cansender">
-<h3><span class="section-number">4.4.3. </span>消息发送(CanSender)<a class="headerlink" href="#cansender" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">4.3.3. </span>消息发送(CanSender)<a class="headerlink" href="#cansender" title="Permalink to this headline"></a></h3>
 <p>消息发送对应的是在CanSender中的”Start”调用”PowerSendThreadFunc”，我们可以看具体实现:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">template</span><span class="w"> </span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">SensorType</span><span class="o">&gt;</span><span class="w"></span>
 <span class="n">common</span><span class="o">::</span><span class="n">ErrorCode</span><span class="w"> </span><span class="n">CanSender</span><span class="o">&lt;</span><span class="n">SensorType</span><span class="o">&gt;::</span><span class="n">Start</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
@@ -300,10 +271,9 @@ VehicleFactory类通过创建不同的类型AbstractVehicleFactory，每个车�
 <span class="w">      </span><span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<a name="can_client" />
 </div>
 <div class="section" id="canbus-canclient">
-<h3><span class="section-number">4.4.4. </span>canbus客户端(CanClient)<a class="headerlink" href="#canbus-canclient" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">4.3.4. </span>canbus客户端(CanClient)<a class="headerlink" href="#canbus-canclient" title="Permalink to this headline"></a></h3>
 <p>CanClient是canbus客户端，同时也是canbus的驱动程序，针对不同的canbus卡，对发送和接收进行封装，并且提供给消息发送和接收控制器使用。
 <img alt="canclient" src="../../_images/canclient.jpg" />
 拿”EsdCanClient”来举例子，发送在”Send”函数中，调用的是第三方的硬件驱动，目录在”third_party/can_card_library/esd_can”，实现can消息的发送：</p>
@@ -324,11 +294,10 @@ VehicleFactory类通过创建不同的类型AbstractVehicleFactory，每个车�
 </pre></div>
 </div>
 <p>其他的can卡可以参考上述的流程，至此整个canbus驱动就分析完成了。</p>
-<a name="reference" />
 </div>
 </div>
 <div class="section" id="reference">
-<h2><span class="section-number">4.5. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">4.4. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
 <p><a class="reference external" href="https://www.ni.com/zh-tw/innovations/white-papers/06/controller-area-network--can--overview.html">Controller Area Network (CAN BUS) 通訊​協定​原理​概述</a></p>
 </div>
 </div>

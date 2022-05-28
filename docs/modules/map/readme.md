@@ -2,38 +2,11 @@
 
 > 事者，生于虑，成于务，失于傲。
 
-## Table of Contents
-- [Map模块简介](#introduction)
-- [Map目录结构](#content)
-- [地图数据结构](#map_data_struct)
-    - [地图信息头](#header)
-    - [人行横道](#crosswalk)
-    - [路口](#junction)
-    - [车道](#lane)
-    - [停止信号](#stop_sign)
-    - [交通信号标志](#signal)
-    - [让行](#yield)
-    - [重叠区域](#overlap)
-    - [禁止停车](#cleararea)
-    - [道路信息](#road)
-    - [停车区域](#parking)
-    - [行人道路](#sidewalk)
-- [opendriver地图解析](#parse)
-- [tools](#tools)
-- [高精度地图API](#api)
-- [如何制作高精度地图](#how)
-    - [采集](#collect)
-    - [加工](#process)
-    - [转换](#transform)
-- [Reference](#reference)
 
-
-<a name="introduction" />
 
 ## Map模块简介
 其实我们只需要知道map模块的主要功能是“加载openstreet格式的地图，并且提供一系列的API给其他模块使用”。然后再根据具体的场景来了解地图各个部分的作用，就算是对map模块比较了解了。
 
-<a name="content" />
 
 ## Map目录结构
 本章主要介绍下apollo代码的map模块，map的代码目录结构如下:
@@ -63,7 +36,6 @@
 apollo的高精度地图采用了opendrive格式，opendrive是一个统一的地图标准，这样保证了地图的通用性。其中map模块主要提供的功能是读取高精度地图，并且转换成apollo程序中的Map对象。直白一点就是说把xml格式的opendrive高精度地图，读取为程序能够识别的格式。
 map模块没有实现的功能是高精度地图的制作，简略的制图过程将在下面章节介绍。
 
-<a name="map_data_struct" />
 
 ## 地图数据结构
 由于openstreet格式是一个标准，可以它的参考官方网站。下面主要介绍下apollo是如何读取xml地图，并且使用的。
@@ -71,7 +43,6 @@ map模块没有实现的功能是高精度地图的制作，简略的制图过�
 下面先介绍下地图消息格式，主要在proto目录。
 "map.proto" 分为地图头部信息和结构体，头部信息主要介绍了地图的基本信息“版本，时间，投影方法，地图大小，厂家等”。结构体主要是道路的不同组成部分，包括“人行横道，路口区域，车道，停车观察，信号灯，让路标志，重叠区域，禁止停车，减速带，道路，停车区域，路边的小路，或者行人走的路”。
 
-<a name="header" />
 
 #### 地图信息头
 首先是地图的基本信息
@@ -113,7 +84,6 @@ message Map {
 }
 ```
 
-<a name="crosswalk" />
 
 #### 人行横道
 map_crosswalk.proto 人行横道(google图片搜索出了彩虹人行横道和三维人行横道，就问深度学习该怎么办？)
@@ -128,7 +98,6 @@ message Crosswalk {
 ```
 ![crosswalk](img/crosswalk.jpg)
 
-<a name="junction" />
 
 #### 路口
 map_junction.proto 路口，道路汇聚点
@@ -143,7 +112,6 @@ message Junction {
 ```
 ![junction](img/junction.jpg)
 
-<a name="lane" />
 
 #### 车道
 
@@ -217,7 +185,6 @@ message Lane {
 ```
 ![lane](img/lane.jpg)
 
-<a name="stop_sign" />
 
 #### 停止信号
 
@@ -244,7 +211,6 @@ message StopSign {
 ```
 ![StopSign](img/StopSign.jpg)
 
-<a name="signal" />
 
 #### 交通信号标志
 
@@ -291,7 +257,6 @@ message Signal {
 ```
 ![Signal](img/Signal.jpg)
 
-<a name="yield" />
 
 #### 让行
 
@@ -307,7 +272,6 @@ message YieldSign {
 ```
 ![YieldSign](img/YieldSign.jpg)
 
-<a name="overlap" />
 
 #### 重叠区域
 
@@ -347,7 +311,6 @@ message Overlap {
 ```
 > 逻辑概念，没有具体的规则显示这个区域
 
-<a name="cleararea" />
 
 #### 禁止停车
 map_clear_area.proto  禁止停车
@@ -372,7 +335,6 @@ message SpeedBump {
 ```
 ![SpeedBump](img/SpeedBump.jpg)
 
-<a name="road" />
 
 #### 道路信息
 map_road.proto 道路的信息，是由一些RoadSection组成
@@ -399,7 +361,6 @@ message Road {
 ```
 ![Road](img/Road.jpg)
 
-<a name="parking" />
 
 #### 停车区域
 
@@ -418,7 +379,6 @@ message ParkingSpace {
 ```
 ![ParkingSpace](img/ParkingSpace.jpg)
 
-<a name="sidewalk" />
 
 #### 行人道路
 
@@ -493,7 +453,6 @@ message PNCJunction {
 }
 ```
 
-<a name="parse" />
 
 ## opendriver地图解析
 
@@ -526,14 +485,12 @@ message PNCJunction {
 │       ├── util_xml_parser.cc
 │       └── util_xml_parser.h
 ```
-<a name="api" />
+
 
 ## 高精度地图API
 最后在看下hdmap_impl.cc，主要实现了一系列的api来查找道路中的元素。由于实现的接口太多，后面有时间了看是否能够整理下api文档。
 关于pnc_map和relative_map还没有介绍，关于一些道路元素的使用场景没有介绍。
 
-
-<a name="tools" />
 
 ## tools
 tools的目录结构如下，主要是一些制作和转换地图的工具。
@@ -585,13 +542,10 @@ right_road_sample
 txt地图转换为bin地图。
 
 
-<a name="how"/>
-
 ## 如何制作高精度地图
 前面介绍了为什么需要高精度地图，那么我们如何制作一张高精度地图呢？
 制作一张高精度地图可以大概分为3个过程：采集、加工、转换。
 
-<a name="collect"/>
 
 #### 采集
 如何采集地图？
@@ -618,8 +572,6 @@ txt地图转换为bin地图。
 here的地图是分层的，比如路面是很少更新的，而路灯，车道标识，或者红绿灯可能会更换，所以路面信息可能需要激光雷达去采集一次，而路灯，车道标识，红绿灯等可以通过摄像头的方案来更新，因为高精度地图需要实时更新，上面的方案可能更加适合一些地图更新的场景。
 
 
-<a name="process"/>
-
 #### 加工
 如何加工上述地图？
 
@@ -638,19 +590,16 @@ here的地图是分层的，比如路面是很少更新的，而路灯，车道�
 这样就生成了一张高精度地图，当然加工过程中首要的目标是提高效率和质量，尽量的采用算法自动化处理会很大的提高效率，这可能是后面地图厂家的核心竞争力。因为地图需要实时更新，谁的效率更高，谁的图就越新，用的人越多，之后的数据也越完善。
 
 
-<a name="transform"/>
-
 #### 转换
 转换主要是得到一个通用的自动驾驶系统可以使用的高精度地图。
 
 上面的高精地图格式可能还是原始的数据格式，需要转换为apollo中高精度地图的格式，apollo中高精度地图采用了opendrive的格式，并且做了改进，总之这是一个通用的标准，这个很重要，否则每个厂家的数据如果不兼容，会导致很大的问题，你需要开发一系列的转换工具，去处理不同地图的差异，并且不同的自动驾驶系统和不同的地图厂家采用的方式不一样，会带来很多兼容性问题。
 
-<a name="reference" />
 
 ## Reference
-[convert opendrive to base_map.xml](https://github.com/ApolloAuto/apollo/issues/603)
-[点云拼接注册](https://blog.csdn.net/xs1997/article/details/76795041)
-[百度技术讲堂](http://bit.baidu.com/Course/detail/id/282.html)
-[四维图新](https://www.navinfo.com/product/autodri_map)
-[Apollo 2.5地图采集功能使用指南](https://link.zhihu.com/?target=https%3A//github.com/ApolloAuto/apollo/blob/master/docs/quickstart/apollo_2_5_map_collection_guide_cn.md)
+* [convert opendrive to base_map.xml](https://github.com/ApolloAuto/apollo/issues/603)
+* [点云拼接注册](https://blog.csdn.net/xs1997/article/details/76795041)
+* [百度技术讲堂](http://bit.baidu.com/Course/detail/id/282.html)
+* [四维图新](https://www.navinfo.com/product/autodri_map)
+* [Apollo 2.5地图采集功能使用指南](https://link.zhihu.com/?target=https%3A//github.com/ApolloAuto/apollo/blob/master/docs/quickstart/apollo_2_5_map_collection_guide_cn.md)
 

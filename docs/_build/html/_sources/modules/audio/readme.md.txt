@@ -3,24 +3,9 @@
 > 勤学如春起之苗，不见其增，日有所长。
 
 
-## Table of Contents
-- [Audio模块介绍](#introduction)
-  - [输入输出](#input_output)
-- [目录结构](#content)
-  - [模块入口](#main_process)
-  - [消息处理（MessageProcess）](#message_process)
-- [声音识别（SirenDetection）](#siren_detection)
-- [移动检测(MovingDetection)](#moving_detection)
-- [方向检测(DirectionDetection)](#direction_detection)
-- [工具（tools）](#tools)
-
-
-<a name="introduction" />
-
 ## Audio模块介绍
 audio模块是Apollo 6.0新增加的模块，主要的用途是通过声音来识别紧急车辆（警车，救护车，消防车）。目前的功能还相对比较简单，只能识别单个紧急车辆，同时需要环境风速低于20mph。下面我们会详细分析这个模块的原理以及实现。
 
-<a name="input_output" />
 
 #### 输入输出
 audio模块的输入是`/apollo/sensor/microphone`，输入的消息来源于"drivers/microphone"，用到的硬件模块是"RESPEAKER"，目前有双通道和四通道，Apollo用到的硬件是四通道，关于硬件的相关介绍，会在"drivers/microphone"中进行说明。
@@ -29,7 +14,6 @@ audio模块的输出是`/apollo/audio_detection`，输出的消息包括：是�
 
 也就是说audio模块单纯的通过声音来识别有没有紧急车辆，以及紧急车辆的位置，为无人驾驶车的感知添加了新的维度。语音交互在车机智能里是非常好的交互方式，目前面临的主要难点是汽车里噪音的影响，这在通过声音进行感知的时候尤其重要。
 
-<a name="content" />
 
 ## 目录结构
 audio模块的目录结构如下，整体来说并不复杂，主要的逻辑在"inference"中。
@@ -52,7 +36,6 @@ Audio模块为事件驱动，当接受到驱动模块的声音输入的时候，
 audio模块的整体调用流程如图：
 ![调用流程](img/main.jpg)
 
-<a name="main_process" />
 
 #### 模块入口
 audio模块通过"Init()"进行初始化，主要是读取录音机的外参，并且创建"audio_writer_"用于发布消息。初始化好之后，接着通过"Proc"来处理消息。处理的过程通过"OnMicrophone"来完成。
@@ -70,8 +53,6 @@ bool AudioComponent::Proc(const std::shared_ptr<AudioData>& audio_data) {
 }
 ```
 
-<a name="message_process" />
-
 #### 消息处理（MessageProcess）
 MessageProcess类实际上是推理模块的一个集合，具体的任务实际上还是在"inference"目录中完成的，主要有3个类，分别为
 * **SirenDetection** - 通过深度学习的方法，判断是否是紧急车辆声音。
@@ -80,7 +61,6 @@ MessageProcess类实际上是推理模块的一个集合，具体的任务实际
 
 下面我们开始分别介绍这3个功能。
 
-<a name="siren_detection" />
 
 ## 声音识别（SirenDetection）
 声音识别SirenDetection类中只有2个函数, LoadModel进行模型的加载，模型文件在"audio/data"目录中。
@@ -130,8 +110,6 @@ bool SirenDetection::Evaluate(const std::vector<std::vector<double>>& signals) {
   }
 }
 ```
-
-<a name="moving_detection" />
 
 ## 移动检测(MovingDetection)
 移动检测在"MovingDetection"类中实现，通过检测最近3帧的声音强度和声音频率，来判断紧急车辆是接近还是远离。MovingDetection中主要有3个函数。
@@ -200,8 +178,6 @@ MovingDetection::SignalStat MovingDetection::GetSignalStat(
 
 最后"Detect"函数会综合4个通道的数据来进行投票表决，然后得到汽车是远离还是靠近，最后输出结果。
 
-
-<a name="direction_detection" />
 
 ## 方向检测(DirectionDetection)
 在"DirectionDetection"类中对紧急车辆的方向进行估计，通过2个通道的差异和声音的速度，就可以得到车辆的大概位置。
@@ -305,7 +281,6 @@ double DirectionDetection::GccPhat(const torch::Tensor& sig,
 Todo:
 关于上述过程的详细计算原理，之后需要做进一步的补充？？？
 
-<a name="tools" />
 
 ## 工具（tools）
 tools目录提供了一些录制和调试工具。

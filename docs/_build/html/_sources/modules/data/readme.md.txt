@@ -2,12 +2,6 @@
 
 > 业精于勤，荒于嬉；行成于思，毁于随。
 
-## Table of Contents
-- [data目录结构](#introduction)
-
-
-
-<a name="introduction" />
 
 ## data目录结构
 data目录的结构如下，

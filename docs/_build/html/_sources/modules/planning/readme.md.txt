@@ -3,40 +3,10 @@
 > 吾尝终日而思矣 不如须臾之所学也
 
 
-## Table of Contents
-- [Planning模块简介](#introduction)
-  - [Planning输入输出](#planning_io)
-  - [Planning整个流程](#planning_flow)
-- [Planning模块入口](#planning_entry)
-  - [模块注册](#planning_register)
-  - [模块初始化](#planning_init)
-  - [模块运行](#planning_proc)
-- [Reference line参考线](reference_line)
-  - [介绍](reference_line#introduction)
-  - [参考线](reference_line#rf_line)
-  - [平滑器](reference_line#rf_smoother)
-  - [参考线提供者](reference_line#rf_provider)
-- [OnLanePlanning](#onLanePlanning)
-  - [初始化](#onLanePlanning_init)
-  - [事件触发](#onLanePlanning_trigger)
-- [Planner](#planner)
-  - [Planner注册场景](#planner_register)
-  - [运行场景](#planner_plan)
-- [Scenario](#scenario)
-  - [场景转换](#scenario_update)
-  - [场景运行](#scenario_process)
-- [Task](#task)
-  - [DP & QP](#dp_qp)
-- [Reference](#reference)
-
-
-<a name="introduction" />
-
 ## Planning模块简介
 规划(planning)模块的作用是根据感知预测的结果，当前的车辆信息和路况规划出一条车辆能够行驶的轨迹，这个轨迹会交给控制(control)模块，控制模块通过油门，刹车和方向盘使得车辆按照规划的轨迹运行。
 规划模块的轨迹是短期轨迹，即车辆短期内行驶的轨迹，长期的轨迹是routing模块规划出的导航轨迹，即起点到目的地的轨迹，规划模块会先生成导航轨迹，然后根据导航轨迹和路况的情况，沿着短期轨迹行驶，直到目的地。这点也很好理解，我们开车之前先打开导航，然后根据导航行驶，如果前面有车就会减速或者变道，超车，避让行人等，这就是短期轨迹，结合上述的方式直到行驶到目的地。
 
-<a name="planning_io" />
 
 #### Planning输入输出
 我们先看下Apollo的数据流向：
@@ -64,8 +34,6 @@ planning_writer_->Write(std::make_shared<ADCTrajectory>(adc_trajectory_pb));
 ```
 
 
-<a name="planning_flow" />
-
 #### Planning整个流程
 下图是整个Planning模块的执行过程：
 ![planning_flow](img/planning_flow.png)
@@ -78,11 +46,9 @@ planning_writer_->Write(std::make_shared<ADCTrajectory>(adc_trajectory_pb));
 
 接下来我们逐步分析整个planning模块的代码结构。
 
-<a name="planning_entry" />
 
 ## Planning模块入口
 
-<a name="planning_register" />
 
 #### 模块注册
 Planning模块的入口为"planning_component.h"和"planning_component.cc"两个文件，实现的功能如下：
@@ -100,8 +66,6 @@ std::shared_ptr<cyber::Writer<routing::RoutingRequest>> rerouting_writer_;
 // 在Cyber中注册模块
 CYBER_REGISTER_COMPONENT(PlanningComponent)
 ```
-
-<a name="planning_init" />
 
 #### 模块初始化
 除了注册模块，订阅和发布消息之外，planning模块实现了2个主要函数"init"和"proc"。
@@ -156,7 +120,6 @@ routing_reader_ = node_->CreateReader<RoutingResponse>(
 至此，Planning模块的初始化就完成了。
 
 
-<a name="planning_proc" />
 
 #### 模块运行
 Proc的主要是检查数据，并且执行注册好的Planning，生成路线并且发布。
@@ -178,7 +141,6 @@ bool PlanningComponent::Proc(...) {
 整个"PlanningComponent"的分析就完成了，可以看到"PlanningComponent"是Planning模块的入口，在Apollo3.5引入了Cyber之后，实现了Planning模块在Cyber中的注册，订阅和发布topic消息。同时实现了3种不同的Planning，根据配置选择其中的一种并且运行。
 由于默认的Planning是开放道路的OnLanePlanning，我们接下来主要分析这个Planning。
 
-<a name="onLanePlanning" />
 
 ## OnLanePlanning
 每次Planning会根据以下2个信息作为输入来执行：
@@ -210,7 +172,6 @@ ADCTrajectory current_frame_planned_trajectory_;  // last published trajectory
 std::vector<routing::LaneWaypoint> future_route_waypoints_;
 ```
 
-<a name="onLanePlanning_init" />
 
 #### 初始化
 OnLanePlanning的初始化逻辑在Init中，主要实现分配具体的Planner，启动参考线提供器(reference_line_provider_)，代码分析如下：
@@ -262,8 +223,6 @@ std::unique_ptr<Planner> OnLanePlannerDispatcher::DispatchPlanner() {
 }
 ```
 
-<a name="onLanePlanning_trigger" />
-
 #### 事件触发
 
 OnLanePlanning的主要逻辑在"RunOnce()"中，在Apollo 3.5之前是定时器触发，3.5改为事件触发，即收到对应的消息之后，就触发执行，这样做的好处是增加了实时性 [参考](https://github.com/ApolloAuto/apollo/issues/6572)。
@@ -312,8 +271,6 @@ Status OnLanePlanning::Plan(
 上述就是"OnLanePlanning"的执行过程，先是Planner分发器根据配置，选择具体的planner，然后初始化Frame，(PUBLIC_ROAD)planner根据输入帧执行"Plan"方法。
 
 
-<a name="planner" />
-
 ## Planner
 我们先看下Planner目录结构，一共实现了5种Planner：
 ```
@@ -341,7 +298,6 @@ Status OnLanePlanning::Plan(
 * **navi**         - 基于实时相对地图的规划器
 * **open_space**   - 自主泊车规划器
 
-<a name="planner_register" />
 
 #### Planner注册场景
 下面我们整理一下planner模块的流程：
@@ -385,7 +341,6 @@ standard_planning_config {
   }
 ```
 
-<a name="planner_plan" />
 
 #### 运行场景
 接着看"Plan"中的实现：
@@ -419,8 +374,6 @@ Status PublicRoadPlanner::Plan(const TrajectoryPoint& planning_start_point,
 下面我们先看下"Scenario"模块，然后把这2个模块串起来讲解。
 
 
-<a name="scenario" />
-
 ## Scenario
 我们同样先看下"Scenario"的目录结构：
 ```
@@ -443,7 +396,6 @@ Status PublicRoadPlanner::Plan(const TrajectoryPoint& planning_start_point,
 ```
 其中需要知道场景如何转换，以及每种场景如何执行。几种场景的介绍可以先看下Apollo的官方文档[planning](https://github.com/ApolloAuto/apollo/blob/master/modules/planning/README.md)，主要的场景是lane_follow，side_pass和stop_sign。
 
-<a name="scenario_update" />
 
 #### 场景转换
 场景转换的实现在"scenario_manager.cc"中，其中实现了场景注册，创建场景和更新场景的功能。
@@ -482,7 +434,6 @@ void ScenarioManager::ScenarioDispatch(const common::TrajectoryPoint& ego_point,
 可以看到，每次切换场景必须是从默认场景(LANE_FOLLOW)开始，即每次场景切换之后都会回到默认场景。
 > ScenarioDispatch目前的代码还没完全完成(有些分支TODO)，而且个人感觉这个实现不够简介和优秀，逻辑看起来有些混乱，不知道是否可以用状态机改进？
 
-<a name="scenario_process" />
 
 #### 场景运行
 场景的执行在"scenario.cc"和对应的场景目录中，实际上每个场景又分为一个或者多个阶段(stage)，每个阶段又由不同的任务(task)组成。执行一个场景，就是顺序执行不同阶段的不同任务。
@@ -589,8 +540,6 @@ Status LaneFollowStage::PlanOnReferenceLine(
 接下来我们看下Task是如何执行的。
 
 
-<a name="task" />
-
 ## Task
 我们先看Task的目录结构：
 ```
@@ -612,7 +561,6 @@ Status LaneFollowStage::PlanOnReferenceLine(
 
 > Task类的生成用到了设计模式的工厂模式，通过"TaskFactory"类生产不同的Task类。
 
-<a name="dp_qp" />
 
 #### DP & QP
 Task中的决策器和优化器采用的方法有DP和QP:
@@ -620,15 +568,14 @@ Task中的决策器和优化器采用的方法有DP和QP:
 * **QP** 二次规划
 
 QP方法的路径优化和速度优化可以参考apollo文档:
-[QP-Spline-Path Optimizer](https://github.com/ApolloAuto/apollo/blob/master/docs/specs/qp_spline_path_optimizer.md)
-[QP-Spline-ST-Speed Optimizer](https://github.com/ApolloAuto/apollo/blob/master/docs/specs/qp_spline_st_speed_optimizer.md)
+* [QP-Spline-Path Optimizer](https://github.com/ApolloAuto/apollo/blob/master/docs/specs/qp_spline_path_optimizer.md)
+* [QP-Spline-ST-Speed Optimizer](https://github.com/ApolloAuto/apollo/blob/master/docs/specs/qp_spline_st_speed_optimizer.md)
 
 
-<a name="reference" />
 
 ## Reference
-[解析百度Apollo之决策规划模块](https://paul.pub/apollo-planning/#id-planning%E4%B8%8Eplanner)
-[Open Space Planner Algorithm](https://github.com/ApolloAuto/apollo/blob/master/docs/specs/Open_Space_Planner.md)
+* [解析百度Apollo之决策规划模块](https://paul.pub/apollo-planning/#id-planning%E4%B8%8Eplanner)
+* [Open Space Planner Algorithm](https://github.com/ApolloAuto/apollo/blob/master/docs/specs/Open_Space_Planner.md)
 
 
 

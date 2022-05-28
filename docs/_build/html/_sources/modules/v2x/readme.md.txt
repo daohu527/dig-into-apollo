@@ -2,22 +2,6 @@
 
 > 业精于勤，荒于嬉；行成于思，毁于随。
 
-## Table of Contents
-- [v2x目录结构](#introduction)
-- [v2x_proxy](#v2x_proxy)
-  - [app](#app)
-  - [TrafficLightTimer](#trafficlight_timer)
-  - [OnV2xCarStatusTimer](#onv2xcar_timer)
-- [OBU接口(ObuInterFaceGrpcImpl)](#obu_interface)
-  - [远程调用服务(grpc_interface)](#grpc_interface)
-- [系统接口(OsInterFace)](#os_interface)
-  - [SendMsgToOs](#send_msg_to_os)
-  - [GetMsgFromOs](#get_msg_from_os)
-
-
-
-
-<a name="introduction" />
 
 ## v2x目录结构
 v2x的目录结构如下。
@@ -34,8 +18,6 @@ v2x的目录结构如下。
 主要的实现在"v2x_proxy"中，无人驾驶车主要是OBU单元，和路侧RSU单元进行交互。
 
 
-<a name="v2x_proxy" />
-
 ## v2x_proxy
 v2x_proxy的目录结构如下。
 ```
@@ -45,7 +27,6 @@ v2x_proxy的目录结构如下。
 └── os_interface
 ```
 
-<a name="app" />
 
 #### app
 v2x模块的入口函数在"app/main.cc"中，在主函数中读取参数并且初始化v2x proxy。在"v2x_proxy.h"和"v2x_proxy.cc"中实现了"V2xProxy"类。
@@ -185,9 +166,6 @@ void V2xProxy::RecvOsPlanning() {
 获取OBU发布的障碍物信息,然后发送到OS
 
 
-
-<a name="trafficlight_timer" />
-
 #### TrafficLightTimer
 交通灯的定时器会定时回调"OnX2vTrafficLightTimer"，下面我们看定时回调里面执行了什么？
 ```c++
@@ -251,8 +229,6 @@ bool V2xProxy::TrafficLightProc(CurrentLaneTrafficLight* msg) {
 2. RSU应该发送多个红绿灯的状态，而不仅仅只发送一个，这样就需要RSU侧也需要高精度地图，并且和车的高精度信息要同步。
 
 
-<a name="onv2xcar_timer" />
-
 #### OnV2xCarStatusTimer
 发送本车的状态到RSU。
 ```c++
@@ -275,8 +251,6 @@ void V2xProxy::OnV2xCarStatusTimer() {
 通过上述分析，我们可以清晰的了解到"V2xProxy"实际上相当于一个桥梁，通过"os_interface_"获取车的信息，通过"obu_interface_"发送消息。下面是流程图。
 ![v2x_proccess](img/v2x_proccess.jpg)
 
-
-<a name="obu_interface" />
 
 ## OBU接口(ObuInterFaceGrpcImpl)
 OBU实际上是车和RSU的桥梁，当前OBU可能和车是单独的设备通过网络连接的，所以这里通过grpc实现调用。 主要实现了从OBU发送和接收障碍物信息，红绿灯信息。ObuInterFaceBase是纯虚类，定义了和OBU通信的接口。
@@ -311,8 +285,6 @@ class ObuInterFaceGrpcImpl : public ObuInterFaceBase {
 ObuInterFaceGrpcImpl中创建了一个grpc客户端和服务端，服务端监听OBU发送过来的消息，并且保存。grpc客户端则发送消息到OBU。
 
 
-<a name="grpc_interface" />
-
 #### 远程调用服务(grpc_interface)
 主要实现了grpc的客户端和服务端，后面看下grpc的介绍之后再详细介绍。
 1. 其中GrpcServerImpl提供rpc服务，当OBU发送请求获取障碍物信息时候，返回无人车感知到的障碍物信息，反之同理。（OBU提供请求）
@@ -321,14 +293,9 @@ ObuInterFaceGrpcImpl中创建了一个grpc客户端和服务端，服务端监�
 上述过程中无人车客户端会启动2个定时器，通过rpc客户端去获取OBU提供的红绿灯和障碍物信息，这里又回到之前的问题，为什么需要红绿灯做同步？如果无人车和OBU的检测不一致，那么理论上应该听谁的？
 
 
-
-<a name="os_interface" />
-
 ## 系统接口(OsInterFace)
 OsInterFace中实现了2个模板，分别接收和发布消息给apollo，下面我们主要看下发布和订阅函数。
 
-
-<a name="send_msg_to_os" />
 
 #### SendMsgToOs
 发布函数非常简单，就是通过reader发送指定的topic，**需要注意一定要对RSU发布的消息做融合了之后才能输出**，如果不做融合，一个简单的例子如果RSU发布的障碍物apollo没有看到，当RSU发布之后，Apollo的感知如果不做融合，下次发送的是apollo自己的感知结果，会出现一帧的障碍物存在，而下一帧不存在的情况，因此要对结果做融合。 另一个疑问是如何保证融合的时间戳一致，因为RSU的频率可能和激光雷达的时间戳不一致。
@@ -348,8 +315,6 @@ OsInterFace中实现了2个模板，分别接收和发布消息给apollo，下�
     }
   }
 ```
-
-<a name="get_msg_from_os" />
 
 #### GetMsgFromOs
 从Apollo系统接收消息，这部分的消息接收没有采用事件驱动的方式，而是采用定时发布的方式。

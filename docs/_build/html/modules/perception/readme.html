@@ -57,12 +57,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../map/readme.html">11. Map</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../monitor/readme.html">12. Monitor</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">13. Perception</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">13.1. Table of Contents</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id1">13.2. Perception模块简介</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#production">13.3. production目录</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#onboard">13.4. onboard目录</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">13.5. 子模块介绍</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#reference">13.6. Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">13.1. Perception模块简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#production">13.2. production目录</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#onboard">13.3. onboard目录</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">13.4. 子模块介绍</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reference">13.5. Reference</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../planning/readme.html">14. Planning</a></li>
@@ -74,12 +73,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../v2x/readme.html">20. V2X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">23. 引用的库</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">24. 论文</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<p class="caption" role="heading"><span class="caption-text">参考</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">28. 常见问题</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">1. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">2. 论文</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">3. 常见问题</a></li>
 </ul>
 
         </div>
@@ -112,58 +111,8 @@
 <blockquote>
 <div><p>温故而知新，可以为师矣</p>
 </div></blockquote>
-<div class="section" id="table-of-contents">
-<h2><span class="section-number">13.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
-<ul class="simple">
-<li><p><span class="xref myst">CNN</span></p>
-<ul>
-<li><p><span class="xref myst">什么是CNN？</span></p></li>
-<li><p><span class="xref myst">CNN的原理</span></p>
-<ul>
-<li><p><span class="xref myst">卷积层(Convolutional Layer)</span></p></li>
-<li><p><span class="xref myst">池化层(Max Pooling Layer)</span></p></li>
-<li><p><span class="xref myst">全连接层(Fully Connected Layer)</span></p></li>
-</ul>
-</li>
-<li><p><span class="xref myst">如何构建CNN</span></p></li>
-<li><p><span class="xref myst">基本概念</span></p></li>
-<li><p><span class="xref myst">引用</span></p></li>
-</ul>
-</li>
-<li><p><span class="xref myst">Caffe2</span></p>
-<ul>
-<li><p><span class="xref myst">Caffe2环境准备</span></p></li>
-<li><p><span class="xref myst">安装显卡驱动</span></p></li>
-<li><p><span class="xref myst">安装CUDA</span></p>
-<ul>
-<li><p><span class="xref myst">选择CUDA版本</span></p></li>
-<li><p><span class="xref myst">安装CUDA</span></p></li>
-<li><p><span class="xref myst">设置环境变量</span></p></li>
-<li><p><span class="xref myst">检验安装</span></p></li>
-</ul>
-</li>
-<li><p><span class="xref myst">安装cuDNN</span></p></li>
-<li><p><span class="xref myst">安装Caffe2</span></p></li>
-<li><p><span class="xref myst">参考</span></p></li>
-</ul>
-</li>
-<li><p><span class="xref myst">Perception模块简介</span></p>
-<ul>
-<li><p><span class="xref myst">production目录</span></p></li>
-<li><p><span class="xref myst">onboard目录</span></p></li>
-<li><p><span class="xref myst">radar子模块</span></p></li>
-<li><p><span class="xref myst">camera子模块</span></p></li>
-<li><p><span class="xref myst">lidar子模块</span></p></li>
-<li><p><span class="xref myst">fusion子模块</span></p></li>
-<li><p><span class="xref myst">inference推理子模块</span></p></li>
-<li><p><span class="xref myst">Reference</span></p></li>
-</ul>
-</li>
-</ul>
-<a name="introduction" />
-</div>
 <div class="section" id="id1">
-<h2><span class="section-number">13.2. </span>Perception模块简介<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">13.1. </span>Perception模块简介<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>首先简单看下perception的目录结构：</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
 ├── BUILD
@@ -200,10 +149,9 @@
 <p>整个模块的流程如图：
 <img alt="process" src="../../_images/perception_process.jpg" />
 可以看到感知模块由production模块开始，由fusion模块结束。</p>
-<a name="production" />
 </div>
 <div class="section" id="production">
-<h2><span class="section-number">13.3. </span>production目录<a class="headerlink" href="#production" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">13.2. </span>production目录<a class="headerlink" href="#production" title="Permalink to this headline"></a></h2>
 <p>production中主要是存放：</p>
 <ol class="arabic simple">
 <li><p>配置和lanuch和dag启动文件</p></li>
@@ -217,10 +165,9 @@
 </pre></div>
 </div>
 <p>该文件中有多个lanuch文件，同时一个lanuch文件中包含多个dag文件，也就是说一个lanuch文件会启动多个子模块。</p>
-<a name="onboard" />
 </div>
 <div class="section" id="onboard">
-<h2><span class="section-number">13.4. </span>onboard目录<a class="headerlink" href="#onboard" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">13.3. </span>onboard目录<a class="headerlink" href="#onboard" title="Permalink to this headline"></a></h2>
 <p>onboard目录定义了多个子模块，每个子模块对应一个功能，包括：车道线识别，障碍物识别，红绿灯识别，传感器融合，场景分割等。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
 ├── common_flags
@@ -249,28 +196,28 @@
 <img alt="sensor" src="../../_images/sensor.jpg" />
 从图中可以看到，每个传感器都实现了物体识别的功能，而摄像头还实现了车道线识别和红绿灯检测的功能，每个传感器执行的任务流水线也大概相似，先进行预处理，然后做识别，最后过滤并且追踪目标。其中物体识别用到了推理引擎inference。</p>
 <p>接下来来我们分别查看各个传感器的具体实现。我们先从radar开始看起，主要是radar模块相对比较简单。</p>
-<a name="sub_module" />
 </div>
 <div class="section" id="id2">
-<h2><span class="section-number">13.5. </span>子模块介绍<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">13.4. </span>子模块介绍<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <p><span class="xref myst">radar子模块介绍</span>
 <span class="xref myst">camera子模块介绍</span>
 <span class="xref myst">lidar子模块介绍</span>
 <span class="xref myst">fusion子模块</span>
 <span class="xref myst">inference推理子模块</span></p>
-<a name="reference" />
 </div>
 <div class="section" id="reference">
-<h2><span class="section-number">13.6. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
-<p><a class="reference external" href="https://skymind.ai/wiki/convolutional-network">A Beginner’s Guide to Convolutional Neural Networks</a>
-<a class="reference external" href="https://cs231n.github.io/convolutional-networks/">cnn</a>
-<a class="reference external" href="https://hci.iwr.uni-heidelberg.de/node/6132/download/3d66608cfb112934ef40175e9a20c81f">traffic light dataset</a>
-<a class="reference external" href="https://github.com/yunjey/pytorch-tutorial">pytorch-tutorial</a>
-<a class="reference external" href="https://www.zhihu.com/question/41037974">全连接层的作用是什么？</a>
-<a class="reference external" href="https://zh.wikipedia.org/wiki/%E7%B4%A2%E8%B2%9D%E7%88%BE%E7%AE%97%E5%AD%90">索伯算子</a>
-<a class="reference external" href="https://zh.wikipedia.org/wiki/%E5%8D%B7%E7%A7%AF">卷积</a>
-<a class="reference external" href="https://arleyzhang.github.io/articles/7f4b25ce/">TensorRT(1)-介绍-使用-安装</a>
-<a class="reference external" href="https://zhuanlan.zhihu.com/p/35657027">高性能深度学习支持引擎实战——TensorRT</a></p>
+<h2><span class="section-number">13.5. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://skymind.ai/wiki/convolutional-network">A Beginner’s Guide to Convolutional Neural Networks</a></p></li>
+<li><p><a class="reference external" href="https://cs231n.github.io/convolutional-networks/">cnn</a></p></li>
+<li><p><a class="reference external" href="https://hci.iwr.uni-heidelberg.de/node/6132/download/3d66608cfb112934ef40175e9a20c81f">traffic light dataset</a></p></li>
+<li><p><a class="reference external" href="https://github.com/yunjey/pytorch-tutorial">pytorch-tutorial</a></p></li>
+<li><p><a class="reference external" href="https://www.zhihu.com/question/41037974">全连接层的作用是什么？</a></p></li>
+<li><p><a class="reference external" href="https://zh.wikipedia.org/wiki/%E7%B4%A2%E8%B2%9D%E7%88%BE%E7%AE%97%E5%AD%90">索伯算子</a></p></li>
+<li><p><a class="reference external" href="https://zh.wikipedia.org/wiki/%E5%8D%B7%E7%A7%AF">卷积</a></p></li>
+<li><p><a class="reference external" href="https://arleyzhang.github.io/articles/7f4b25ce/">TensorRT(1)-介绍-使用-安装</a></p></li>
+<li><p><a class="reference external" href="https://zhuanlan.zhihu.com/p/35657027">高性能深度学习支持引擎实战——TensorRT</a></p></li>
+</ul>
 </div>
 </div>
 

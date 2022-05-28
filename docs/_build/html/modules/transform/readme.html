@@ -63,28 +63,27 @@
 <li class="toctree-l1"><a class="reference internal" href="../routing/readme.html#id5">17. Routing模块分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tools/readme.html">18. Tools</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">19. Transform</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">19.1. Table of Contents</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id1">19.2. Transform模块简介</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">19.3. Transform(静态变换)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#transform-broadcaster">19.4. transform_broadcaster（广播）</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#buffer">19.5. Buffer（接收缓存）</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id3">19.5.1. 缓存接口</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id4">19.5.2. 缓存实现</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">19.1. Transform模块简介</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">19.2. Transform(静态变换)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#transform-broadcaster">19.3. transform_broadcaster（广播）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#buffer">19.4. Buffer（接收缓存）</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">19.4.1. 缓存接口</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">19.4.2. 缓存实现</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id5">19.6. 总结</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#reference">19.7. Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">19.5. 总结</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reference">19.6. Reference</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../v2x/readme.html">20. V2X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">23. 引用的库</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">24. 论文</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<p class="caption" role="heading"><span class="caption-text">参考</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">28. 常见问题</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">1. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">2. 论文</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">3. 常见问题</a></li>
 </ul>
 
         </div>
@@ -117,25 +116,8 @@
 <blockquote>
 <div><p>三人行，必有我师。</p>
 </div></blockquote>
-<div class="section" id="table-of-contents">
-<h2><span class="section-number">19.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
-<ul class="simple">
-<li><p><span class="xref myst">Transform模块简介</span></p></li>
-<li><p><span class="xref myst">Transform(静态变换)</span></p></li>
-<li><p><span class="xref myst">transform_broadcaster（广播）</span></p></li>
-<li><p><span class="xref myst">Buffer（接收缓存）</span></p>
-<ul>
-<li><p><span class="xref myst">缓存接口</span></p></li>
-<li><p><span class="xref myst">缓存实现</span></p></li>
-</ul>
-</li>
-<li><p><span class="xref myst">总结</span></p></li>
-<li><p><span class="xref myst">Reference</span></p></li>
-</ul>
-<a name="introduction" />
-</div>
 <div class="section" id="id1">
-<h2><span class="section-number">19.2. </span>Transform模块简介<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">19.1. </span>Transform模块简介<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>关于transform模块开始一直不知道是干啥的，一直看到一个”/tf”的TOPIC，还以为是tensorflow的缩写，想着是不是和神经网络有关系，后来才知道tf是transform的缩写，主要的用途是进行坐标转换，原型即是大名鼎鼎的”ros/tf2”库。那么为什么要进行坐标转换呢？
 <img alt="tf2" src="../../_images/frames2.png" />
 在机器人系统中，经常需要用到坐标转换，比如一个机器人的手臂要去拿一个运动的物体，控制的时候我们需要手臂的当前坐标，同时还需要知道手臂和身体的坐标，这个时候就需要用到坐标转换，把手臂的坐标转换为身体的坐标系，这样控制起来就方便一点。当然这里是动态的情况，也存在静态的情况，比如机器人头顶的摄像头，转换到身体的坐标系，那么位置关系是相对固定的，所以可以一开始就写到固定的位置。这里就引入了以下几个问题：</p>
@@ -144,10 +126,9 @@
 <li><p>有动态转换关系的节点，需要实时动态发布自己的转换关系，这样会涉及到时间戳，以及过时。</p></li>
 <li><p>转换关系的拓扑结构如何确定？是树型还是网络型的，这涉及到转换关系传递的问题。</p></li>
 </ol>
-<a name="static_transform" />
 </div>
 <div class="section" id="id2">
-<h2><span class="section-number">19.3. </span>Transform(静态变换)<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">19.2. </span>Transform(静态变换)<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h2>
 <p>TransformComponent模块的入口在”static_transform_component.cc”和”static_transform_component.h”中。实现了”StaticTransformComponent”类，我们接下来看下它的实现。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">StaticTransformComponent</span><span class="w"> </span><span class="k">final</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">apollo</span><span class="o">::</span><span class="n">cyber</span><span class="o">::</span><span class="n">Component</span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -286,10 +267,9 @@
 <p>所以这里需要注意<strong>child_frame_id的值一定不要一样，否则会覆盖之前的配置</strong>。</p>
 <p>按照流程总结一下就如下图所示，首先遍历conf，获取传感器的外参数文件路径，然后解析对应的yaml文件，并且发布到”/tf_static”。
 <img alt="transform流程" src="../../_images/transform.jpg" /></p>
-<a name="no_static_transform" />
 </div>
 <div class="section" id="transform-broadcaster">
-<h2><span class="section-number">19.4. </span>transform_broadcaster（广播）<a class="headerlink" href="#transform-broadcaster" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">19.3. </span>transform_broadcaster（广播）<a class="headerlink" href="#transform-broadcaster" title="Permalink to this headline"></a></h2>
 <p><strong>各个模块通过广播的方式来发布动态变换，实际上就是各个模块通过调用transform_broadcaster的库函数来实现广播转换消息</strong>，我们接下来看下transform_broadcaster是如何实现的，transform_broadcaster做为一个lib库，入口在”transform_broadcaster.h”和”transform_broadcaster.cc”中。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TransformBroadcaster</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -330,14 +310,12 @@
 <span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
-<a name="buffer" />
 </div>
 <div class="section" id="buffer">
-<h2><span class="section-number">19.5. </span>Buffer（接收缓存）<a class="headerlink" href="#buffer" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">19.4. </span>Buffer（接收缓存）<a class="headerlink" href="#buffer" title="Permalink to this headline"></a></h2>
 <p>Buffer实际上提供了一个工具类给其它模块，它的主要作用是接收”/tf”和”/tf_static”的消息，并且保持在buffer中，提供给其它节点进行查找和转换到对应的坐标系，我们先看BufferInterface的实现：</p>
-<a name="buffer_interface" />
 <div class="section" id="id3">
-<h3><span class="section-number">19.5.1. </span>缓存接口<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">19.4.1. </span>缓存接口<a class="headerlink" href="#id3" title="Permalink to this headline"></a></h3>
 <p>BufferInterface类定义了缓存需要实现的接口：</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BufferInterface</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -434,10 +412,9 @@
 </pre></div>
 </div>
 <p>BufferInterface实现的功能主要是查找转换关系，以及查看转换关系是否存在，以及做最后的转换。</p>
-<a name="buffer_class" />
 </div>
 <div class="section" id="id4">
-<h3><span class="section-number">19.5.2. </span>缓存实现<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
+<h3><span class="section-number">19.4.2. </span>缓存实现<a class="headerlink" href="#id4" title="Permalink to this headline"></a></h3>
 <p>下面我们接着看buffer类的实现，可以看到buffer类继承了”BufferInterface”和”tf2::BufferCore”，其中”tf2::BufferCore”就是大名鼎鼎的ROS中的tf2库。</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Buffer</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">BufferInterface</span><span class="p">,</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">tf2</span><span class="o">::</span><span class="n">BufferCore</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span><span class="w"></span>
@@ -607,18 +584,18 @@
 </div>
 <p>接着是lookupTransform和canTransform分别调用tf2的库函数，实现查找转换和判断是否能够转换的实现，由于函数功能比较简单这里就不介绍了。
 可以看到主要的缓存实现都是在tf2的库函数中，后面有时间再分析下tf2具体的实现。</p>
-<a name="summary" />
 </div>
 </div>
 <div class="section" id="id5">
-<h2><span class="section-number">19.6. </span>总结<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">19.5. </span>总结<a class="headerlink" href="#id5" title="Permalink to this headline"></a></h2>
 <p>接下来我们用一张图来总结Apollo中的坐标变换关系，即静态坐标转换由”StaticTransform”模块提供，而动态转换由需要发布的模块自行发布如”NDTLocalization”,”RTKLocalization”和””Gnss，可以看到动态变换主要是世界坐标到本地坐标的转换，而静态转换主要是各个传感器之间的转换。最后转换关系统一由Buffer模块接收，并且提供查询。
 <img alt="all" src="../../_images/all.jpg" /></p>
-<a name="reference" />
 </div>
 <div class="section" id="reference">
-<h2><span class="section-number">19.7. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
-<p><a class="reference external" href="http://wiki.ros.org/tf2">tf2</a></p>
+<h2><span class="section-number">19.6. </span>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="http://wiki.ros.org/tf2">tf2</a></p></li>
+</ul>
 </div>
 </div>
 

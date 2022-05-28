@@ -50,9 +50,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../canbus/readme.html">4. Canbus</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../control/readme.html">5. Control</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">6. Data</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">6.1. Table of Contents</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id1">6.2. data目录结构</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#recordviewer">6.3. RecordViewer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">6.1. data目录结构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#recordviewer">6.2. RecordViewer</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../dreamview/readme.html">7. Dreamview</a></li>
@@ -71,12 +70,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../v2x/readme.html">20. V2X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../performance/readme.html">21. 性能分析</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../simulation/readme.html">22. 仿真</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">23. 引用的库</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">24. 论文</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Appendices</span></p>
+<p class="caption" role="heading"><span class="caption-text">参考</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">28. 常见问题</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../library/readme.html">1. 引用的库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../papers/readme.html">2. 论文</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../questions/readme.html">3. 常见问题</a></li>
 </ul>
 
         </div>
@@ -109,15 +108,8 @@
 <blockquote>
 <div><p>业精于勤，荒于嬉；行成于思，毁于随。</p>
 </div></blockquote>
-<div class="section" id="table-of-contents">
-<h2><span class="section-number">6.1. </span>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline"></a></h2>
-<ul class="simple">
-<li><p><span class="xref myst">data目录结构</span></p></li>
-</ul>
-<a name="introduction" />
-</div>
 <div class="section" id="id1">
-<h2><span class="section-number">6.2. </span>data目录结构<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">6.1. </span>data目录结构<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
 <p>data目录的结构如下，</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>.
 ├── BUILD
@@ -158,7 +150,7 @@ trigger主要的作用是生成对应的时间段，并且放到pool中。
 record主要用来录制数据，分为在线和离线录制。主要是调用RecordWriter和RecordReader，这2个类实现实时读取。</p>
 </div>
 <div class="section" id="recordviewer">
-<h2><span class="section-number">6.3. </span>RecordViewer<a class="headerlink" href="#recordviewer" title="Permalink to this headline"></a></h2>
+<h2><span class="section-number">6.2. </span>RecordViewer<a class="headerlink" href="#recordviewer" title="Permalink to this headline"></a></h2>
 <p>RecordViewer实现了迭代器，并且可以读取文件和实时的流式数据？？
 RecordViewer中包含RecordReader</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span><span class="o">-&gt;</span><span class="n">GetHeader</span><span class="p">()</span><span class="w"></span>

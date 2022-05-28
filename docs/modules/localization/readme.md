@@ -2,14 +2,7 @@
 
 > 虽千万人，吾往矣。
 
-## Table of Contents
-- [Localization模块简介](#introduction)
-- [代码目录](#content)
-- [RTK定位流程](#rtk)
-- [Reference](#reference)
 
-
-<a name="introduction" />
 
 ## Localization模块简介
 localization模块主要实现了以下2个功能：
@@ -24,7 +17,6 @@ localization模块主要实现了以下2个功能：
 > MSF方法参考论文"Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes"
 
 
-<a name="content" />
 
 ## 代码目录
 下面是localization的目录结构，在查看具体的代码之前最好看下定位模块的readme文件:
@@ -66,7 +58,6 @@ localization模块主要实现了以下2个功能：
 通过上述目录可以知道，定位模块主要实现了rtk，ndt，msf这3个定位方法，分别对应不同的目录。proto文件夹定义了消息的格式，common和conf主要是存放一些配置和消息TOPIC。下面我们逐个分析RTK定位、NDT定位和MSF定位。
 
 
-<a name="rtk" />
 
 ## RTK定位流程
 RTK定位是通过GPS和IMU的信息做融合然后输出车辆所在的位置。RTK通过基准站的获取当前GPS信号的误差，用来校正无人车当前的位置，可以得到厘米级别的精度。IMU的输出频率高，可以在GPS没有刷新的情况下（通常是1s刷新一次）用IMU获取车辆的位置。下面是RTK模块的目录结构。
@@ -442,9 +433,8 @@ bool RTKLocalization::FindNearestGpsStatus(const double gps_timestamp_sec,
 以上就是整个RTK的定位流程，主要的思路是通过接收GPS和IMU信息结合输出无人车的位置信息，这里还有一个疑问是为什么最后输出的定位信息的位置是直接采用的GPS的位置信息，没有通过IMU信息对位置信息做解算，还是说在其它模块中实现的？？？
 
 
-<a name="reference" />
 
 ## Reference
-[Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes](https://ieeexplore.ieee.org/document/8461224)
+* [Robust and Precise Vehicle Localization Based on Multi-Sensor Fusion in Diverse City Scenes](https://ieeexplore.ieee.org/document/8461224)
 
 

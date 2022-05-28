@@ -13,7 +13,5 @@
 
 
 
-<a name="reference" />
-
 ## Reference
-[linux](https://www.kernel.org/)
+* [linux](https://www.kernel.org/)

@@ -3,19 +3,6 @@
 > 三人行，必有我师。
 
 
-## Table of Contents
-- [Transform模块简介](#introduction)
-- [Transform(静态变换)](#static_transform)
-- [transform_broadcaster（广播）](#no_static_transform)
-- [Buffer（接收缓存）](#buffer)
-  - [缓存接口](#buffer_interface)
-  - [缓存实现](#buffer_class)
-- [总结](#summary)
-- [Reference](#reference)
-
-
-<a name="introduction" />
-
 ## Transform模块简介
 关于transform模块开始一直不知道是干啥的，一直看到一个"/tf"的TOPIC，还以为是tensorflow的缩写，想着是不是和神经网络有关系，后来才知道tf是transform的缩写，主要的用途是进行坐标转换，原型即是大名鼎鼎的"ros/tf2"库。那么为什么要进行坐标转换呢？
 ![tf2](img/frames2.png)
@@ -24,8 +11,6 @@
 2. 有动态转换关系的节点，需要实时动态发布自己的转换关系，这样会涉及到时间戳，以及过时。
 3. 转换关系的拓扑结构如何确定？是树型还是网络型的，这涉及到转换关系传递的问题。
 
-
-<a name="static_transform" />
 
 ## Transform(静态变换)
 
@@ -174,8 +159,6 @@ void StaticTransformComponent::SendTransform(
 ![transform流程](img/transform.jpg)
 
 
-<a name="no_static_transform" />
-
 ## transform_broadcaster（广播）
 **各个模块通过广播的方式来发布动态变换，实际上就是各个模块通过调用transform_broadcaster的库函数来实现广播转换消息**，我们接下来看下transform_broadcaster是如何实现的，transform_broadcaster做为一个lib库，入口在"transform_broadcaster.h"和"transform_broadcaster.cc"中。
 ```c++
@@ -218,13 +201,10 @@ void TransformBroadcaster::SendTransform(
 }
 ```
 
-<a name="buffer" />
 
 ## Buffer（接收缓存）
 Buffer实际上提供了一个工具类给其它模块，它的主要作用是接收"/tf"和"/tf_static"的消息，并且保持在buffer中，提供给其它节点进行查找和转换到对应的坐标系，我们先看BufferInterface的实现：
 
-
-<a name="buffer_interface" />
 
 #### 缓存接口
 BufferInterface类定义了缓存需要实现的接口：
@@ -324,7 +304,6 @@ class BufferInterface {
 ```
 BufferInterface实现的功能主要是查找转换关系，以及查看转换关系是否存在，以及做最后的转换。
 
-<a name="buffer_class" />
 
 #### 缓存实现
 下面我们接着看buffer类的实现，可以看到buffer类继承了"BufferInterface"和"tf2::BufferCore"，其中"tf2::BufferCore"就是大名鼎鼎的ROS中的tf2库。
@@ -499,14 +478,12 @@ void Buffer::SubscriptionCallbackImpl(
 接着是lookupTransform和canTransform分别调用tf2的库函数，实现查找转换和判断是否能够转换的实现，由于函数功能比较简单这里就不介绍了。
 可以看到主要的缓存实现都是在tf2的库函数中，后面有时间再分析下tf2具体的实现。
 
-<a name="summary" />
 
 ## 总结
 接下来我们用一张图来总结Apollo中的坐标变换关系，即静态坐标转换由"StaticTransform"模块提供，而动态转换由需要发布的模块自行发布如"NDTLocalization","RTKLocalization"和""Gnss，可以看到动态变换主要是世界坐标到本地坐标的转换，而静态转换主要是各个传感器之间的转换。最后转换关系统一由Buffer模块接收，并且提供查询。
 ![all](img/all.jpg)
 
-<a name="reference" />
 
 ## Reference
-[tf2](http://wiki.ros.org/tf2)
+* [tf2](http://wiki.ros.org/tf2)
 

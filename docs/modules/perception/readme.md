@@ -3,39 +3,6 @@
 > 温故而知新，可以为师矣
 
 
-## Table of Contents
-- [CNN](cnn)
-    - [什么是CNN？](cnn#what_is_cnn)
-    - [CNN的原理](cnn#cnn_principle)
-        - [卷积层(Convolutional Layer)](cnn#convolutional)
-        - [池化层(Max Pooling Layer)](cnn#max_pool)
-        - [全连接层(Fully Connected Layer)](cnn#fully_connect)
-    - [如何构建CNN](cnn#how_to)
-    - [基本概念](cnn#base_concept)
-    - [引用](cnn#reference)
-- [Caffe2](caffe2)
-    - [Caffe2环境准备](caffe2#env)
-    - [安装显卡驱动](caffe2#drivers)
-    - [安装CUDA](caffe2#cuda)
-        - [选择CUDA版本](caffe2#cuda_version)
-        - [安装CUDA](caffe2#cuda_install)
-        - [设置环境变量](caffe2#cuda_env)
-        - [检验安装](caffe2#cuda_check)
-    - [安装cuDNN](caffe2#cudnn)
-    - [安装Caffe2](caffe2#caffe2)
-    - [参考](caffe2#reference)
-- [Perception模块简介](#introduction)
-    - [production目录](#production)
-    - [onboard目录](#onboard)
-    - [radar子模块](#sub_module)
-    - [camera子模块](#sub_module)
-    - [lidar子模块](#sub_module)
-    - [fusion子模块](#sub_module)
-    - [inference推理子模块](#sub_module)
-    - [Reference](#reference)
-
-<a name="introduction" />
-
 ## Perception模块简介
 
 首先简单看下perception的目录结构：
@@ -75,8 +42,6 @@
 可以看到感知模块由production模块开始，由fusion模块结束。
 
 
-<a name="production" />
-
 ## production目录
 production中主要是存放：
 1. 配置和lanuch和dag启动文件
@@ -90,8 +55,6 @@ production中主要是存放：
 ```
 该文件中有多个lanuch文件，同时一个lanuch文件中包含多个dag文件，也就是说一个lanuch文件会启动多个子模块。
 
-
-<a name="onboard" />
 
 ## onboard目录
 onboard目录定义了多个子模块，每个子模块对应一个功能，包括：车道线识别，障碍物识别，红绿灯识别，传感器融合，场景分割等。
@@ -128,8 +91,6 @@ onboard目录定义了多个子模块，每个子模块对应一个功能，包�
 接下来来我们分别查看各个传感器的具体实现。我们先从radar开始看起，主要是radar模块相对比较简单。
 
 
-<a name="sub_module" />
-
 ## 子模块介绍
 [radar子模块介绍](radar#radar_module)
 [camera子模块介绍](camera#camera_module)
@@ -138,16 +99,14 @@ onboard目录定义了多个子模块，每个子模块对应一个功能，包�
 [inference推理子模块](inference#inference_module)
 
 
-<a name="reference" />
 
 ## Reference
-[A Beginner's Guide to Convolutional Neural Networks](https://skymind.ai/wiki/convolutional-network)
-[cnn](https://cs231n.github.io/convolutional-networks/)
-[traffic light dataset](https://hci.iwr.uni-heidelberg.de/node/6132/download/3d66608cfb112934ef40175e9a20c81f)
-[pytorch-tutorial](https://github.com/yunjey/pytorch-tutorial)
-[全连接层的作用是什么？](https://www.zhihu.com/question/41037974)
-[索伯算子](https://zh.wikipedia.org/wiki/%E7%B4%A2%E8%B2%9D%E7%88%BE%E7%AE%97%E5%AD%90)
-[卷积](https://zh.wikipedia.org/wiki/%E5%8D%B7%E7%A7%AF)
-[TensorRT(1)-介绍-使用-安装](https://arleyzhang.github.io/articles/7f4b25ce/)
-[高性能深度学习支持引擎实战——TensorRT](https://zhuanlan.zhihu.com/p/35657027)
-
+* [A Beginner's Guide to Convolutional Neural Networks](https://skymind.ai/wiki/convolutional-network)
+* [cnn](https://cs231n.github.io/convolutional-networks/)
+* [traffic light dataset](https://hci.iwr.uni-heidelberg.de/node/6132/download/3d66608cfb112934ef40175e9a20c81f)
+* [pytorch-tutorial](https://github.com/yunjey/pytorch-tutorial)
+* [全连接层的作用是什么？](https://www.zhihu.com/question/41037974)
+* [索伯算子](https://zh.wikipedia.org/wiki/%E7%B4%A2%E8%B2%9D%E7%88%BE%E7%AE%97%E5%AD%90)
+* [卷积](https://zh.wikipedia.org/wiki/%E5%8D%B7%E7%A7%AF)
+* [TensorRT(1)-介绍-使用-安装](https://arleyzhang.github.io/articles/7f4b25ce/)
+* [高性能深度学习支持引擎实战——TensorRT](https://zhuanlan.zhihu.com/p/35657027)
