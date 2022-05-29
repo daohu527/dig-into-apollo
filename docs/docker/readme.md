@@ -5,17 +5,16 @@
 
 docker的主要的好处是开箱即用，在编译docker的时候安装好需要的环境，在使用的时候就无需担心环境问题带来的影响了。下面我们主要分析下docker文件夹中的脚本，主要涉及docker的编译、启动、以及host相关的内容。
 
-<a name="docker_build" />
 
 ## docker编译
-编译docker在目录中"apollo\docker\build"中，执行的命令为
-```
+编译docker在目录中`apollo\docker\build`中，执行的命令为
+```sh
 ./build_dev.sh ./dev.x86_64.dockerfile
 ```
 在"build_dev.sh"脚本中会执行编译docker的工作，下面我们分析下docker的编译过程。
 
 #### build_dev.sh
-```
+```sh
 # Usage:
 #   ./build_dev.sh ./dev.x86_64.dockerfile
 # 1. 获取dockerfile名称，这里为第一个参数
@@ -49,7 +48,7 @@ CONTEXT ： docker编译的资源目录
 
 接着我们来看dockerfile
 #### dev.x86_64.dockerfile
-```
+```sh
 # 1. 以nvidia/cuda:10.0做为基础镜像
 FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
 
@@ -168,11 +167,10 @@ RUN bash /tmp/installers/install_opuslib.sh
 # 33. 设置工作路径和用户为apollo
 WORKDIR /apollo
 USER apollo
-
 ```
 
 还有一些没有用到的脚本
-```
+```sh
 1.
 install_adolc.sh
 
@@ -183,10 +181,9 @@ install_fast-rtps.sh
 install_libtorch.sh
 ```
 
-<a name="docker_script" />
 
 ## docker脚本
-容器相关的脚本在"scripts"中，下面我逐步分析下这些脚本做了哪些工作。
+容器相关的脚本在`scripts`中，下面我逐步分析下这些脚本做了哪些工作。
 
 #### dev_start.sh
 启动容器的脚本
@@ -194,8 +191,6 @@ install_libtorch.sh
 #### dev_into.sh
 进入容器的脚本
 
-
-<a name="setup_host" />
 
 ## 设置主机
 设置host，提供了一些在主机上使用的脚本
@@ -207,7 +202,7 @@ install_libtorch.sh
 安装docker
 
 #### setup_host.sh
-```
+```sh
 APOLLO_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
 
 # Setup core dump format.
@@ -235,5 +230,3 @@ if [ $? -ne 0 ]; then
   echo "uvcvideo clock=realtime" | sudo tee -a /etc/modules
 fi
 ```
-
-

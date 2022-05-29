@@ -3,15 +3,13 @@
 > 高行微言，所以修身。
 
 
-<a name="build" />
-
 ## 编译
-编译脚本在"apollo.sh"中实现，通过shell脚本设置一些参数和环境变量，最后通过bazel编译。下面我们分析下apollo.sh的具体实现。
+编译脚本在`apollo.sh`中实现，通过shell脚本设置一些参数和环境变量，最后通过bazel编译。下面我们分析下`apollo.sh`的具体实现。
 
 
-"apollo.sh"中实现了一些函数，我们先介绍下build函数
+`apollo.sh`中实现了一些函数，我们先介绍下build函数
 #### build
-```
+```sh
 function build() {
   if [ "${USE_GPU}" = "1" ] ; then
     echo -e "${YELLOW}Running build under GPU mode. GPU is required to run the build.${NO_COLOR}"
@@ -66,12 +64,17 @@ function build() {
 }
 ```
 
-<a name="question" />
 
 ## 常见问题
 1. 如果机器内存小于8G，会出现编译错误的情况，单独编译又没有问题，问题的原因是内存缓冲不足，导致报错。调大内存后解决，错误信息如下。
-```
+```console
 gcc: internal compiler error: Killed
+```
+我们可以通过在脚本中减少并行编译的线程数来防止上述问题。修改`scripts/apollo_build.sh`中`jobs`的值，减少一点，本例中为2，也就是运行2个线程。
+```sh
+  local job_args="--jobs=$(nproc) --local_ram_resources=HOST_RAM*0.7"
+  # 替换为
+  local job_args="--jobs=2 --local_ram_resources=HOST_RAM*0.7"
 ```
 
 2. 因为一些文件需要下载之后才能编译，如果启动离线模式，或者想下载文件之后再进行编译，可以参考。
