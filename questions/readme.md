@@ -14,9 +14,9 @@
 <a name="build" />
 
 ## build
-1. 编译提示下载依赖库失败，可以把下载下来的文件放到data/pkg，然后在`tools/bazel.rc`中指定bazel的查找路径，重新编译
+1. 编译提示下载依赖库失败，可以把下载下来的文件放到'.cache/distdir/'，重新编译, 如果是老版本那么可以在`tools/bazel.rc`中增加路径，然后放到指定目录
 ```
-build --distdir=data/pkg
+build --distdir=.cache/distdir/
 ```
 
 <a name="map" />
