@@ -14,6 +14,10 @@
 <a name="build" />
 
 ## build
+1. 编译提示下载依赖库失败，可以把下载下来的文件放到data/pkg，然后在`tools/bazel.rc`中指定bazel的查找路径，重新编译
+```
+build --distdir=data/pkg
+```
 
 <a name="map" />
 
