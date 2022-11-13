@@ -2,10 +2,11 @@
 
 Dig into Apollo is mainly to help learning [Apollo](https://github.com/ApolloAuto/apollo) autopilot system. We first introduce the functions of each module in detail, and then analyzed the code of each module. If you like autonomous driving and want to learn it, let's start this project and discuss anything you want to know!
 
-> Hi all, the Apollo study notes series has been updated again. The typography is now more natural and easier to read and index. There are still some hiccups, but I'll continue to update the documentation this year. I hope you can experience it first. The following is the project address.
+#### readthedocs
+- [dig-into-apollo](https://dig-into-apollo.readthedocs.io/en/latest/index.html#)
 
-**[dig-into-apollo](https://dig-into-apollo.readthedocs.io/en/latest/index.html#)**
-
+#### google groups
+- [disscuss-apollo](https://groups.google.com/g/d-apollo)
 
 ## Friendly tips
 
