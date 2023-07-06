@@ -1,12 +1,18 @@
-# Dig into Apollo ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout)
+# Dig into Apollo ![GitHub](https://img.shields.io/github/license/daohu527/Dig-into-Apollo.svg?style=popout) [![Documentation Status](https://readthedocs.org/projects/dig-into-apollo/badge/?version=latest)](https://dig-into-apollo.readthedocs.io/en/latest/?badge=latest)
 
 Dig into Apollo is mainly to help learning [Apollo](https://github.com/ApolloAuto/apollo) autopilot system. We first introduce the functions of each module in detail, and then analyzed the code of each module. If you like autonomous driving and want to learn it, let's start this project and discuss anything you want to know!
 
+#### readthedocs
+- [dig-into-apollo](https://dig-into-apollo.readthedocs.io/en/latest/index.html#)
+
+#### google groups
+- [disscuss-apollo](https://groups.google.com/g/d-apollo)
 
 ## Friendly tips
 
-If "git clone" on github is too slow, pls try apollo **[mirror](https://gitee.com/baidu/apolloauto)**. If you need more help and want to learning together, please add WeChat official accounts `fzyd006`.  
-
+* If "git clone" on github is too slow, pls try apollo **[mirror](https://gitee.com/baidu/apolloauto)**. 
+* If you have any questions, please feel free to ask in **[git issue](https://github.com/daohu527/dig-into-apollo/issues)**.  
+* If you need to add new documents or give suggestions, welcome to participate in **[git discussion](https://github.com/daohu527/dig-into-apollo/discussions)**
 
 ## Table of Contents
 

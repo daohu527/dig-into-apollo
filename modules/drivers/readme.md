@@ -8,8 +8,8 @@
 [Radar驱动子模块介绍](radar#radar_module)  
 [Camera驱动子模块介绍](camera#camera_module)  
 [velodyne驱动子模块介绍](velodyne#velodyne_module)  
-[hesai驱动子模块介绍](hesai#hesai_module)
-[Gnss驱动子模块介绍](gnss#gnss_module)
+[hesai驱动子模块介绍](hesai#hesai_module)  
+[Gnss驱动子模块介绍](gnss#gnss_module)  
 
 
 
